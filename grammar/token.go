@@ -15,3 +15,7 @@ type TokenTyper interface {
 	fmt.GoStringer
 	fmt.Stringer
 }
+
+// Token is a token.
+type Token struct {
+}
