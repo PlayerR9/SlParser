@@ -3,7 +3,7 @@ package grammar
 import (
 	"strings"
 
-	uc "github.com/PlayerR9/MyGoLib/Units/common"
+	uc "github.com/PlayerR9/lib_units/common"
 )
 
 // Rule is a rule of the grammar.

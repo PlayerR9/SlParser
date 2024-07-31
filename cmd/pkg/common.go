@@ -3,7 +3,7 @@ package pkg
 import (
 	"fmt"
 
-	prx "github.com/PlayerR9/EbnfParser/cmd/Parser"
+	prx "github.com/PlayerR9/SLParser/Parser"
 	ast "github.com/PlayerR9/grammar/ast"
 )
 

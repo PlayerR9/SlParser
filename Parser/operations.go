@@ -7,7 +7,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	uast "github.com/PlayerR9/EbnfParser/cmd/util/ast"
+	uast "github.com/PlayerR9/SLParser/cmd/util/ast"
 	ast "github.com/PlayerR9/grammar/ast"
 	luch "github.com/PlayerR9/lib_units/runes"
 	lus "github.com/PlayerR9/lib_units/slices"

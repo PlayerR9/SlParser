@@ -6,8 +6,8 @@ import (
 	"os"
 	"text/template"
 
-	prx "github.com/PlayerR9/EbnfParser/cmd/Parser"
-	pkg "github.com/PlayerR9/EbnfParser/cmd/pkg"
+	prx "github.com/PlayerR9/SLParser/Parser"
+	pkg "github.com/PlayerR9/SLParser/cmd/pkg"
 	ggen "github.com/PlayerR9/lib_units/generator"
 )
 
