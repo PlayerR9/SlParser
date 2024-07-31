@@ -6,8 +6,8 @@ import (
 	"os"
 	"text/template"
 
-	prx "github.com/PlayerR9/SLParser/Parser"
 	pkg "github.com/PlayerR9/SLParser/cmd/pkg"
+	prx "github.com/PlayerR9/SLParser/parser"
 	ggen "github.com/PlayerR9/lib_units/generator"
 )
 
@@ -75,7 +75,7 @@ func main() {
 		logger.Fatalf("Error parsing file: %s", err.Error())
 	}
 
-	ee_data, err := prx.ExtractEnums.Apply(root)
+	ee_data, err := pkg.ExtractEnums.Apply(root)
 	if err != nil {
 		logger.Fatalf("Error extracting enums: %s", err.Error())
 	}
@@ -86,7 +86,7 @@ func main() {
 		ParserEnums:  ee_data.GetParserEnums(),
 	}
 
-	_, err = prx.RenameNodes.Apply(root)
+	_, err = pkg.RenameNodes.Apply(root)
 	if err != nil {
 		logger.Fatalf("Error renaming nodes: %s", err.Error())
 	}

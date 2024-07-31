@@ -1,4 +1,4 @@
-package Parser
+package parser
 
 // NodeType represents the type of a node in the AST tree.
 type NodeType int

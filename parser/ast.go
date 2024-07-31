@@ -1,9 +1,9 @@
-package Parser
+package parser
 
 import (
 	"fmt"
 
-	pkg "github.com/PlayerR9/SLParser/Parser/pkg"
+	pkg "github.com/PlayerR9/SLParser/parser/pkg"
 	ast "github.com/PlayerR9/grammar/ast"
 	gr "github.com/PlayerR9/grammar/grammar"
 	ulx "github.com/PlayerR9/grammar/lexer"
