@@ -1,0 +1,20 @@
+Source = Source1 EOF .
+Source1 = Rule .
+Source1 = Rule newline Source1 .
+
+Rule = uppercase_id equal RhsCls dot .
+Rule = uppercase_id newline equal RhsCls RuleLine .
+RuleLine = newline pipe RhsCls RuleLine .
+RuleLine = newline dot  .
+
+RhsCls = Rhs .
+RhsCls = Rhs RhsCls .
+
+Rhs = Identifier .
+Rhs = op_paren OrExpr cl_paren .
+
+OrExpr = Identifier pipe Identifier .
+OrExpr = Identifier pipe OrExpr .
+
+Identifier = uppercase_id .
+Identifier = lowercase_id .

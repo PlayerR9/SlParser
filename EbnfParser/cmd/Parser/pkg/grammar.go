@@ -1,0 +1,116 @@
+package pkg
+
+const Grammar string = `
+equal = "=" .
+dot = "." .
+pipe = "|" .
+newline = [ "\r" ] "\n" { [ "\r" ] "\n" } .
+ws = " " | "\t" . -> skip
+op_paren = "(" .
+cl_paren = ")" .
+
+uppercase_id = uppercase_word { uppercase_word } { digit } .
+lowercase_id = lowercase_word { digit } .
+
+fragment lowercase_word = "a".."z" { "a".."z" } . 
+fragment uppercase_word = "A".."Z" { "a".."z" } .
+fragment digit = "0".."9" .
+
+Source = Source1 EOF .
+Source1 = Rule .
+Source1 = Rule newline Source1 .
+
+Rule = uppercase_id equal RhsCls dot .
+Rule = uppercase_id newline equal RhsCls RuleLine .
+RuleLine = newline pipe RhsCls RuleLine .
+RuleLine = newline dot  .
+
+RhsCls = Rhs .
+RhsCls = Rhs RhsCls .
+
+Rhs = Identifier .
+Rhs = op_paren OrExpr cl_paren .
+
+OrExpr = Identifier pipe Identifier .
+OrExpr = Identifier pipe OrExpr .
+
+Identifier = uppercase_id .
+Identifier = lowercase_id .
+`
+
+const ReversedGrammar string = `
+EOF Source1 -> Source .
+
+Rule -> Source1 .
+Source1 newline Rule -> Source1 .
+
+dot RhsCls equal uppercase_id -> Rule .
+RuleLine RhsCls equal newline uppercase_id -> Rule .
+
+RuleLine RhsCls pipe newline -> RuleLine .
+dot newline -> RuleLine .
+
+Rhs -> RhsCls .
+RhsCls Rhs -> RhsCls .
+
+Identifier -> Rhs .
+cl_paren OrExpr op_paren -> Rhs .
+
+Identifier pipe Identifier -> OrExpr .
+OrExpr pipe Identifier -> OrExpr .
+
+uppercase_id -> Identifier .
+lowercase_id -> Identifier .
+`
+
+const DecisionGrammar string = `
+[ EOF ] Source1 -> Source : accept .
+
+EOF [ Source1 ] -> Source : shift .
+[ Source1 ] newline Rule -> Source1 : reduce .
+
+[ Rule ] -> Source1 : reduce .
+Source1 newline [ Rule ] -> Source1 : shift .
+
+Source1 [ newline ] Rule -> Source1 : shift .
+RuleLine RhsCls equal [ newline ] uppercase_id -> Rule : shift .
+RuleLine RhsCls pipe [ newline ] -> RuleLine : shift .
+dot [ newline ] -> RuleLine : shift .
+
+[ dot ] RhsCls equal uppercase_id -> Rule : reduce .
+[ dot ] newline -> RuleLine : reduce .
+
+dot [ RhsCls ] equal uppercase_id -> Rule : shift .
+RuleLine [ RhsCls ] equal newline uppercase_id -> Rule : shift .
+RuleLine [ RhsCls ] pipe newline -> RuleLine : shift .
+[ RhsCls ] Rhs -> RhsCls : reduce .
+
+dot RhsCls [ equal ] uppercase_id -> Rule : shift .
+RuleLine RhsCls [ equal ] newline uppercase_id -> Rule : shift .
+
+dot RhsCls equal [ uppercase_id ] -> Rule : shift .
+RuleLine RhsCls equal newline [ uppercase_id ] -> Rule : shift .
+[ uppercase_id ] -> Identifier : reduce .
+
+[ RuleLine ] RhsCls equal newline uppercase_id -> Rule : reduce .
+[ RuleLine ] RhsCls pipe newline -> RuleLine : reduce .
+
+RuleLine RhsCls [ pipe ] newline -> RuleLine : shift .
+Identifier [ pipe ] Identifier -> OrExpr : shift .
+OrExpr [ pipe ] Identifier -> OrExpr : shift .
+
+[ Rhs ] -> RhsCls : reduce .
+RhsCls [ Rhs ] -> RhsCls : shift .
+
+[ Identifier ] -> Rhs : reduce .
+Identifier pipe [ Identifier ] -> OrExpr : reduce .
+
+[ cl_paren ] OrExpr op_paren -> Rhs : reduce .
+
+cl_paren [ OrExpr ] op_paren -> Rhs : shift .
+[ OrExpr ] pipe Identifier -> OrExpr : reduce .
+
+cl_paren OrExpr [ op_paren ] -> Rhs : shift .
+
+[ lowercase_id ] -> Identifier : reduce .
+`
