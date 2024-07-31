@@ -375,9 +375,9 @@ func NewParser() *Parser {
 //   - tokens: The input stream of the parser.
 //
 // Returns:
-//   - []*gr.Token[TokenType]: The syntax forest of the input stream.
+//   - []*gr.TokenTree[TokenType]: The syntax forest of the input stream.
 //   - error: An error if the parser encounters an error while parsing the input stream.
-func FullParse(tokens []*gr.Token[TokenType]) ([]*gr.Token[TokenType], error) {
+func FullParse(tokens []*gr.Token[TokenType]) ([]*gr.TokenTree[TokenType], error) {
 	parser := NewParser()
 
 	forest, err := uprx.FullParse(parser, tokens)

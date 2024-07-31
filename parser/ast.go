@@ -34,7 +34,7 @@ func init() {
 //   - error: An error if the parsing failed.
 func Parse(data []byte) (*ast.Node[NodeType], error) {
 	if len(data) == 0 {
-		return nil, luc.NewErrInvalidParameter("data", luc.NewErrEmpty(data))
+		return nil, luc.NewErrInvalidParameter("data", luc.NewErrEmpty("slice of bytes"))
 	}
 
 	tokens, err := ulx.FullLex(lexer, data)
@@ -49,7 +49,7 @@ func Parse(data []byte) (*ast.Node[NodeType], error) {
 	forest, err := uprx.FullParse(parser, tokens)
 	if err != nil {
 		for _, tree := range forest {
-			fmt.Println(uprx.PrintParseTree(tree))
+			fmt.Println(tree.String())
 			fmt.Println()
 		}
 
@@ -58,7 +58,7 @@ func Parse(data []byte) (*ast.Node[NodeType], error) {
 		return nil, fmt.Errorf("error while parsing: %w", err)
 	} else if len(forest) != 1 {
 		for _, tree := range forest {
-			fmt.Println(uprx.PrintParseTree(tree))
+			fmt.Println(tree.String())
 			fmt.Println()
 		}
 
@@ -67,7 +67,7 @@ func Parse(data []byte) (*ast.Node[NodeType], error) {
 		return nil, fmt.Errorf("expected 1 tree, got %d trees instead", len(forest))
 	}
 
-	nodes, err := AstBuilder.Apply(forest[0])
+	nodes, err := AstBuilder.Apply(forest[0].Root())
 	if err != nil {
 		for _, node := range nodes {
 			fmt.Println(ast.PrintAst(node))

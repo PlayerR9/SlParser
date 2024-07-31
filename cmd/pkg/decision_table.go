@@ -3,8 +3,8 @@ package pkg
 import (
 	"strings"
 
-	lus "github.com/PlayerR9/SLParser/cmd/util/slices"
 	luc "github.com/PlayerR9/lib_units/common"
+	lus "github.com/PlayerR9/lib_units/slices"
 )
 
 type DecisionTable struct {

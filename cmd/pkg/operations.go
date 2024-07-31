@@ -2,12 +2,11 @@ package pkg
 
 import (
 	"fmt"
-	"slices"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 
-	uast "github.com/PlayerR9/SLParser/cmd/util/ast"
+	uast "github.com/PlayerR9/SLParser/cmd/util/make"
 	prx "github.com/PlayerR9/SLParser/parser"
 	ast "github.com/PlayerR9/grammar/ast"
 	luch "github.com/PlayerR9/lib_units/runes"
@@ -127,13 +126,7 @@ func (d *ExtractEnumsData) AddLexerEnum(enum string) error {
 		return err
 	}
 
-	// Replace this with slices.TryInsert when lib_units is updated:
-	// lexer_enums = lus.TryInsert(lexer_enums, top.Data)
-
-	pos, ok := slices.BinarySearch(d.lexer_enums, new_enum)
-	if !ok {
-		d.lexer_enums = slices.Insert(d.lexer_enums, pos, new_enum)
-	}
+	d.lexer_enums = lus.TryInsert(d.lexer_enums, new_enum)
 
 	return nil
 }
@@ -144,13 +137,7 @@ func (d *ExtractEnumsData) AddParserEnum(enum string) error {
 		return err
 	}
 
-	// Replace this with slices.TryInsert when lib_units is updated:
-	// parser_enums = lus.TryInsert(parser_enums, top.Data)
-
-	pos, ok := slices.BinarySearch(d.parser_enums, new_enum)
-	if !ok {
-		d.parser_enums = slices.Insert(d.parser_enums, pos, new_enum)
-	}
+	d.parser_enums = lus.TryInsert(d.parser_enums, new_enum)
 
 	return nil
 }
@@ -161,13 +148,7 @@ func (d *ExtractEnumsData) AddSpecialEnum(enum string) error {
 		return err
 	}
 
-	// Replace this with slices.TryInsert when lib_units is updated:
-	// special_enums = lus.TryInsert(special_enums, top.Data)
-
-	pos, ok := slices.BinarySearch(d.special_enums, new_enum)
-	if !ok {
-		d.special_enums = slices.Insert(d.special_enums, pos, new_enum)
-	}
+	d.special_enums = lus.TryInsert(d.special_enums, new_enum)
 
 	return nil
 }

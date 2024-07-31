@@ -46,3 +46,27 @@ func (t TokenType) String() string {
 		"OR expression",
 	}[t]
 }
+
+func (t TokenType) GoString() string {
+	return [...]string{
+		"TtkEOF",
+
+		"TtkDot",
+		"TtkOpParen",
+		"TtkClParen",
+		"TtkPipe",
+		"TtkEqualSign",
+		"TtkNewline",
+		"TtkUppercaseID",
+		"TtkLowercaseID",
+
+		"NtkSource",
+		"NtkSource1",
+		"NtkRule",
+		"NtkRhsCls",
+		"NtkRuleLine",
+		"NtkRhs",
+		"NtkIdentifier",
+		"NtkOrExpr",
+	}[t]
+}

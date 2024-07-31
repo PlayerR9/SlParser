@@ -1,9 +1,9 @@
-package ast
+package make
 
 import (
+	ast "github.com/PlayerR9/grammar/ast"
 	luc "github.com/PlayerR9/lib_units/common"
-	lls "github.com/PlayerR9/listlike"
-	tr "github.com/PlayerR9/tree/tree"
+	lls "github.com/PlayerR9/listlike/stack"
 )
 
 // DFSDoFunc is a function that is called for each node.
@@ -14,16 +14,16 @@ import (
 //
 // Returns:
 //   - error: An error if the DFS could not be applied.
-type DFSDoFunc[N tr.Noder, I any] func(node N, data I) error
+type DFSDoFunc[N ast.Noder, I any] func(node N, data I) error
 
 // InitFunc is a function that initializes the data.
 //
 // Returns:
 //   - I: The data.
-type InitFunc[N tr.Noder, I any] func() I
+type InitFunc[N ast.Noder, I any] func() I
 
 // SimpleDFS is a simple depth-first search.
-type SimpleDFS[N tr.Noder, I any] struct {
+type SimpleDFS[N ast.Noder, I any] struct {
 	// do_func is the function that is called for each node.
 	do_func DFSDoFunc[N, I]
 
@@ -41,7 +41,7 @@ type SimpleDFS[N tr.Noder, I any] struct {
 //
 // If f is nil, simpleDFS is returned as nil.
 // If init is nil, the default init function is used which returns the zero value of I.
-func NewSimpleDFS[N tr.Noder, I any](f DFSDoFunc[N, I], init InitFunc[N, I]) *SimpleDFS[N, I] {
+func NewSimpleDFS[N ast.Noder, I any](f DFSDoFunc[N, I], init InitFunc[N, I]) *SimpleDFS[N, I] {
 	if f == nil {
 		return nil
 	}
