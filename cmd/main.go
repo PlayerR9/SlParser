@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"path/filepath"
 
 	gen "github.com/PlayerR9/SLParser/cmd/generation"
 	pkg "github.com/PlayerR9/SLParser/cmd/pkg"
@@ -45,5 +46,17 @@ func main() {
 		gen.Logger.Fatalf("Error generating code: %s", err.Error())
 	}
 
-	gen.Logger.Printf("Successfully generated file: %q", dest)
+	dir := filepath.Dir(dest.DestLoc)
+
+	err = os.MkdirAll(dir, 0755)
+	if err != nil {
+		gen.Logger.Fatalf("Error creating directory: %s", err.Error())
+	}
+
+	err = os.WriteFile(dest.DestLoc, dest.Data, 0644)
+	if err != nil {
+		gen.Logger.Fatalf("Error writing file: %s", err.Error())
+	}
+
+	gen.Logger.Printf("Successfully generated file: %q", dest.DestLoc)
 }
