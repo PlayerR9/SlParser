@@ -9,7 +9,6 @@ import (
 
 	gr "github.com/PlayerR9/grammar/grammar"
 	ulpx "github.com/PlayerR9/grammar/lexer"
-	luc "github.com/PlayerR9/lib_units/common"
 	utch "github.com/PlayerR9/lib_units/runes"
 )
 
@@ -65,7 +64,7 @@ func (l *Lexer) IsDone() bool {
 
 // LexOne implements the Grammar.Lexer interface.
 func (l *Lexer) LexOne() (*gr.Token[TokenType], error) {
-	luc.Assert(len(l.input_stream) > 0, "l.input_stream is empty")
+	// luc.Assert(len(l.input_stream) > 0, "l.input_stream is empty")
 
 	c, size := utf8.DecodeRune(l.input_stream)
 	if c == utf8.RuneError {

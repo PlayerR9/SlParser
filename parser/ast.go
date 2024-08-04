@@ -67,7 +67,7 @@ func Parse(data []byte) (*ast.Node[NodeType], error) {
 		return nil, fmt.Errorf("expected 1 tree, got %d trees instead", len(forest))
 	}
 
-	nodes, err := AstBuilder.Apply(forest[0].Root())
+	nodes, err := AstBuilder.Apply(forest[0])
 	if err != nil {
 		for _, node := range nodes {
 			fmt.Println(ast.PrintAst(node))
@@ -86,18 +86,19 @@ func Parse(data []byte) (*ast.Node[NodeType], error) {
 
 var (
 	// AstBuilder is the AST builder of the parser.
-	AstBuilder *ast.Make[NodeType, pkg.TokenType]
+	AstBuilder *ast.Make[*ast.Node[NodeType], pkg.TokenType]
 )
 
 func init() {
-	AstBuilder = ast.NewMake[NodeType, pkg.TokenType]()
+	AstBuilder = ast.NewMake[*ast.Node[NodeType], pkg.TokenType]()
 
-	parts := ast.NewPartsBuilder[NodeType]()
+	parts := ast.NewPartsBuilder[*ast.Node[NodeType]]()
 
-	parts.Add(func(a *ast.Result[NodeType], prev any) (any, error) {
-		luc.AssertNil(a, "a")
+	parts.Add(func(a *ast.Result[*ast.Node[NodeType]], prev any) (any, error) {
+		// luc.AssertNil(a, "a")
 
-		root := luc.AssertConv[*gr.Token[pkg.TokenType]](prev, "prev")
+		root := prev.(*gr.Token[pkg.TokenType])
+		// root := luc.AssertConv[*gr.Token[pkg.TokenType]](prev, "prev")
 
 		children, err := ast.ExtractChildren(root)
 		if err != nil {
@@ -111,10 +112,11 @@ func init() {
 		return children[0], nil
 	})
 
-	parts.Add(func(a *ast.Result[NodeType], prev any) (any, error) {
-		luc.AssertNil(a, "a")
+	parts.Add(func(a *ast.Result[*ast.Node[NodeType]], prev any) (any, error) {
+		// luc.AssertNil(a, "a")
 
-		child := luc.AssertConv[*gr.Token[pkg.TokenType]](prev, "prev")
+		child := prev.(*gr.Token[pkg.TokenType])
+		// child := luc.AssertConv[*gr.Token[pkg.TokenType]](prev, "prev")
 
 		// Identifier = uppercase_id .
 		// Identifier = lowercase_id .
@@ -124,7 +126,7 @@ func init() {
 			return nil, err
 		}
 
-		a.MakeNode(IdentifierNode, data)
+		a.SetNode(ast.NewNode(IdentifierNode, data))
 
 		return nil, nil
 	})
@@ -137,7 +139,7 @@ func init() {
 		case 2:
 			// OrExpr = Identifier pipe (OrExpr) .
 
-			sub_nodes, err := AstBuilder.Apply(children[0])
+			sub_nodes, err := AstBuilder.ApplyToken(children[0])
 			if err != nil {
 				return sub_nodes, err
 			}
@@ -148,7 +150,7 @@ func init() {
 
 			var nodes []*ast.Node[NodeType]
 
-			sub_nodes, err := AstBuilder.Apply(children[0])
+			sub_nodes, err := AstBuilder.ApplyToken(children[0])
 			if len(sub_nodes) > 0 {
 				nodes = append(nodes, sub_nodes...)
 			}
@@ -157,7 +159,7 @@ func init() {
 				return nodes, err
 			}
 
-			sub_nodes, err = AstBuilder.Apply(children[2])
+			sub_nodes, err = AstBuilder.ApplyToken(children[2])
 			if len(sub_nodes) > 0 {
 				nodes = append(nodes, sub_nodes...)
 			}
@@ -172,15 +174,23 @@ func init() {
 		}
 	}
 
-	parts.Add(func(a *ast.Result[NodeType], prev any) (any, error) {
-		luc.AssertNil(a, "a")
+	parts.Add(func(a *ast.Result[*ast.Node[NodeType]], prev any) (any, error) {
+		// luc.AssertNil(a, "a")
 
-		root := luc.AssertConv[*gr.Token[pkg.TokenType]](prev, "prev")
+		root := prev.(*gr.Token[pkg.TokenType])
+		// root := luc.AssertConv[*gr.Token[pkg.TokenType]](prev, "prev")
 
-		a.MakeNode(OrNode, "")
+		a.SetNode(ast.NewNode(OrNode, ""))
 
 		nodes, err := ast.LeftRecursive(root, pkg.NtkOrExpr, f1)
-		a.AppendChildren(nodes)
+
+		a_nodes := make([]ast.Noder, 0, len(nodes))
+
+		for _, node := range nodes {
+			a_nodes = append(a_nodes, node)
+		}
+
+		a.AppendChildren(a_nodes)
 
 		if err != nil {
 			return nil, err
@@ -192,10 +202,11 @@ func init() {
 	AstBuilder.AddEntry(pkg.NtkOrExpr, parts.Build())
 	parts.Reset()
 
-	parts.Add(func(a *ast.Result[NodeType], prev any) (any, error) {
-		luc.AssertNil(a, "a")
+	parts.Add(func(a *ast.Result[*ast.Node[NodeType]], prev any) (any, error) {
+		// luc.AssertNil(a, "a")
 
-		root := luc.AssertConv[*gr.Token[pkg.TokenType]](prev, "prev")
+		root := prev.(*gr.Token[pkg.TokenType])
+		// root := luc.AssertConv[*gr.Token[pkg.TokenType]](prev, "prev")
 
 		children, err := ast.ExtractChildren(root)
 		if err != nil {
@@ -205,16 +216,17 @@ func init() {
 		return children, nil
 	})
 
-	parts.Add(func(a *ast.Result[NodeType], prev any) (any, error) {
-		luc.AssertNil(a, "a")
+	parts.Add(func(a *ast.Result[*ast.Node[NodeType]], prev any) (any, error) {
+		// luc.AssertNil(a, "a")
 
-		children := luc.AssertConv[[]*gr.Token[pkg.TokenType]](prev, "prev")
+		children := prev.([]*gr.Token[pkg.TokenType])
+		// children := luc.AssertConv[[]*gr.Token[pkg.TokenType]](prev, "prev")
 
 		switch len(children) {
 		case 1:
 			// Rhs = Identifier .
 
-			sub_nodes, err := AstBuilder.Apply(children[0])
+			sub_nodes, err := AstBuilder.ApplyToken(children[0])
 			a.SetNodes(sub_nodes)
 
 			if err != nil {
@@ -227,10 +239,16 @@ func init() {
 		case 3:
 			// Rhs = op_paren OrExpr cl_paren .
 
-			a.MakeNode(OrNode, "")
+			a.SetNode(ast.NewNode(OrNode, ""))
 
-			sub_nodes, err := AstBuilder.Apply(children[1])
-			a.AppendChildren(sub_nodes)
+			sub_nodes, err := AstBuilder.ApplyToken(children[1])
+			a_nodes := make([]ast.Noder, 0, len(sub_nodes))
+
+			for _, node := range sub_nodes {
+				a_nodes = append(a_nodes, node)
+			}
+
+			a.AppendChildren(a_nodes)
 
 			if err != nil {
 				return nil, err
@@ -246,7 +264,7 @@ func init() {
 	parts.Reset()
 
 	f2 := func(children []*gr.Token[pkg.TokenType]) ([]*ast.Node[NodeType], error) {
-		nodes, err := AstBuilder.Apply(children[0])
+		nodes, err := AstBuilder.ApplyToken(children[0])
 		if err != nil {
 			return nodes, err
 		}
@@ -254,10 +272,11 @@ func init() {
 		return nodes, nil
 	}
 
-	parts.Add(func(a *ast.Result[NodeType], prev any) (any, error) {
-		luc.AssertNil(a, "a")
+	parts.Add(func(a *ast.Result[*ast.Node[NodeType]], prev any) (any, error) {
+		// luc.AssertNil(a, "a")
 
-		root := luc.AssertConv[*gr.Token[pkg.TokenType]](prev, "prev")
+		root := prev.(*gr.Token[pkg.TokenType])
+		// root := luc.AssertConv[*gr.Token[pkg.TokenType]](prev, "prev")
 
 		// RhsCls = Rhs .
 		// RhsCls = Rhs RhsCls .
@@ -288,8 +307,14 @@ func init() {
 
 			n := ast.NewNode(OrNode, "")
 
-			sub_nodes, err := AstBuilder.Apply(children[3])
-			n.AddChildren(sub_nodes)
+			sub_nodes, err := AstBuilder.ApplyToken(children[3])
+			a_nodes := make([]ast.Noder, 0, len(sub_nodes))
+
+			for _, node := range sub_nodes {
+				a_nodes = append(a_nodes, node)
+			}
+
+			n.AddChildren(a_nodes)
 
 			if err != nil {
 				return []*ast.Node[NodeType]{n}, err
@@ -301,10 +326,11 @@ func init() {
 		}
 	}
 
-	parts.Add(func(a *ast.Result[NodeType], prev any) (any, error) {
-		luc.AssertNil(a, "a")
+	parts.Add(func(a *ast.Result[*ast.Node[NodeType]], prev any) (any, error) {
+		// luc.AssertNil(a, "a")
 
-		root := luc.AssertConv[*gr.Token[pkg.TokenType]](prev, "prev")
+		root := prev.(*gr.Token[pkg.TokenType])
+		// root := luc.AssertConv[*gr.Token[pkg.TokenType]](prev, "prev")
 
 		sub_nodes, err := ast.LeftRecursive(root, pkg.NtkRuleLine, f3)
 		a.SetNodes(sub_nodes)
@@ -319,10 +345,11 @@ func init() {
 	AstBuilder.AddEntry(pkg.NtkRuleLine, parts.Build())
 	parts.Reset()
 
-	parts.Add(func(a *ast.Result[NodeType], prev any) (any, error) {
-		luc.AssertNil(a, "a")
+	parts.Add(func(a *ast.Result[*ast.Node[NodeType]], prev any) (any, error) {
+		// luc.AssertNil(a, "a")
 
-		root := luc.AssertConv[*gr.Token[pkg.TokenType]](prev, "prev")
+		root := prev.(*gr.Token[pkg.TokenType])
+		// root := luc.AssertConv[*gr.Token[pkg.TokenType]](prev, "prev")
 
 		children, err := ast.ExtractChildren(root)
 		if err != nil {
@@ -332,10 +359,11 @@ func init() {
 		return children, nil
 	})
 
-	parts.Add(func(a *ast.Result[NodeType], prev any) (any, error) {
-		luc.AssertNil(a, "a")
+	parts.Add(func(a *ast.Result[*ast.Node[NodeType]], prev any) (any, error) {
+		// luc.AssertNil(a, "a")
 
-		children := luc.AssertConv[[]*gr.Token[pkg.TokenType]](prev, "prev")
+		children := prev.([]*gr.Token[pkg.TokenType])
+		// children := luc.AssertConv[[]*gr.Token[pkg.TokenType]](prev, "prev")
 
 		lhs, err := ast.ExtractData(children[0])
 		if err != nil {
@@ -346,10 +374,16 @@ func init() {
 		case 4:
 			// Rule = uppercase_id equal RhsCls dot .
 
-			a.MakeNode(RuleNode, lhs)
+			a.SetNode(ast.NewNode(RuleNode, lhs))
 
-			sub_nodes, err := AstBuilder.Apply(children[2])
-			a.AppendChildren(sub_nodes)
+			sub_nodes, err := AstBuilder.ApplyToken(children[2])
+			a_nodes := make([]ast.Noder, 0, len(sub_nodes))
+
+			for _, node := range sub_nodes {
+				a_nodes = append(a_nodes, node)
+			}
+
+			a.AppendChildren(a_nodes)
 
 			if err != nil {
 				return nil, err
@@ -359,19 +393,37 @@ func init() {
 
 			n := ast.NewNode(OrNode, "")
 
-			sub_nodes, err := AstBuilder.Apply(children[4])
-			n.AddChildren(sub_nodes)
+			sub_nodes, err := AstBuilder.ApplyToken(children[4])
+			a_nodes := make([]ast.Noder, 0, len(sub_nodes))
+
+			for _, node := range sub_nodes {
+				a_nodes = append(a_nodes, node)
+			}
+
+			n.AddChildren(a_nodes)
 
 			a.AppendNodes([]*ast.Node[NodeType]{n})
 
 			if err != nil {
-				a.TransformNodes(RuleNode, lhs)
+				_ = a.DoForEach(func(n *ast.Node[NodeType]) error {
+					n.Data = lhs
+					n.Type = RuleNode
+
+					return nil
+				})
+
 				return nil, err
 			}
 
-			sub_nodes, err = AstBuilder.Apply(children[5])
+			sub_nodes, err = AstBuilder.ApplyToken(children[5])
 			a.AppendNodes(sub_nodes)
-			a.TransformNodes(RuleNode, lhs)
+
+			_ = a.DoForEach(func(n *ast.Node[NodeType]) error {
+				n.Data = lhs
+				n.Type = RuleNode
+
+				return nil
+			})
 
 			if err != nil {
 				return nil, err
@@ -387,14 +439,15 @@ func init() {
 	AstBuilder.AddEntry(pkg.NtkRule, parts.Build())
 	parts.Reset()
 
-	parts.Add(func(a *ast.Result[NodeType], prev any) (any, error) {
-		luc.AssertNil(a, "a")
+	parts.Add(func(a *ast.Result[*ast.Node[NodeType]], prev any) (any, error) {
+		// luc.AssertNil(a, "a")
 
-		root := luc.AssertConv[*gr.Token[pkg.TokenType]](prev, "prev")
+		root := prev.(*gr.Token[pkg.TokenType])
+		// root := luc.AssertConv[*gr.Token[pkg.TokenType]](prev, "prev")
 
 		// Source = Source1 EOF .
 
-		a.MakeNode(SourceNode, "")
+		a.SetNode(ast.NewNode(SourceNode, ""))
 
 		children, err := ast.ExtractChildren(root)
 		if err != nil {
@@ -409,7 +462,7 @@ func init() {
 	})
 
 	f4 := func(children []*gr.Token[pkg.TokenType]) ([]*ast.Node[NodeType], error) {
-		nodes, err := AstBuilder.Apply(children[0])
+		nodes, err := AstBuilder.ApplyToken(children[0])
 		if err != nil {
 			return nodes, err
 		}
@@ -417,13 +470,20 @@ func init() {
 		return nodes, nil
 	}
 
-	parts.Add(func(a *ast.Result[NodeType], prev any) (any, error) {
-		luc.AssertNil(a, "a")
+	parts.Add(func(a *ast.Result[*ast.Node[NodeType]], prev any) (any, error) {
+		// luc.AssertNil(a, "a")
 
-		child := luc.AssertConv[*gr.Token[pkg.TokenType]](prev, "prev")
+		child := prev.(*gr.Token[pkg.TokenType])
+		// child := luc.AssertConv[*gr.Token[pkg.TokenType]](prev, "prev")
 
 		sub_nodes, err := ast.LeftRecursive(child, pkg.NtkSource1, f4)
-		a.AppendChildren(sub_nodes)
+		a_nodes := make([]ast.Noder, 0, len(sub_nodes))
+
+		for _, node := range sub_nodes {
+			a_nodes = append(a_nodes, node)
+		}
+
+		a.AppendChildren(a_nodes)
 
 		if err != nil {
 			return nil, err

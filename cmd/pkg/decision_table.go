@@ -3,7 +3,6 @@ package pkg
 import (
 	"strings"
 
-	luc "github.com/PlayerR9/lib_units/common"
 	lus "github.com/PlayerR9/lib_units/slices"
 )
 
@@ -18,8 +17,8 @@ func (dt *DecisionTable) String() string {
 	var values []string
 
 	for _, symbol := range dt.symbols {
-		items, ok := dt.table[symbol]
-		luc.AssertF(ok, "symbol %q not found in table", symbol)
+		items, _ := dt.table[symbol]
+		// luc.AssertF(ok, "symbol %q not found in table", symbol)
 
 		elems := make([]string, 0, len(items))
 
@@ -76,8 +75,8 @@ func (dt *DecisionTable) make_items_per_symbol(symbol string) {
 		for _, idx := range indices {
 			act := DetermineAction(idx, symbol)
 
-			item, err := NewItem(dt.rules[key], idx, act)
-			luc.AssertErr(err, "NewItem(rule, %d, %q)", idx, act)
+			item, _ := NewItem(dt.rules[key], idx, act)
+			// luc.AssertErr(err, "NewItem(rule, %d, %q)", idx, act)
 
 			items = append(items, item)
 		}

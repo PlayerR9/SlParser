@@ -2,6 +2,7 @@ package generation
 
 import (
 	"log"
+	"os"
 
 	"github.com/PlayerR9/SLParser/cmd/pkg"
 	prx "github.com/PlayerR9/SLParser/parser"
@@ -15,7 +16,7 @@ var (
 )
 
 func init() {
-	Logger = ggen.InitLogger("SL parser")
+	Logger = ggen.InitLogger(os.Stdout, "SL parser")
 }
 
 type Gen struct {

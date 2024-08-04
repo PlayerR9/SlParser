@@ -6,7 +6,6 @@ import (
 
 	gr "github.com/PlayerR9/grammar/grammar"
 	uprx "github.com/PlayerR9/grammar/parser"
-	luc "github.com/PlayerR9/lib_units/common"
 	llq "github.com/PlayerR9/listlike/queue"
 	lls "github.com/PlayerR9/listlike/stack"
 )
@@ -19,8 +18,8 @@ type Parser struct {
 
 // SetInputStream implements the Grammar.Parser interface.
 func (p *Parser) SetInputStream(tokens []*gr.Token[TokenType]) {
-	luc.AssertNil(p.stack, "p.stack")
-	luc.AssertNil(p.popped, "p.popped")
+	// luc.AssertNil(p.stack, "p.stack")
+	// luc.AssertNil(p.popped, "p.popped")
 
 	p.tokens = llq.NewArrayQueue[*gr.Token[TokenType]]()
 	p.tokens.EnqueueMany(tokens)
@@ -31,14 +30,14 @@ func (p *Parser) SetInputStream(tokens []*gr.Token[TokenType]) {
 
 // Pop implements the Grammar.Parser interface.
 func (p *Parser) Pop() (*gr.Token[TokenType], bool) {
-	luc.AssertNil(p.stack, "p.stack")
+	// luc.AssertNil(p.stack, "p.stack")
 
 	top, ok := p.stack.Pop()
 	if !ok {
 		return nil, false
 	}
 
-	luc.AssertNil(p.popped, "p.popped")
+	// luc.AssertNil(p.popped, "p.popped")
 
 	p.popped.Push(top)
 
@@ -47,7 +46,7 @@ func (p *Parser) Pop() (*gr.Token[TokenType], bool) {
 
 // Peek implements the Grammar.Parser interface.
 func (p *Parser) Peek() (*gr.Token[TokenType], bool) {
-	luc.AssertNil(p.stack, "p.stack")
+	// luc.AssertNil(p.stack, "p.stack")
 
 	top, ok := p.stack.Peek()
 	if !ok {
@@ -71,8 +70,8 @@ func (p *Parser) GetDecision(lookahead *gr.Token[TokenType]) (uprx.Actioner, err
 	switch top1.Type {
 	case TtkEOF:
 		// [ EOF ] Source1 -> Source : accept .
-		tmp, err := uprx.NewAcceptAction(uprx.NewRule(NtkSource, []TokenType{TtkEOF, NtkSource1}))
-		luc.AssertErr(err, "NewAcceptAction(TkSource, []TokenType{TkEOF, TkSource1})")
+		tmp, _ := uprx.NewAcceptAction(uprx.NewRule(NtkSource, []TokenType{TtkEOF, NtkSource1}))
+		// luc.AssertErr(err, "NewAcceptAction(TkSource, []TokenType{TkEOF, TkSource1})")
 
 		act = tmp
 	case NtkSource1:
@@ -84,8 +83,8 @@ func (p *Parser) GetDecision(lookahead *gr.Token[TokenType]) (uprx.Actioner, err
 		} else {
 			// [ Source1 ] newline Rule -> Source1 : reduce .
 
-			tmp, err := uprx.NewReduceAction(uprx.NewRule(NtkSource1, []TokenType{NtkSource1, TtkNewline, NtkRule}))
-			luc.AssertErr(err, "NewReduceAction(TkSource1, []TokenType{TkSource1, TkNewline, TkRule})")
+			tmp, _ := uprx.NewReduceAction(uprx.NewRule(NtkSource1, []TokenType{NtkSource1, TtkNewline, NtkRule}))
+			// luc.AssertErr(err, "NewReduceAction(TkSource1, []TokenType{TkSource1, TkNewline, TkRule})")
 
 			act = tmp
 		}
@@ -93,8 +92,8 @@ func (p *Parser) GetDecision(lookahead *gr.Token[TokenType]) (uprx.Actioner, err
 		if lookahead == nil || lookahead.Type != TtkNewline {
 			// [ Rule ] -> Source1 : reduce .
 
-			tmp, err := uprx.NewReduceAction(uprx.NewRule(NtkSource1, []TokenType{NtkRule}))
-			luc.AssertErr(err, "NewReduceAction(TkSource1, []TokenType{TkRule})")
+			tmp, _ := uprx.NewReduceAction(uprx.NewRule(NtkSource1, []TokenType{NtkRule}))
+			// luc.AssertErr(err, "NewReduceAction(TkSource1, []TokenType{TkRule})")
 
 			act = tmp
 		} else {
@@ -119,15 +118,15 @@ func (p *Parser) GetDecision(lookahead *gr.Token[TokenType]) (uprx.Actioner, err
 		case NtkRhsCls:
 			// [ dot ] RhsCls equal uppercase_id -> Rule : reduce .
 
-			tmp, err := uprx.NewReduceAction(uprx.NewRule(NtkRule, []TokenType{TtkDot, NtkRhsCls, TtkEqualSign, TtkUppercaseID}))
-			luc.AssertErr(err, "NewReduceAction(TkRule, []TokenType{TkDot, TkRhsCls, TkEqualSign, TkUppercaseID})")
+			tmp, _ := uprx.NewReduceAction(uprx.NewRule(NtkRule, []TokenType{TtkDot, NtkRhsCls, TtkEqualSign, TtkUppercaseID}))
+			// luc.AssertErr(err, "NewReduceAction(TkRule, []TokenType{TkDot, TkRhsCls, TkEqualSign, TkUppercaseID})")
 
 			act = tmp
 		case TtkNewline:
 			// [ dot ] newline -> RuleLine : reduce .
 
-			tmp, err := uprx.NewReduceAction(uprx.NewRule(NtkRuleLine, []TokenType{TtkDot, TtkNewline}))
-			luc.AssertErr(err, "NewReduceAction(TkRuleLine, []TokenType{TkDot, TkNewline})")
+			tmp, _ := uprx.NewReduceAction(uprx.NewRule(NtkRuleLine, []TokenType{TtkDot, TtkNewline}))
+			// luc.AssertErr(err, "NewReduceAction(TkRuleLine, []TokenType{TkDot, TkNewline})")
 
 			act = tmp
 		default:
@@ -142,8 +141,8 @@ func (p *Parser) GetDecision(lookahead *gr.Token[TokenType]) (uprx.Actioner, err
 		if top2.Type == NtkRhs {
 			// [ RhsCls ] Rhs -> RhsCls : reduce .
 
-			tmp, err := uprx.NewReduceAction(uprx.NewRule(NtkRhsCls, []TokenType{NtkRhsCls, NtkRhs}))
-			luc.AssertErr(err, "NewReduceAction(TkRhsCls, []TokenType{TkRhsCls, TkRhs})")
+			tmp, _ := uprx.NewReduceAction(uprx.NewRule(NtkRhsCls, []TokenType{NtkRhsCls, NtkRhs}))
+			// luc.AssertErr(err, "NewReduceAction(TkRhsCls, []TokenType{TkRhsCls, TkRhs})")
 
 			act = tmp
 		} else {
@@ -165,8 +164,8 @@ func (p *Parser) GetDecision(lookahead *gr.Token[TokenType]) (uprx.Actioner, err
 		if lookahead == nil {
 			// [ uppercase_id ] -> Identifier : reduce .
 
-			tmp, err := uprx.NewReduceAction(uprx.NewRule(NtkIdentifier, []TokenType{TtkUppercaseID}))
-			luc.AssertErr(err, "NewReduceAction(TkIdentifier, []TokenType{TkUppercaseID})")
+			tmp, _ := uprx.NewReduceAction(uprx.NewRule(NtkIdentifier, []TokenType{TtkUppercaseID}))
+			// luc.AssertErr(err, "NewReduceAction(TkIdentifier, []TokenType{TkUppercaseID})")
 
 			act = tmp
 		} else {
@@ -182,8 +181,8 @@ func (p *Parser) GetDecision(lookahead *gr.Token[TokenType]) (uprx.Actioner, err
 			default:
 				// [ uppercase_id ] -> Identifier : reduce .
 
-				tmp, err := uprx.NewReduceAction(uprx.NewRule(NtkIdentifier, []TokenType{TtkUppercaseID}))
-				luc.AssertErr(err, "NewReduceAction(TkIdentifier, []TokenType{TkUppercaseID})")
+				tmp, _ := uprx.NewReduceAction(uprx.NewRule(NtkIdentifier, []TokenType{TtkUppercaseID}))
+				// luc.AssertErr(err, "NewReduceAction(TkIdentifier, []TokenType{TkUppercaseID})")
 
 				act = tmp
 			}
@@ -205,15 +204,15 @@ func (p *Parser) GetDecision(lookahead *gr.Token[TokenType]) (uprx.Actioner, err
 		case TtkEqualSign:
 			// [ RuleLine ] RhsCls equal newline uppercase_id -> Rule : reduce .
 
-			tmp, err := uprx.NewReduceAction(uprx.NewRule(NtkRule, []TokenType{NtkRuleLine, NtkRhsCls, TtkEqualSign, TtkNewline, TtkUppercaseID}))
-			luc.AssertErr(err, "NewReduceAction(TkRule, []TokenType{TkRuleLine, TkRhsCls, TkEqualSign, TkNewline, TkUppercaseID})")
+			tmp, _ := uprx.NewReduceAction(uprx.NewRule(NtkRule, []TokenType{NtkRuleLine, NtkRhsCls, TtkEqualSign, TtkNewline, TtkUppercaseID}))
+			// luc.AssertErr(err, "NewReduceAction(TkRule, []TokenType{TkRuleLine, TkRhsCls, TkEqualSign, TkNewline, TkUppercaseID})")
 
 			act = tmp
 		case TtkPipe:
 			// [ RuleLine ] RhsCls pipe newline -> RuleLine : reduce .
 
-			tmp, err := uprx.NewReduceAction(uprx.NewRule(NtkRuleLine, []TokenType{NtkRuleLine, NtkRhsCls, TtkPipe, TtkNewline}))
-			luc.AssertErr(err, "NewReduceAction(TkRuleLine, []TokenType{TkRuleLine, TkRhsCls, TkPipe, TkTab, TkNewline})")
+			tmp, _ := uprx.NewReduceAction(uprx.NewRule(NtkRuleLine, []TokenType{NtkRuleLine, NtkRhsCls, TtkPipe, TtkNewline}))
+			// luc.AssertErr(err, "NewReduceAction(TkRuleLine, []TokenType{TkRuleLine, TkRhsCls, TkPipe, TkTab, TkNewline})")
 
 			act = tmp
 		default:
@@ -229,8 +228,8 @@ func (p *Parser) GetDecision(lookahead *gr.Token[TokenType]) (uprx.Actioner, err
 		if lookahead == nil || (lookahead.Type != TtkUppercaseID && lookahead.Type != TtkLowercaseID && lookahead.Type != TtkOpParen) {
 			// [ Rhs ] -> RhsCls : reduce .
 
-			tmp, err := uprx.NewReduceAction(uprx.NewRule(NtkRhsCls, []TokenType{NtkRhs}))
-			luc.AssertErr(err, "NewReduceAction(TkRhsCls, []TokenType{TkRhs})")
+			tmp, _ := uprx.NewReduceAction(uprx.NewRule(NtkRhsCls, []TokenType{NtkRhs}))
+			// luc.AssertErr(err, "NewReduceAction(TkRhsCls, []TokenType{TkRhs})")
 
 			act = tmp
 		} else {
@@ -254,15 +253,15 @@ func (p *Parser) GetDecision(lookahead *gr.Token[TokenType]) (uprx.Actioner, err
 			if !ok || top2.Type != TtkPipe {
 				// [ Identifier ] -> Rhs : reduce .
 
-				tmp, err := uprx.NewReduceAction(uprx.NewRule(NtkRhs, []TokenType{NtkIdentifier}))
-				luc.AssertErr(err, "NewReduceAction(TkRhs, []TokenType{TkIdentifier})")
+				tmp, _ := uprx.NewReduceAction(uprx.NewRule(NtkRhs, []TokenType{NtkIdentifier}))
+				// luc.AssertErr(err, "NewReduceAction(TkRhs, []TokenType{TkIdentifier})")
 
 				act = tmp
 			} else {
 				// [ Identifier ] pipe Identifier -> OrExpr : reduce .
 
-				tmp, err := uprx.NewReduceAction(uprx.NewRule(NtkOrExpr, []TokenType{NtkIdentifier, TtkPipe, NtkIdentifier}))
-				luc.AssertErr(err, "NewReduceAction(TkOrExpr, []TokenType{TkIdentifier, TkPipe, TkIdentifier})")
+				tmp, _ := uprx.NewReduceAction(uprx.NewRule(NtkOrExpr, []TokenType{NtkIdentifier, TtkPipe, NtkIdentifier}))
+				// luc.AssertErr(err, "NewReduceAction(TkOrExpr, []TokenType{TkIdentifier, TkPipe, TkIdentifier})")
 
 				act = tmp
 			}
@@ -274,16 +273,16 @@ func (p *Parser) GetDecision(lookahead *gr.Token[TokenType]) (uprx.Actioner, err
 	case TtkClParen:
 		// [ cl_paren ] OrExpr op_paren -> Rhs : reduce .
 
-		tmp, err := uprx.NewReduceAction(uprx.NewRule(NtkRhs, []TokenType{TtkClParen, NtkOrExpr, TtkOpParen}))
-		luc.AssertErr(err, "NewReduceAction(TkRhs, []TokenType{TkClParen, TkOrExpr, TkOpParen})")
+		tmp, _ := uprx.NewReduceAction(uprx.NewRule(NtkRhs, []TokenType{TtkClParen, NtkOrExpr, TtkOpParen}))
+		// luc.AssertErr(err, "NewReduceAction(TkRhs, []TokenType{TkClParen, TkOrExpr, TkOpParen})")
 
 		act = tmp
 	case NtkOrExpr:
 		if lookahead == nil || lookahead.Type != TtkClParen {
 			// [ OrExpr ] pipe Identifier -> OrExpr : reduce .
 
-			tmp, err := uprx.NewReduceAction(uprx.NewRule(NtkOrExpr, []TokenType{NtkOrExpr, TtkPipe, NtkIdentifier}))
-			luc.AssertErr(err, "NewReduceAction(TkOrExpr, []TokenType{TkOrExpr, TkPipe, TkIdentifier})")
+			tmp, _ := uprx.NewReduceAction(uprx.NewRule(NtkOrExpr, []TokenType{NtkOrExpr, TtkPipe, NtkIdentifier}))
+			// luc.AssertErr(err, "NewReduceAction(TkOrExpr, []TokenType{TkOrExpr, TkPipe, TkIdentifier})")
 
 			act = tmp
 		} else {
@@ -298,8 +297,8 @@ func (p *Parser) GetDecision(lookahead *gr.Token[TokenType]) (uprx.Actioner, err
 	case TtkLowercaseID:
 		// [ lowercase_id ] -> Identifier : reduce .
 
-		tmp, err := uprx.NewReduceAction(uprx.NewRule(NtkIdentifier, []TokenType{TtkLowercaseID}))
-		luc.AssertErr(err, "NewReduceAction(TkIdentifier, []TokenType{TkLowercaseID})")
+		tmp, _ := uprx.NewReduceAction(uprx.NewRule(NtkIdentifier, []TokenType{TtkLowercaseID}))
+		// luc.AssertErr(err, "NewReduceAction(TkIdentifier, []TokenType{TkLowercaseID})")
 
 		act = tmp
 	default:
@@ -311,14 +310,14 @@ func (p *Parser) GetDecision(lookahead *gr.Token[TokenType]) (uprx.Actioner, err
 
 // Shift implements the Grammar.Parser interface.
 func (p *Parser) Shift() bool {
-	luc.AssertNil(p.tokens, "p.tokens")
+	// luc.AssertNil(p.tokens, "p.tokens")
 
 	first, ok := p.tokens.Dequeue()
 	if !ok {
 		return false
 	}
 
-	luc.AssertNil(p.stack, "p.stack")
+	// luc.AssertNil(p.stack, "p.stack")
 
 	p.stack.Push(first)
 
@@ -340,7 +339,7 @@ func (p *Parser) Push(token *gr.Token[TokenType]) {
 		return
 	}
 
-	luc.AssertNil(p.stack, "p.stack")
+	// luc.AssertNil(p.stack, "p.stack")
 
 	p.stack.Push(token)
 }
