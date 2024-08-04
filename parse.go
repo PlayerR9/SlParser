@@ -1,8 +1,6 @@
 package SLParser
 
 import (
-	"os"
-
 	prx "github.com/PlayerR9/SLParser/parser"
 	ast "github.com/PlayerR9/grammar/ast"
 )
@@ -10,16 +8,11 @@ import (
 // ParseEbnf parses an EBNF file.
 //
 // Parameters:
-//   - loc: The location of the EBNF file.
+//   - data: The data to parse.
 //
 // Returns:
 //   - *ast.Node[prx.NodeType]: The root node of the AST tree.
-func ParseEbnf(loc string) (*ast.Node[prx.NodeType], error) {
-	data, err := os.ReadFile(loc)
-	if err != nil {
-		return nil, err
-	}
-
+func ParseEbnf(data []byte) (*ast.Node[prx.NodeType], error) {
 	root, err := prx.Parse(data)
 	if err != nil {
 		return root, err
