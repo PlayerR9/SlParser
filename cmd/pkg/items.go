@@ -3,7 +3,8 @@ package pkg
 import (
 	"strings"
 
-	luc "github.com/PlayerR9/lib_units/common"
+	gcers "github.com/PlayerR9/go-commons/errors"
+	gcint "github.com/PlayerR9/go-commons/ints"
 )
 
 // Item is an item of the grammar.
@@ -64,14 +65,14 @@ func (item *Item) String() string {
 //     if pos is out of bounds.
 func NewItem(rule *Rule, pos int, action ActionType) (*Item, error) {
 	if rule == nil {
-		return nil, luc.NewErrNilParameter("rule")
+		return nil, gcers.NewErrNilParameter("rule")
 	} else if action < 0 || action >= 3 {
-		return nil, luc.NewErrInvalidParameter("action", luc.NewErrOutOfBounds(int(action), 0, 2))
+		return nil, gcers.NewErrInvalidParameter("action", gcint.NewErrOutOfBounds(int(action), 0, 2))
 	}
 
 	size := rule.Size()
 	if pos < 0 || pos >= size {
-		return nil, luc.NewErrInvalidParameter("pos", luc.NewErrOutOfBounds(pos, 0, size))
+		return nil, gcers.NewErrInvalidParameter("pos", gcint.NewErrOutOfBounds(pos, 0, size))
 	}
 
 	return &Item{

@@ -47,12 +47,26 @@ func ExtractRules(root *ast.Node[prx.NodeType]) ([]*Rule, error) {
 	return rules, nil
 }
 
-func StringifyRules(rules []*Rule) string {
+func StringifyRules(rules []*Rule) map[string][]string {
 	if len(rules) == 0 {
-		return ""
+		return nil
 	}
 
 	dt := NewDecisionTable(rules)
 
-	return dt.String()
+	table := dt.GetTable()
+
+	result := make(map[string][]string)
+
+	for symbol, items := range table {
+		values := make([]string, 0, len(items))
+
+		for _, item := range items {
+			values = append(values, item.String())
+		}
+
+		result[symbol] = values
+	}
+
+	return result
 }

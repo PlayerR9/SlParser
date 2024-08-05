@@ -2,11 +2,11 @@ package main
 
 import (
 	"os"
-	"path/filepath"
 
 	gen "github.com/PlayerR9/SLParser/cmd/generation"
 	pkg "github.com/PlayerR9/SLParser/cmd/pkg"
 	prx "github.com/PlayerR9/SLParser/parser"
+	ast "github.com/PlayerR9/grammar/ast"
 )
 
 func main() {
@@ -25,15 +25,11 @@ func main() {
 		gen.Logger.Fatalf("Error parsing file: %s", err.Error())
 	}
 
-	ee_data, err := pkg.ExtractEnums.Apply(root)
+	err = GenerateTokens(root)
 	if err != nil {
-		gen.Logger.Fatalf("Error extracting enums: %s", err.Error())
-	}
-
-	g := &gen.Gen{
-		SpecialEnums: ee_data.GetSpecialEnums(),
-		LexerEnums:   ee_data.GetLexerEnums(),
-		ParserEnums:  ee_data.GetParserEnums(),
+		gen.Logger.Fatalf("While generating tokens: %s", err.Error())
+	} else {
+		gen.Logger.Printf("Successfully generated tokens.")
 	}
 
 	_, err = pkg.RenameNodes.Apply(root)
@@ -41,24 +37,87 @@ func main() {
 		gen.Logger.Fatalf("Error renaming nodes: %s", err.Error())
 	}
 
-	g.Root = root
-
-	dest, err := gen.Generator.Generate("test", ".go", g)
+	err = GenerateLexer()
 	if err != nil {
-		gen.Logger.Fatalf("Error generating code: %s", err.Error())
+		gen.Logger.Fatalf("While generating lexer: %s", err.Error())
+	} else {
+		gen.Logger.Printf("Successfully generated lexer.")
 	}
 
-	dir := filepath.Dir(dest.DestLoc)
-
-	err = os.MkdirAll(dir, 0755)
+	err = GenerateParser(root)
 	if err != nil {
-		gen.Logger.Fatalf("Error creating directory: %s", err.Error())
+		gen.Logger.Fatalf("While generating parser: %s", err.Error())
+	} else {
+		gen.Logger.Printf("Successfully generated parser.")
+	}
+}
+
+func GenerateTokens(root *ast.Node[prx.NodeType]) error {
+	ee_data, err := pkg.ExtractEnums.Apply(root)
+	if err != nil {
+		return err
 	}
 
-	err = os.WriteFile(dest.DestLoc, dest.Data, 0644)
-	if err != nil {
-		gen.Logger.Fatalf("Error writing file: %s", err.Error())
+	g := &gen.TokenGen{
+		SpecialEnums: ee_data.GetSpecialEnums(),
+		LexerEnums:   ee_data.GetLexerEnums(),
+		ParserEnums:  ee_data.GetParserEnums(),
 	}
 
-	gen.Logger.Printf("Successfully generated file: %q", dest.DestLoc)
+	dest, err := gen.TokenGenerator.Generate("test", ".go", g)
+	if err != nil {
+		return err
+	}
+
+	dest.ModifyFileName("_tokens")
+
+	err = dest.WriteFile()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GenerateLexer() error {
+	g := &gen.LexerGen{}
+
+	dest, err := gen.LexerGenerator.Generate("test", ".go", g)
+	if err != nil {
+		return err
+	}
+
+	dest.ModifyFileName("_lexer")
+
+	err = dest.WriteFile()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GenerateParser(root *ast.Node[prx.NodeType]) error {
+	rules, err := pkg.ExtractRules(root)
+	if err != nil {
+		return err
+	}
+
+	g := &gen.ParserGen{
+		Rules: pkg.StringifyRules(rules),
+	}
+
+	dest, err := gen.ParserGenerator.Generate("test", ".go", g)
+	if err != nil {
+		return err
+	}
+
+	dest.ModifyFileName("_parser")
+
+	err = dest.WriteFile()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

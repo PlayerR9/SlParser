@@ -115,3 +115,7 @@ func NewDecisionTable(rules []*Rule) *DecisionTable {
 
 	return dt
 }
+
+func (dt *DecisionTable) GetTable() map[string][]*Item {
+	return dt.table
+}

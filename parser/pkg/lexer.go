@@ -7,9 +7,9 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	gcch "github.com/PlayerR9/go-commons/runes"
 	gr "github.com/PlayerR9/grammar/grammar"
-	ulpx "github.com/PlayerR9/grammar/lexer"
-	utch "github.com/PlayerR9/lib_units/runes"
+	grlx "github.com/PlayerR9/grammar/lexer"
 )
 
 var (
@@ -68,7 +68,7 @@ func (l *Lexer) LexOne() (*gr.Token[TokenType], error) {
 
 	c, size := utf8.DecodeRune(l.input_stream)
 	if c == utf8.RuneError {
-		return nil, utch.NewErrInvalidUTF8Encoding(l.at)
+		return nil, gcch.NewErrInvalidUTF8Encoding(l.at)
 	}
 
 	token_type, ok := single_token_map[c]
@@ -96,7 +96,7 @@ func (l *Lexer) LexOne() (*gr.Token[TokenType], error) {
 
 		c, size = utf8.DecodeRune(l.input_stream)
 		if c == utf8.RuneError {
-			return nil, utch.NewErrInvalidUTF8Encoding(l.at)
+			return nil, gcch.NewErrInvalidUTF8Encoding(l.at)
 		}
 
 		if c != '\n' {
@@ -168,7 +168,7 @@ func NewLexer() *Lexer {
 func FullLex(data []byte) ([]*gr.Token[TokenType], error) {
 	lexer := NewLexer()
 
-	tokens, err := ulpx.FullLex(lexer, data)
+	tokens, err := grlx.FullLex(lexer, data)
 	if err != nil {
 		return tokens, err
 	}

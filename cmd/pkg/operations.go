@@ -9,8 +9,9 @@ import (
 	prx "github.com/PlayerR9/SLParser/parser"
 	ast "github.com/PlayerR9/grammar/ast"
 	uast "github.com/PlayerR9/grammar/make"
-	luch "github.com/PlayerR9/lib_units/runes"
 	lus "github.com/PlayerR9/lib_units/slices"
+
+	gcch "github.com/PlayerR9/go-commons/runes"
 )
 
 // EnumType represents the type of enum.
@@ -70,7 +71,7 @@ func ToEnum(str string, t_type EnumType) (string, error) {
 
 		return builder.String(), nil
 	case LexerEnum:
-		chars, err := luch.StringToUtf8(str)
+		chars, err := gcch.StringToUtf8(str)
 		if err != nil {
 			return "", err
 		}

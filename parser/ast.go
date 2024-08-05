@@ -8,7 +8,8 @@ import (
 	gr "github.com/PlayerR9/grammar/grammar"
 	ulx "github.com/PlayerR9/grammar/lexer"
 	uprx "github.com/PlayerR9/grammar/parser"
-	luc "github.com/PlayerR9/lib_units/common"
+
+	gcers "github.com/PlayerR9/go-commons/errors"
 )
 
 var (
@@ -34,7 +35,7 @@ func init() {
 //   - error: An error if the parsing failed.
 func Parse(data []byte) (*ast.Node[NodeType], error) {
 	if len(data) == 0 {
-		return nil, luc.NewErrInvalidParameter("data", luc.NewErrEmpty("slice of bytes"))
+		return nil, gcers.NewErrInvalidParameter("data", gcers.NewErrEmpty(data))
 	}
 
 	tokens, err := ulx.FullLex(lexer, data)
