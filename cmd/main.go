@@ -41,6 +41,8 @@ func main() {
 		gen.Logger.Fatalf("Error renaming nodes: %s", err.Error())
 	}
 
+	g.Root = root
+
 	dest, err := gen.Generator.Generate("test", ".go", g)
 	if err != nil {
 		gen.Logger.Fatalf("Error generating code: %s", err.Error())

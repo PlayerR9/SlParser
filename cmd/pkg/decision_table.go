@@ -17,7 +17,7 @@ func (dt *DecisionTable) String() string {
 	var values []string
 
 	for _, symbol := range dt.symbols {
-		items, _ := dt.table[symbol]
+		items := dt.table[symbol]
 		// luc.AssertF(ok, "symbol %q not found in table", symbol)
 
 		elems := make([]string, 0, len(items))

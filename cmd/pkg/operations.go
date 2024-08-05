@@ -6,9 +6,9 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	uast "github.com/PlayerR9/SLParser/cmd/util/make"
 	prx "github.com/PlayerR9/SLParser/parser"
 	ast "github.com/PlayerR9/grammar/ast"
+	uast "github.com/PlayerR9/grammar/make"
 	luch "github.com/PlayerR9/lib_units/runes"
 	lus "github.com/PlayerR9/lib_units/slices"
 )
