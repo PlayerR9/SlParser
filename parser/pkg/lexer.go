@@ -5,11 +5,9 @@ import (
 	"regexp"
 	"strconv"
 	"unicode"
-	"unicode/utf8"
 
-	gcch "github.com/PlayerR9/go-commons/runes"
+	grlx "github.com/PlayerR9/SLParser/util/lexer"
 	gr "github.com/PlayerR9/grammar/grammar"
-	grlx "github.com/PlayerR9/grammar/lexer"
 )
 
 var (
@@ -34,144 +32,82 @@ func init() {
 	}
 }
 
-// Lexer is a struct that represents a lexer.
-type Lexer struct {
-	// input_stream is the input stream of the lexer.
-	input_stream []byte
+var (
+	// Lexer is the lexer of the grammar.
+	Lexer *grlx.Lexer[TokenType]
+)
 
-	// tokens is the tokens of the lexer.
-	tokens []*gr.Token[TokenType]
+func init() {
+	f := func(lexer *grlx.Lexer[TokenType]) (*gr.Token[TokenType], error) {
+		// luc.Assert(len(l.input_stream) > 0, "l.input_stream is empty")
 
-	// at is the position of the lexer in the input stream.
-	at int
-}
+		c, err := lexer.Peek()
+		if grlx.IsExhausted(err) {
+			return nil, fmt.Errorf("expected character, got nothing instead")
+		} else if err != nil {
+			return nil, err
+		}
 
-// SetInputStream implements the Grammar.Lexer interface.
-func (l *Lexer) SetInputStream(data []byte) {
-	l.input_stream = data
-}
+		token_type, ok := single_token_map[c]
+		if ok {
+			tk := gr.NewToken(token_type, string(c), lexer.At(), nil)
 
-// Reset implements the Grammar.Lexer interface.
-func (l *Lexer) Reset() {
-	l.tokens = l.tokens[:0]
-	l.at = 0
-}
+			_, _ = lexer.Next()
 
-// IsDone implements the Grammar.Lexer interface.
-func (l *Lexer) IsDone() bool {
-	return len(l.input_stream) == 0
-}
+			return tk, nil
+		}
 
-// LexOne implements the Grammar.Lexer interface.
-func (l *Lexer) LexOne() (*gr.Token[TokenType], error) {
-	// luc.Assert(len(l.input_stream) > 0, "l.input_stream is empty")
+		var tk *gr.Token[TokenType]
 
-	c, size := utf8.DecodeRune(l.input_stream)
-	if c == utf8.RuneError {
-		return nil, gcch.NewErrInvalidUTF8Encoding(l.at)
-	}
+		switch c {
+		case ' ', '\t':
+			// Do nothing
 
-	token_type, ok := single_token_map[c]
-	if ok {
-		tk := gr.NewToken(token_type, string(c), l.at, nil)
+			_, _ = lexer.Next()
+		case '\r':
+			_, err := lexer.MatchChars([]rune{'\r', '\n'})
+			if err != nil {
+				return nil, err
+			}
 
-		l.input_stream = l.input_stream[size:]
-		l.at += size
+			tk = gr.NewToken(TtkNewline, "\n", lexer.At(), nil)
+		default:
+			at := lexer.At()
+
+			var data string
+			var s TokenType
+
+			if !unicode.IsLetter(c) {
+				tmp, ok := lexer.MatchRegex(parse_newlines)
+				if !ok {
+					return nil, fmt.Errorf("invalid character: %s", strconv.QuoteRune(c))
+				}
+
+				data = tmp
+				s = TtkNewline
+			} else if unicode.IsUpper(c) {
+				tmp, ok := lexer.MatchRegex(parse_uppercase_id)
+				if !ok {
+					return nil, fmt.Errorf("invalid uppercase identifier: %s", strconv.QuoteRune(c))
+				}
+
+				data = tmp
+				s = TtkUppercaseID
+			} else {
+				tmp, ok := lexer.MatchRegex(parse_lowercase_id)
+				if !ok {
+					return nil, fmt.Errorf("invalid lowercase identifier: %s", strconv.QuoteRune(c))
+				}
+
+				data = tmp
+				s = TtkLowercaseID
+			}
+
+			tk = gr.NewToken(s, data, at, nil)
+		}
 
 		return tk, nil
 	}
 
-	var tk *gr.Token[TokenType]
-
-	switch c {
-	case ' ', '\t':
-		// Do nothing
-	case '\r':
-		l.input_stream = l.input_stream[size:]
-		l.at += size
-
-		if len(l.input_stream) == 0 {
-			return nil, fmt.Errorf("expected '\\n' after '\\r', got nothing instead")
-		}
-
-		c, size = utf8.DecodeRune(l.input_stream)
-		if c == utf8.RuneError {
-			return nil, gcch.NewErrInvalidUTF8Encoding(l.at)
-		}
-
-		if c != '\n' {
-			return nil, fmt.Errorf("expected '\\n' after '\\r', got %s instead", strconv.QuoteRune(c))
-		}
-
-		tmp := gr.NewToken(TtkNewline, "\n", l.at, nil)
-
-		tk = tmp
-	default:
-		var match []byte
-
-		if !unicode.IsLetter(c) {
-			match = parse_newlines.Find(l.input_stream)
-			if len(match) == 0 {
-				return nil, fmt.Errorf("invalid character: %s", strconv.QuoteRune(c))
-			}
-
-			tmp := gr.NewToken(TtkNewline, string(match), l.at, nil)
-
-			tk = tmp
-		} else {
-			if unicode.IsUpper(c) {
-				match = parse_uppercase_id.Find(l.input_stream)
-				if len(match) == 0 {
-					return nil, fmt.Errorf("invalid uppercase identifier: %s", strconv.QuoteRune(c))
-				}
-
-				tmp := gr.NewToken(TtkUppercaseID, string(match), l.at, nil)
-
-				tk = tmp
-			} else {
-				match = parse_lowercase_id.Find(l.input_stream)
-				if len(match) == 0 {
-					return nil, fmt.Errorf("invalid lowercase identifier: %s", strconv.QuoteRune(c))
-				}
-
-				tmp := gr.NewToken(TtkLowercaseID, string(match), l.at, nil)
-
-				tk = tmp
-			}
-		}
-
-		size = len(match)
-	}
-
-	l.input_stream = l.input_stream[size:]
-	l.at += size
-
-	return tk, nil
-}
-
-// NewLexer creates a new lexer.
-//
-// Returns:
-//   - *Lexer: The new lexer. Never returns nil.
-func NewLexer() *Lexer {
-	return &Lexer{}
-}
-
-// FullLex is just a wrapper around the Grammar.FullLex function.
-//
-// Parameters:
-//   - data: The input stream of the lexer.
-//
-// Returns:
-//   - []*Token[T]: The tokens of the lexer.
-//   - error: An error if the lexer encounters an error while lexing the input stream.
-func FullLex(data []byte) ([]*gr.Token[TokenType], error) {
-	lexer := NewLexer()
-
-	tokens, err := grlx.FullLex(lexer, data)
-	if err != nil {
-		return tokens, err
-	}
-
-	return tokens, nil
+	Lexer = grlx.NewLexer(f)
 }

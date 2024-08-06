@@ -4,24 +4,20 @@ import (
 	"fmt"
 
 	pkg "github.com/PlayerR9/SLParser/parser/pkg"
+	ulx "github.com/PlayerR9/SLParser/util/lexer"
 	ast "github.com/PlayerR9/grammar/ast"
 	gr "github.com/PlayerR9/grammar/grammar"
-	ulx "github.com/PlayerR9/grammar/lexer"
 	uprx "github.com/PlayerR9/grammar/parser"
 
 	gcers "github.com/PlayerR9/go-commons/errors"
 )
 
 var (
-	// lexer is the lexer of the parser.
-	lexer *pkg.Lexer
-
 	// parser is the parser of the parser.
 	parser *pkg.Parser
 )
 
 func init() {
-	lexer = pkg.NewLexer()
 	parser = pkg.NewParser()
 }
 
@@ -38,7 +34,7 @@ func Parse(data []byte) (*ast.Node[NodeType], error) {
 		return nil, gcers.NewErrInvalidParameter("data", gcers.NewErrEmpty(data))
 	}
 
-	tokens, err := ulx.FullLex(lexer, data)
+	tokens, err := pkg.Lexer.FullLex(data)
 	if err != nil {
 		// DEBUG: Print tokens:
 		fmt.Println(string(ulx.PrintSyntaxError(data, tokens)))
