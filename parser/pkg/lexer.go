@@ -42,15 +42,15 @@ func init() {
 		// luc.Assert(len(l.input_stream) > 0, "l.input_stream is empty")
 
 		c, err := lexer.Peek()
-		if grlx.IsExhausted(err) {
-			return nil, fmt.Errorf("expected character, got nothing instead")
-		} else if err != nil {
+		if err != nil {
 			return nil, err
 		}
 
+		at := lexer.At()
+
 		token_type, ok := single_token_map[c]
 		if ok {
-			tk := gr.NewToken(token_type, string(c), lexer.At(), nil)
+			tk := gr.NewToken(token_type, string(c), at, nil)
 
 			_, _ = lexer.Next()
 
@@ -70,10 +70,8 @@ func init() {
 				return nil, err
 			}
 
-			tk = gr.NewToken(TtkNewline, "\n", lexer.At(), nil)
+			tk = gr.NewToken(TtkNewline, "\n", at, nil)
 		default:
-			at := lexer.At()
-
 			var data string
 			var s TokenType
 
