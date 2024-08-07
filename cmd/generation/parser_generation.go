@@ -31,183 +31,40 @@ package {{ .PackageName }}
 
 import (
 	"fmt"
-	"slices"
 
-	gr "github.com/PlayerR9/grammar/grammar"
 	grpx "github.com/PlayerR9/grammar/parser"
-	llq "github.com/PlayerR9/listlike/queue"
-	lls "github.com/PlayerR9/listlike/stack"
 )
 
-// Parser is the parser of the grammar.
-type Parser struct {
-	// tokens is the tokens of the parser.
-	tokens *llq.ArrayQueue[*gr.Token[TokenType]]
+var (
+	// Parser is the parser of the grammar.
+	Parser *Parser[TokenType]
+)
 
-	// stack is the stack of the parser.
-	stack  *lls.ArrayStack[*gr.Token[TokenType]]
+func init() {
+	decision_func := func(lookahead *gr.Token[TokenType]) (grpx.Actioner, error) {
+		defer p.Refuse()
 
-	// popped is the stack of the parser.
-	popped *lls.ArrayStack[*gr.Token[TokenType]]
-}
-
-// NewParser creates a new parser.
-//
-// Returns:
-//   - *Parser: The new parser. Never returns nil.
-func NewParser() *Parser {
-	return &Parser{
-		stack:  lls.NewArrayStack[*gr.Token[TokenType]](),
-		popped: lls.NewArrayStack[*gr.Token[TokenType]](),
-	}
-}
-
-// SetInputStream sets the input stream of the parser.
-//
-// Parameters:
-//   - tokens: The input stream of the parser.
-func (p *Parser) SetInputStream(tokens []*gr.Token[TokenType]) {
-	p.tokens = llq.NewArrayQueue[*gr.Token[TokenType]]()
-	p.tokens.EnqueueMany(tokens)
-
-	p.stack.Clear()
-	p.popped.Clear()
-}
-
-// Pop pops a token from the stack.
-//
-// Returns:
-//   - *Token[T]: The token if the stack is not empty, nil otherwise.
-//   - bool: True if the stack is not empty, false otherwise.
-func (p *Parser) Pop() (*gr.Token[TokenType], bool) {
-	top, ok := p.stack.Pop()
-	if !ok {
-		return nil, false
-	}
-
-	p.popped.Push(top)
-
-	return top, true
-}
-
-// Peek pops a token from the stack without removing it.
-//
-// Returns:
-//   - *Token[T]: The token if the stack is not empty, nil otherwise.
-//   - bool: True if the stack is not empty, false otherwise.
-func (p *Parser) Peek() (*gr.Token[TokenType], bool) {
-	top, ok := p.stack.Peek()
-	if !ok {
-		return nil, false
-	}
-
-	return top, true
-}
-
-// GetDecision returns the decision of the parser.
-//
-// Parameters:
-//   - lookahead: The lookahead token.
-//
-// Returns:
-//   - grpx.Actioner: The decision of the parser.
-//   - error: An error if the parser encounters an error while parsing.
-func (p *Parser) GetDecision(lookahead *gr.Token[TokenType]) (grpx.Actioner, error) {
-	defer p.Refuse()
-
-	top1, ok := p.Pop()
-	if !ok {
-		return nil, fmt.Errorf("p.stack is empty")
-	}
-
-	var act grpx.Actioner
-
-	switch top1.Type {
-	{{- range $key, $values := .Rules }}
-	case {{ $key }}:
-		{{- range $index, $element := $values }}
-		// {{ $element }}
-		{{- end }}
-	{{- end}}
-	default:
-		return nil, fmt.Errorf("unexpected token: %s", top1.String())
-	}
-
-	return act, nil
-}
-
-// Shift shifts a token from the input stream to the stack.
-//
-// Returns:
-//   - bool: True if the input stream is not empty, false otherwise.
-func (p *Parser) Shift() bool {
-	first, ok := p.tokens.Dequeue()
-	if !ok {
-		return false
-	}
-
-	p.stack.Push(first)
-
-	return true
-}
-
-// GetPopped returns the popped tokens.
-//
-// Returns:
-//   - []*Token[TokenType]: The popped tokens.
-func (p *Parser) GetPopped() []*gr.Token[TokenType] {
-	popped := p.popped.Slice()
-	slices.Reverse(popped)
-	return popped
-}
-
-// Push pushes a token to the stack. Does nothing if the token is nil.
-//
-// Parameters:
-//   - token: The token to push.
-func (p *Parser) Push(token *gr.Token[TokenType]) {
-	if token == nil {
-		return
-	}
-
-	p.stack.Push(token)
-}
-
-// Refuse refuses all the tokens that were popped since the last
-// call to Accept().
-func (p *Parser) Refuse() {
-	for {
-		top, ok := p.popped.Pop()
+		top1, ok := p.Pop()
 		if !ok {
-			break
+			return nil, fmt.Errorf("p.stack is empty")
 		}
 
-		p.stack.Push(top)
-	}
-}
+		var act grpx.Actioner
 
-// Accept accepts all the tokens that were popped since the last
-// call to Accept().
-func (p *Parser) Accept() {
-	p.popped.Clear()
-}
+		switch top1.Type {
+		{{- range $key, $values := .Rules }}
+		case {{ $key }}:
+			{{- range $index, $element := $values }}
+			// {{ $element }}
+			{{- end }}
+		{{- end}}
+		default:
+			return nil, fmt.Errorf("unexpected token: %s", top1.String())
+		}
 
-// FullParse is just a wrapper around the Grammar.FullParse function.
-//
-// Parameters:
-//   - tokens: The input stream of the parser.
-//
-// Returns:
-//   - []*gr.TokenTree[TokenType]: The syntax forest of the input stream.
-//   - error: An error if the parser encounters an error while parsing the input stream.
-func FullParse(tokens []*gr.Token[TokenType]) ([]*gr.TokenTree[TokenType], error) {
-	parser := NewParser()
-
-	forest, err := grpx.FullParse(parser, tokens)
-	if err != nil {
-		return forest, err
+		return act, nil
 	}
 
-	return forest, nil
+	Parser = NewParser[TokenType](decision_func)
 }
 `

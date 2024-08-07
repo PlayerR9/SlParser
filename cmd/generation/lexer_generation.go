@@ -45,6 +45,6 @@ func init() {
 		panic("Implement me!")
 	}
 
-	Lexer = grlx.NewLexer(lex_one)
+	Lexer = grlx.NewLexer[TokenType](lex_one)
 }
 `
