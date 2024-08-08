@@ -231,10 +231,7 @@ func init() {
 	f := func(lexer *grlx.Lexer[TokenType]) (*gr.Token[TokenType], error) {
 		// luc.Assert(len(l.input_stream) > 0, "l.input_stream is empty")
 
-		match, err := matcher.Match(lexer)
-		if err != nil {
-			return nil, err
-		}
+		match, _ := matcher.Match(lexer)
 
 		if match.IsValidMatch() {
 			symbol, data := match.GetMatch()
