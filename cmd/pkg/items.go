@@ -27,15 +27,7 @@ type Item struct {
 func (item *Item) String() string {
 	var values []string
 
-	iter := item.rule.Iterator()
-	var i int
-
-	for {
-		rhs, err := iter.Consume()
-		if err != nil {
-			break
-		}
-
+	for i, rhs := range item.rule.GetRhss() {
 		if i == item.pos {
 			values = append(values, "[")
 			values = append(values, rhs)
@@ -43,8 +35,6 @@ func (item *Item) String() string {
 		} else {
 			values = append(values, rhs)
 		}
-
-		i++
 	}
 
 	values = append(values, "->", item.rule.GetLhs(), ":", item.action.String(), ".")

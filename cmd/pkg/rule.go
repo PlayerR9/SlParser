@@ -4,8 +4,6 @@ import (
 	"strings"
 
 	"golang.org/x/exp/slices"
-
-	itrs "github.com/PlayerR9/iterators/simple"
 )
 
 // Rule is a rule of the grammar.
@@ -30,13 +28,6 @@ func (r *Rule) String() string {
 	values = append(values, ".")
 
 	return strings.Join(values, " ")
-}
-
-// Iterator implements the common.Iterater interface.
-//
-// Never returns nil.
-func (r *Rule) Iterator() itrs.Iterater[string] {
-	return itrs.NewSimpleIterator(r.rhss)
 }
 
 // NewRule is a constructor for a Rule.

@@ -131,7 +131,7 @@ func init() {
 
 		chars, err := grlx.RightLex(scanner, lex_lowercase)
 		if err != nil {
-			return nil, err
+			return []rune{c}, nil
 		}
 
 		return append([]rune{c}, chars...), nil
@@ -146,16 +146,14 @@ func init() {
 		}
 
 		c, _, err := scanner.ReadRune()
-		if err == io.EOF {
-			return chars, nil
-		} else if err != nil {
-			return nil, err
+		if err != nil {
+			return chars, err
 		}
 
 		if c != '_' {
 			_ = scanner.UnreadRune()
 
-			return chars, nil
+			return chars, grlx.Done
 		}
 
 		chars = append(chars, c)
@@ -170,6 +168,8 @@ var (
 )
 
 func match_rules(lexer *grlx.Lexer[TokenType]) (*gr.Token[TokenType], error) {
+	at := lexer.Pos()
+
 	chars, err := grlx.RightLex(lexer, lex_whitespace)
 	if err != nil {
 		return nil, err
@@ -185,7 +185,7 @@ func match_rules(lexer *grlx.Lexer[TokenType]) (*gr.Token[TokenType], error) {
 	}
 
 	if len(chars) != 0 {
-		return gr.NewToken(TtkNewline, "\n", lexer.Pos(), nil), nil
+		return gr.NewToken(TtkNewline, "\n", at, nil), nil
 	}
 
 	chars, err = grlx.RightLex(lexer, frag_uppercases)
@@ -203,7 +203,7 @@ func match_rules(lexer *grlx.Lexer[TokenType]) (*gr.Token[TokenType], error) {
 
 		chars = append(chars, digit...)
 
-		return gr.NewToken(TtkUppercaseID, string(chars), lexer.Pos(), nil), nil
+		return gr.NewToken(TtkUppercaseID, string(chars), at, nil), nil
 	}
 
 	chars, err = grlx.RightLex(lexer, frag_lowercases)
@@ -221,26 +221,35 @@ func match_rules(lexer *grlx.Lexer[TokenType]) (*gr.Token[TokenType], error) {
 
 		chars = append(chars, digit...)
 
-		return gr.NewToken(TtkLowercaseID, string(chars), lexer.Pos(), nil), nil
+		return gr.NewToken(TtkLowercaseID, string(chars), at, nil), nil
 	}
 
-	return nil, fmt.Errorf("no match found at %d", lexer.Pos())
+	return nil, fmt.Errorf("no match found at %d", at)
 }
 
 func init() {
 	f := func(lexer *grlx.Lexer[TokenType]) (*gr.Token[TokenType], error) {
 		// luc.Assert(len(l.input_stream) > 0, "l.input_stream is empty")
 
-		match, _ := matcher.Match(lexer)
+		// Remove this once grammar is updated.
+		if lexer.IsExhausted() {
+			return nil, io.EOF
+		}
+
+		at := lexer.Pos()
+
+		match, err0 := matcher.Match(lexer)
 
 		if match.IsValidMatch() {
 			symbol, data := match.GetMatch()
 
-			return gr.NewToken(symbol, data, lexer.Pos(), nil), nil
+			return gr.NewToken(symbol, data, at, nil), nil
 		}
 
 		tk, err := match_rules(lexer)
 		if err != nil {
+			fmt.Println(err0.Error())
+
 			return nil, err
 		}
 
