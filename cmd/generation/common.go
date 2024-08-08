@@ -3,8 +3,6 @@ package generation
 import (
 	"log"
 	"os"
-
-	ggen "github.com/PlayerR9/lib_units/generator"
 )
 
 var (
@@ -13,5 +11,5 @@ var (
 )
 
 func init() {
-	Logger = ggen.InitLogger(os.Stdout, "SL parser")
+	Logger = log.New(os.Stdout, "[Sl Parser]: ", log.LstdFlags)
 }

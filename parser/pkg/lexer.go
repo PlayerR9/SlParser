@@ -6,14 +6,15 @@ import (
 	"strconv"
 	"unicode"
 
-	grlx "github.com/PlayerR9/SLParser/util/lexer"
 	gr "github.com/PlayerR9/grammar/grammar"
+	grlx "github.com/PlayerR9/grammar/lexer"
 )
 
 var (
 	parse_lowercase_id *regexp.Regexp
 	parse_uppercase_id *regexp.Regexp
-	parse_newlines     *regexp.Regexp
+
+	matcher *grlx.Matcher[TokenType]
 
 	single_token_map map[rune]TokenType
 )
@@ -21,15 +22,14 @@ var (
 func init() {
 	parse_lowercase_id = regexp.MustCompile(`^[a-z]+([_][a-z]+)*[0-9]*`)
 	parse_uppercase_id = regexp.MustCompile(`^([A-Z][a-z]*)+[0-9]*`)
-	parse_newlines = regexp.MustCompile(`((\r)?\n)+`)
 
-	single_token_map = map[rune]TokenType{
-		'.': TtkDot,
-		'(': TtkOpParen,
-		')': TtkClParen,
-		'|': TtkPipe,
-		'=': TtkEqualSign,
-	}
+	matcher = grlx.NewMatcher[TokenType]()
+
+	_ = matcher.AddToMatch(TtkDot, ".")
+	_ = matcher.AddToMatch(TtkOpParen, "(")
+	_ = matcher.AddToMatch(TtkClParen, ")")
+	_ = matcher.AddToMatch(TtkPipe, "|")
+	_ = matcher.AddToMatch(TtkEqualSign, "=")
 }
 
 var (
@@ -40,6 +40,47 @@ var (
 func init() {
 	f := func(lexer *grlx.Lexer[TokenType]) (*gr.Token[TokenType], error) {
 		// luc.Assert(len(l.input_stream) > 0, "l.input_stream is empty")
+
+		match, err := matcher.Match(lexer)
+		if err != nil {
+			return nil, err
+		}
+
+		if match.IsValidMatch() {
+			symbol, data := match.GetMatch()
+
+			return gr.NewToken(symbol, data, lexer.Pos(), nil), nil
+		}
+
+		c, _, err := lexer.ReadRune()
+		if err != nil {
+			return nil, err
+		}
+
+		// lowercase ([_] lowercase)* -> lowercase id
+		// lowercase ([_] lowercase)* digit -> lowercase id
+		// lowercase :
+		// 	[a-z]
+		// 	| [a-z] lowercase
+		// 	;
+		// digit :
+		// 	[0-9]
+		// 	| [0-9] digit
+		// 	;
+		// [A-Z] lowercase? ([A-Z] lowercase?)* -> uppercase id
+		// [A-Z] lowercase? ([A-Z] lowercase?)* digit -> uppercase id
+		// digit :
+		// 	[0-9]
+		// 	| [0-9] digit
+		// 	;
+		// newline :
+		// 	[\r]?[\n]
+		// 	| [\r]?[\n] newline
+		// 	;
+		// whitespace :
+		// 	[ \t]
+		// 	| [ \t] whitespace
+		// 	;
 
 		c, err := lexer.Peek()
 		if err != nil {

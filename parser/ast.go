@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	pkg "github.com/PlayerR9/SLParser/parser/pkg"
-	ulx "github.com/PlayerR9/SLParser/util/lexer"
 	ast "github.com/PlayerR9/grammar/ast"
 	gr "github.com/PlayerR9/grammar/grammar"
+	ulx "github.com/PlayerR9/grammar/lexer"
 	uprx "github.com/PlayerR9/grammar/parser"
 
 	gcers "github.com/PlayerR9/go-commons/errors"

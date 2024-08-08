@@ -7,9 +7,9 @@ import (
 	"unicode/utf8"
 
 	prx "github.com/PlayerR9/SLParser/parser"
+	gcslc "github.com/PlayerR9/go-commons/slices"
 	ast "github.com/PlayerR9/grammar/ast"
 	uast "github.com/PlayerR9/grammar/make"
-	lus "github.com/PlayerR9/lib_units/slices"
 
 	gcch "github.com/PlayerR9/go-commons/runes"
 )
@@ -90,7 +90,7 @@ func ToEnum(str string, t_type EnumType) (string, error) {
 			chars[idx+1] = unicode.ToUpper(chars[idx+1])
 		}
 
-		chars = lus.SliceFilter(chars, func(r rune) bool {
+		chars = gcslc.SliceFilter(chars, func(r rune) bool {
 			return r != '_'
 		})
 
@@ -127,7 +127,7 @@ func (d *ExtractEnumsData) AddLexerEnum(enum string) error {
 		return err
 	}
 
-	d.lexer_enums = lus.TryInsert(d.lexer_enums, new_enum)
+	d.lexer_enums = gcslc.TryInsert(d.lexer_enums, new_enum)
 
 	return nil
 }
@@ -138,7 +138,7 @@ func (d *ExtractEnumsData) AddParserEnum(enum string) error {
 		return err
 	}
 
-	d.parser_enums = lus.TryInsert(d.parser_enums, new_enum)
+	d.parser_enums = gcslc.TryInsert(d.parser_enums, new_enum)
 
 	return nil
 }
@@ -149,7 +149,7 @@ func (d *ExtractEnumsData) AddSpecialEnum(enum string) error {
 		return err
 	}
 
-	d.special_enums = lus.TryInsert(d.special_enums, new_enum)
+	d.special_enums = gcslc.TryInsert(d.special_enums, new_enum)
 
 	return nil
 }

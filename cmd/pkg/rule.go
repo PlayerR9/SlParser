@@ -3,8 +3,9 @@ package pkg
 import (
 	"strings"
 
-	luc "github.com/PlayerR9/lib_units/common"
 	"golang.org/x/exp/slices"
+
+	itrs "github.com/PlayerR9/iterators/simple"
 )
 
 // Rule is a rule of the grammar.
@@ -34,8 +35,8 @@ func (r *Rule) String() string {
 // Iterator implements the common.Iterater interface.
 //
 // Never returns nil.
-func (r *Rule) Iterator() luc.Iterater[string] {
-	return luc.NewSimpleIterator(r.rhss)
+func (r *Rule) Iterator() itrs.Iterater[string] {
+	return itrs.NewSimpleIterator(r.rhss)
 }
 
 // NewRule is a constructor for a Rule.

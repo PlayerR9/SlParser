@@ -3,7 +3,7 @@ package pkg
 import (
 	"strings"
 
-	lus "github.com/PlayerR9/lib_units/slices"
+	gcslc "github.com/PlayerR9/go-commons/slices"
 )
 
 type DecisionTable struct {
@@ -43,7 +43,7 @@ func (dt *DecisionTable) make_symbols() {
 		all_symbols = append(all_symbols, symbols...)
 	}
 
-	dt.symbols = lus.OrderedUniquefy(all_symbols)
+	dt.symbols = gcslc.OrderedUniquefy(all_symbols)
 }
 
 // make_items_per_symbol makes the items of the grammar per symbol.

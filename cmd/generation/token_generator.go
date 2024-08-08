@@ -1,7 +1,7 @@
 package generation
 
 import (
-	ggen "github.com/PlayerR9/lib_units/generator"
+	ggen "github.com/PlayerR9/go-generator/generator"
 )
 
 type TokenGen struct {
