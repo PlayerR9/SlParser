@@ -12,15 +12,6 @@ import (
 	gcers "github.com/PlayerR9/go-commons/errors"
 )
 
-var (
-	// parser is the parser of the parser.
-	parser *pkg.Parser
-)
-
-func init() {
-	parser = pkg.NewParser()
-}
-
 // Parse parses the given data and returns the AST tree.
 //
 // Parameters:
@@ -43,7 +34,7 @@ func Parse(data []byte) (*ast.Node[NodeType], error) {
 		return nil, fmt.Errorf("error while lexing: %w", err)
 	}
 
-	forest, err := uprx.FullParse(parser, tokens)
+	forest, err := uprx.FullParse(pkg.Parser, tokens)
 	if err != nil {
 		for _, tree := range forest {
 			fmt.Println(tree.String())
