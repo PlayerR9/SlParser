@@ -108,8 +108,10 @@ func GenerateParser(root *ast.Node[prx.NodeType]) (string, error) {
 		return "", err
 	}
 
+	dt := pkg.NewDecisionTable(rules)
+
 	g := &gen.ParserGen{
-		Rules: pkg.StringifyRules(rules),
+		Table: dt,
 	}
 
 	res, err := gen.ParserGenerator.Generate(gen.OutputLocFlag, "test.go", g)

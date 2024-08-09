@@ -2,11 +2,14 @@ package generation
 
 import (
 	ggen "github.com/PlayerR9/go-generator/generator"
+
+	pkg "github.com/PlayerR9/SLParser/cmd/pkg"
 )
 
 type ParserGen struct {
 	PackageName string
-	Rules       map[string][]string
+	Table       *pkg.DecisionTable
+	Rules       map[string][2][]string
 }
 
 func (g *ParserGen) SetPackageName(pkg_name string) {
@@ -22,6 +25,56 @@ func init() {
 	if err != nil {
 		Logger.Fatalf("Error creating code generator: %s", err.Error())
 	}
+
+	tmp.AddDoFunc(func(g *ParserGen) error {
+		table := g.Table.GetTable()
+
+		g.Rules = make(map[string][2][]string)
+
+		for symbol, items := range table {
+			values := make([]string, 0, len(items))
+
+			for _, item := range items {
+				values = append(values, item.String())
+			}
+
+			g.Rules[symbol] = [2][]string{values, {}}
+		}
+
+		return nil
+	})
+
+	tmp.AddDoFunc(func(g *ParserGen) error {
+		for key, items := range g.Table.GetTable() {
+			if len(items) == 1 {
+				x := g.Rules[key]
+
+				x[1] = []string{items[0].GetItemTempl("parser", "token_type")}
+
+				g.Rules[key] = x
+			} else if len(items) > 1 {
+				found := true
+
+				for i := 0; i < len(items) && found; i++ {
+					if items[i].Action != pkg.Shift {
+						found = false
+					}
+				}
+
+				x := g.Rules[key]
+
+				if !found {
+					x[1] = []string{"panic(\"not implemented\")"}
+				} else {
+					x[1] = []string{items[0].GetItemTempl("parser", "token_type")}
+				}
+
+				g.Rules[key] = x
+			}
+		}
+
+		return nil
+	})
 
 	ParserGenerator = tmp
 }
@@ -51,11 +104,13 @@ func init() {
 		var act parser.Actioner
 
 		switch top1.Type {
-		{{- range $key, $values := .Rules }}{{- if ne $key "NtkSource" }}
+		{{- range $key, $values := .Rules }}{{- if ne $key "ntk_Source" }}
 		case {{ $key }}:
-			{{- range $index, $element := $values }}
+			{{- range $index, $element := ( index $values 0 ) }}
 			// {{ $element }}
 			{{- end }}
+
+			{{ index $values 1 0 }}
 		{{- end }}
 		{{- end }}
 		default:

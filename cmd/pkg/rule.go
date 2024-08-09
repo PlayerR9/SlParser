@@ -121,3 +121,26 @@ func (r *Rule) GetSymbols() []string {
 
 	return symbols
 }
+
+// GetRuleTempl returns the template of the rule.
+//
+// Parameters:
+//   - pkg_name: The name of the package.
+//   - tt_name: The name of the token type.
+//
+// Returns:
+//   - string: The template of the rule.
+func (r *Rule) GetRuleTempl(pkg_name, tt_name string) string {
+	var builder strings.Builder
+
+	builder.WriteString(pkg_name)
+	builder.WriteString(".NewRule(")
+	builder.WriteString(r.lhs)
+	builder.WriteString(", []")
+	builder.WriteString(tt_name)
+	builder.WriteString("{")
+	builder.WriteString(strings.Join(r.rhss, ", "))
+	builder.WriteString("})")
+
+	return builder.String()
+}

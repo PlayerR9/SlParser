@@ -15,8 +15,8 @@ type Item struct {
 	// pos is the position of the item in the rule.
 	pos int
 
-	// action is the action of the item.
-	action ActionType
+	// Action is the action of the item.
+	Action ActionType
 }
 
 // String implements the fmt.Stringer interface.
@@ -37,7 +37,7 @@ func (item *Item) String() string {
 		}
 	}
 
-	values = append(values, "->", item.rule.GetLhs(), ":", item.action.String(), ".")
+	values = append(values, "->", item.rule.GetLhs(), ":", item.Action.String(), ".")
 
 	return strings.Join(values, " ")
 }
@@ -68,6 +68,39 @@ func NewItem(rule *Rule, pos int, action ActionType) (*Item, error) {
 	return &Item{
 		rule:   rule,
 		pos:    pos,
-		action: action,
+		Action: action,
 	}, nil
+}
+
+// GetItemTempl returns the template of the item.
+//
+// Parameters:
+//   - pkg_name: The name of the package.
+//   - tt_name: The name of the token type.
+//
+// Returns:
+//   - string: The template of the item.
+func (item *Item) GetItemTempl(pkg_name, tt_name string) string {
+	var builder strings.Builder
+
+	switch item.Action {
+	case Shift:
+		builder.WriteString("act = ")
+		builder.WriteString(pkg_name)
+		builder.WriteString(".NewShiftAction()")
+	case Reduce:
+		builder.WriteString("act, _ = ")
+		builder.WriteString(pkg_name)
+		builder.WriteString(".NewReduceAction(")
+		builder.WriteString(item.rule.GetRuleTempl(pkg_name, tt_name))
+		builder.WriteRune(')')
+	case Accept:
+		builder.WriteString("act, _ = ")
+		builder.WriteString(pkg_name)
+		builder.WriteString(".NewAcceptAction(")
+		builder.WriteString(item.rule.GetRuleTempl(pkg_name, tt_name))
+		builder.WriteRune(')')
+	}
+
+	return builder.String()
 }

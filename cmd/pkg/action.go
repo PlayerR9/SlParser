@@ -29,7 +29,7 @@ func DetermineAction(pos int, symbol string) ActionType {
 		return Shift
 	}
 
-	if symbol == "EtkEOF" {
+	if symbol == "etk_EOF" {
 		return Accept
 	} else {
 		return Reduce
