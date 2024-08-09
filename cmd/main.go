@@ -10,17 +10,17 @@ import (
 )
 
 func main() {
-	source, err := gen.ParseFlags()
+	fs, err := gen.ParseFlags()
 	if err != nil {
 		gen.Logger.Fatalf("Error parsing flags: %s", err.Error())
 	}
 
-	data, err := os.ReadFile(source)
+	data, err := os.ReadFile(fs.Input)
 	if err != nil {
 		gen.Logger.Fatalf("Error reading file: %s", err.Error())
 	}
 
-	root, err := prx.Parse(data)
+	root, err := prx.Parse(data, fs.Enable.Get())
 	if err != nil {
 		gen.Logger.Fatalf("Error parsing file: %s", err.Error())
 	}
@@ -50,6 +50,15 @@ func main() {
 	} else {
 		gen.Logger.Printf("Successfully generated parser: %q", dest)
 	}
+
+	dest, err = GenerateAST()
+	if err != nil {
+		gen.Logger.Fatalf("While generating ast: %s", err.Error())
+	} else {
+		gen.Logger.Printf("Successfully generated ast: %q", dest)
+	}
+
+	gen.Logger.Printf("Done!")
 }
 
 func GenerateTokens(root *ast.Node[prx.NodeType]) (string, error) {
@@ -69,7 +78,7 @@ func GenerateTokens(root *ast.Node[prx.NodeType]) (string, error) {
 		return "", err
 	}
 
-	dest, err := res.WriteFile("_tokens")
+	dest, err := res.WriteFile("_tokens", "")
 	if err != nil {
 		return "", err
 	}
@@ -85,7 +94,7 @@ func GenerateLexer() (string, error) {
 		return "", err
 	}
 
-	dest, err := res.WriteFile("_lexer")
+	dest, err := res.WriteFile("_lexer", "")
 	if err != nil {
 		return "", err
 	}
@@ -108,7 +117,23 @@ func GenerateParser(root *ast.Node[prx.NodeType]) (string, error) {
 		return "", err
 	}
 
-	dest, err := res.WriteFile("_parser")
+	dest, err := res.WriteFile("_parser", "")
+	if err != nil {
+		return "", err
+	}
+
+	return dest, nil
+}
+
+func GenerateAST() (string, error) {
+	g := &gen.ASTGen{}
+
+	res, err := gen.ASTGenerator.Generate(gen.OutputLocFlag, "test.go", g)
+	if err != nil {
+		return "", err
+	}
+
+	dest, err := res.WriteFile("_ast", "")
 	if err != nil {
 		return "", err
 	}

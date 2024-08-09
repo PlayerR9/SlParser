@@ -13,7 +13,7 @@ import (
 // Returns:
 //   - *ast.Node[prx.NodeType]: The root node of the AST tree.
 func ParseEbnf(data []byte) (*ast.Node[prx.NodeType], error) {
-	root, err := prx.Parse(data)
+	root, err := prx.Parse(data, prx.ShowNone)
 	if err != nil {
 		return root, err
 	}

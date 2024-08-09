@@ -32,32 +32,32 @@ package {{ .PackageName }}
 import (
 	"fmt"
 
-	grpx "github.com/PlayerR9/grammar/parser"
+	"github.com/PlayerR9/grammar/grammar"
+	"github.com/PlayerR9/grammar/parser"
 )
 
 var (
-	// Parser is the parser of the grammar.
-	Parser *Parser[TokenType]
+	// internal_parser is the parser of the grammar.
+	internal_parser *parser.Parser[token_type]
 )
 
 func init() {
-	decision_func := func(lookahead *gr.Token[TokenType]) (grpx.Actioner, error) {
-		defer p.Refuse()
-
+	decision_func := func(p *parser.Parser[token_type], lookahead *grammar.Token[token_type]) (parser.Actioner, error) {
 		top1, ok := p.Pop()
 		if !ok {
 			return nil, fmt.Errorf("p.stack is empty")
 		}
 
-		var act grpx.Actioner
+		var act parser.Actioner
 
 		switch top1.Type {
-		{{- range $key, $values := .Rules }}
+		{{- range $key, $values := .Rules }}{{- if ne $key "NtkSource" }}
 		case {{ $key }}:
 			{{- range $index, $element := $values }}
 			// {{ $element }}
 			{{- end }}
-		{{- end}}
+		{{- end }}
+		{{- end }}
 		default:
 			return nil, fmt.Errorf("unexpected token: %s", top1.String())
 		}
@@ -65,6 +65,5 @@ func init() {
 		return act, nil
 	}
 
-	Parser = NewParser[TokenType](decision_func)
-}
-`
+	internal_parser = parser.NewParser(decision_func)
+}`

@@ -66,7 +66,7 @@ func ToEnum(str string, t_type EnumType) (string, error) {
 	case SpecialEnum:
 		var builder strings.Builder
 
-		builder.WriteString("Etk")
+		builder.WriteString("etk_")
 		builder.WriteString(str)
 
 		return builder.String(), nil
@@ -96,7 +96,7 @@ func ToEnum(str string, t_type EnumType) (string, error) {
 
 		var builder strings.Builder
 
-		builder.WriteString("Ttk")
+		builder.WriteString("ttk_")
 
 		for _, c := range chars {
 			builder.WriteRune(c)
@@ -106,7 +106,7 @@ func ToEnum(str string, t_type EnumType) (string, error) {
 	case ParserEnum:
 		var builder strings.Builder
 
-		builder.WriteString("Ntk")
+		builder.WriteString("ntk_")
 		builder.WriteString(str)
 
 		return builder.String(), nil

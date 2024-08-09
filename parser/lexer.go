@@ -1,4 +1,4 @@
-package pkg
+package parser
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	matcher *grlx.Matcher[TokenType]
+	matcher *grlx.Matcher[token_type]
 
 	lex_whitespace grlx.LexFunc
 	lex_digit      grlx.LexFunc
@@ -22,13 +22,13 @@ var (
 )
 
 func init() {
-	matcher = grlx.NewMatcher[TokenType]()
+	matcher = grlx.NewMatcher[token_type]()
 
-	_ = matcher.AddToMatch(TtkDot, ".")
-	_ = matcher.AddToMatch(TtkOpParen, "(")
-	_ = matcher.AddToMatch(TtkClParen, ")")
-	_ = matcher.AddToMatch(TtkPipe, "|")
-	_ = matcher.AddToMatch(TtkEqualSign, "=")
+	_ = matcher.AddToMatch(ttk_Dot, ".")
+	_ = matcher.AddToMatch(ttk_OpParen, "(")
+	_ = matcher.AddToMatch(ttk_ClParen, ")")
+	_ = matcher.AddToMatch(ttk_Pipe, "|")
+	_ = matcher.AddToMatch(ttk_EqualSign, "=")
 
 	lex_whitespace = func(scanner io.RuneScanner) ([]rune, error) {
 		// [ \t]+
@@ -163,11 +163,11 @@ func init() {
 }
 
 var (
-	// Lexer is the lexer of the grammar.
-	Lexer *grlx.Lexer[TokenType]
+	// internal_lexer is the lexer of the grammar.
+	internal_lexer *grlx.Lexer[token_type]
 )
 
-func match_rules(lexer *grlx.Lexer[TokenType]) (*gr.Token[TokenType], error) {
+func match_rules(lexer *grlx.Lexer[token_type]) (*gr.Token[token_type], error) {
 	at := lexer.Pos()
 
 	chars, err := grlx.RightLex(lexer, lex_whitespace)
@@ -185,7 +185,7 @@ func match_rules(lexer *grlx.Lexer[TokenType]) (*gr.Token[TokenType], error) {
 	}
 
 	if len(chars) != 0 {
-		return gr.NewToken(TtkNewline, "\n", at, nil), nil
+		return gr.NewToken(ttk_Newline, "\n", at, nil), nil
 	}
 
 	chars, err = grlx.RightLex(lexer, frag_uppercases)
@@ -203,7 +203,7 @@ func match_rules(lexer *grlx.Lexer[TokenType]) (*gr.Token[TokenType], error) {
 
 		chars = append(chars, digit...)
 
-		return gr.NewToken(TtkUppercaseID, string(chars), at, nil), nil
+		return gr.NewToken(ttk_UppercaseID, string(chars), at, nil), nil
 	}
 
 	chars, err = grlx.RightLex(lexer, frag_lowercases)
@@ -221,24 +221,17 @@ func match_rules(lexer *grlx.Lexer[TokenType]) (*gr.Token[TokenType], error) {
 
 		chars = append(chars, digit...)
 
-		return gr.NewToken(TtkLowercaseID, string(chars), at, nil), nil
+		return gr.NewToken(ttk_LowercaseID, string(chars), at, nil), nil
 	}
 
 	return nil, fmt.Errorf("no match found at %d", at)
 }
 
 func init() {
-	f := func(lexer *grlx.Lexer[TokenType]) (*gr.Token[TokenType], error) {
-		// luc.Assert(len(l.input_stream) > 0, "l.input_stream is empty")
-
-		// Remove this once grammar is updated.
-		if lexer.IsExhausted() {
-			return nil, io.EOF
-		}
-
+	f := func(lexer *grlx.Lexer[token_type]) (*gr.Token[token_type], error) {
 		at := lexer.Pos()
 
-		match, err0 := matcher.Match(lexer)
+		match, _ := matcher.Match(lexer)
 
 		if match.IsValidMatch() {
 			symbol, data := match.GetMatch()
@@ -248,13 +241,11 @@ func init() {
 
 		tk, err := match_rules(lexer)
 		if err != nil {
-			fmt.Println(err0.Error())
-
 			return nil, err
 		}
 
 		return tk, nil
 	}
 
-	Lexer = grlx.NewLexer(f)
+	internal_lexer = grlx.NewLexer(f)
 }
