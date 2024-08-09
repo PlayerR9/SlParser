@@ -56,6 +56,8 @@ var (
 func init() {
 	ast_builder = ast.NewMake[*Node, token_type]()
 
+	// Add here your custom AST builder rules...
+
 	// Initialize the parts builder. (if needed)
 	// parts := ast.NewPartsBuilder[*Node]()
 
