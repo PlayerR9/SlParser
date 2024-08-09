@@ -6,9 +6,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	prx "github.com/PlayerR9/SLParser/parser"
+	ebnf "github.com/PlayerR9/EbnfParser/pkg"
 	gcslc "github.com/PlayerR9/go-commons/slices"
-	ast "github.com/PlayerR9/grammar/ast"
 	uast "github.com/PlayerR9/grammar/make"
 
 	gcch "github.com/PlayerR9/go-commons/runes"
@@ -31,7 +30,7 @@ const (
 //
 // Returns:
 //   - EnumType: The type of enum.
-func GetEnumType(root *ast.Node[prx.NodeType]) EnumType {
+func GetEnumType(root *ebnf.Node) EnumType {
 	if root == nil || root.Data == "" {
 		return NotEnum
 	}
@@ -167,11 +166,11 @@ func (d *ExtractEnumsData) GetSpecialEnums() []string {
 }
 
 var (
-	ExtractEnums *uast.SimpleDFS[*ast.Node[prx.NodeType], *ExtractEnumsData]
+	ExtractEnums *uast.SimpleDFS[*ebnf.Node, *ExtractEnumsData]
 )
 
 func init() {
-	ee_do := func(node *ast.Node[prx.NodeType], data *ExtractEnumsData) error {
+	ee_do := func(node *ebnf.Node, data *ExtractEnumsData) error {
 		e_type := GetEnumType(node)
 
 		switch e_type {
@@ -206,11 +205,11 @@ func init() {
 }
 
 var (
-	RenameNodes *uast.SimpleDFS[*ast.Node[prx.NodeType], any]
+	RenameNodes *uast.SimpleDFS[*ebnf.Node, any]
 )
 
 func init() {
-	f := func(node *ast.Node[prx.NodeType], data any) error {
+	f := func(node *ebnf.Node, data any) error {
 		e_type := GetEnumType(node)
 
 		switch e_type {

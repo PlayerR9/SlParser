@@ -3,11 +3,10 @@ package pkg
 import (
 	"fmt"
 
-	prx "github.com/PlayerR9/SLParser/parser"
-	ast "github.com/PlayerR9/grammar/ast"
+	ebnf "github.com/PlayerR9/EbnfParser/pkg"
 )
 
-func node_to_rule(root *ast.Node[prx.NodeType]) *Rule {
+func node_to_rule(root *ebnf.Node) *Rule {
 	lhs := root.Data
 
 	var rhss []string
@@ -19,18 +18,18 @@ func node_to_rule(root *ast.Node[prx.NodeType]) *Rule {
 	return NewRule(lhs, rhss, false)
 }
 
-func ExtractRules(root *ast.Node[prx.NodeType]) ([]*Rule, error) {
+func ExtractRules(root *ebnf.Node) ([]*Rule, error) {
 	if root == nil {
-		return nil, fmt.Errorf("expected %q, got nothing instead", prx.SourceNode.String())
-	} else if root.Type != prx.SourceNode {
-		return nil, fmt.Errorf("expected %q, got %q instead", prx.SourceNode.String(), root.Type.String())
+		return nil, fmt.Errorf("expected %q, got nothing instead", ebnf.SourceNode.String())
+	} else if root.Type != ebnf.SourceNode {
+		return nil, fmt.Errorf("expected %q, got %q instead", ebnf.SourceNode.String(), root.Type.String())
 	}
 
-	var sub_roots []*ast.Node[prx.NodeType]
+	var sub_roots []*ebnf.Node
 
 	for c := root.FirstChild; c != nil; c = c.NextSibling {
-		if c.Type != prx.RuleNode {
-			return nil, fmt.Errorf("expected %q, got %q instead", prx.RuleNode, c.Type)
+		if c.Type != ebnf.RuleNode {
+			return nil, fmt.Errorf("expected %q, got %q instead", ebnf.RuleNode, c.Type)
 		}
 
 		sub_roots = append(sub_roots, c)

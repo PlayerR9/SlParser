@@ -2,11 +2,13 @@ package main
 
 import (
 	"os"
+	"os/exec"
+	"path/filepath"
 
 	gen "github.com/PlayerR9/SLParser/cmd/generation"
 	pkg "github.com/PlayerR9/SLParser/cmd/pkg"
-	prx "github.com/PlayerR9/SLParser/parser"
-	ast "github.com/PlayerR9/grammar/ast"
+
+	ebnf "github.com/PlayerR9/EbnfParser/pkg"
 )
 
 func main() {
@@ -20,7 +22,9 @@ func main() {
 		gen.Logger.Fatalf("Error reading file: %s", err.Error())
 	}
 
-	root, err := prx.Parse(data, fs.Enable.Get())
+	ebnf.Parser.SetDebug(fs.Enable.Get())
+
+	root, err := ebnf.Parser.Parse(data)
 	if err != nil {
 		gen.Logger.Fatalf("Error parsing file: %s", err.Error())
 	}
@@ -58,10 +62,26 @@ func main() {
 		gen.Logger.Printf("Successfully generated ast: %q", dest)
 	}
 
+	dest, err = GenerateGrammar()
+	if err != nil {
+		gen.Logger.Fatalf("While generating grammar: %s", err.Error())
+	} else {
+		gen.Logger.Printf("Successfully generated grammar: %q", dest)
+	}
+
+	dir, _ := filepath.Split(dest)
+
+	cmd := exec.Command("go", "run", "github.com/PlayerR9/grammar/cmd", "-name=Node", "-type=NodeType", "-o="+filepath.Join(dir, "node.go"))
+
+	err = cmd.Run()
+	if err != nil {
+		gen.Logger.Fatalf("While generating node: %s", err.Error())
+	}
+
 	gen.Logger.Printf("Done!")
 }
 
-func GenerateTokens(root *ast.Node[prx.NodeType]) (string, error) {
+func GenerateTokens(root *ebnf.Node) (string, error) {
 	ee_data, err := pkg.ExtractEnums.Apply(root)
 	if err != nil {
 		return "", err
@@ -78,12 +98,14 @@ func GenerateTokens(root *ast.Node[prx.NodeType]) (string, error) {
 		return "", err
 	}
 
-	dest, err := res.WriteFile("_tokens", "")
+	res.DestLoc = ModifyPrefixPath(res.DestLoc, "cmp_token_")
+
+	err = res.WriteFile()
 	if err != nil {
 		return "", err
 	}
 
-	return dest, nil
+	return res.DestLoc, nil
 }
 
 func GenerateLexer() (string, error) {
@@ -94,15 +116,17 @@ func GenerateLexer() (string, error) {
 		return "", err
 	}
 
-	dest, err := res.WriteFile("_lexer", "")
+	res.DestLoc = ModifyPrefixPath(res.DestLoc, "cmp_lexer_")
+
+	err = res.WriteFile()
 	if err != nil {
 		return "", err
 	}
 
-	return dest, nil
+	return res.DestLoc, nil
 }
 
-func GenerateParser(root *ast.Node[prx.NodeType]) (string, error) {
+func GenerateParser(root *ebnf.Node) (string, error) {
 	rules, err := pkg.ExtractRules(root)
 	if err != nil {
 		return "", err
@@ -119,12 +143,14 @@ func GenerateParser(root *ast.Node[prx.NodeType]) (string, error) {
 		return "", err
 	}
 
-	dest, err := res.WriteFile("_parser", "")
+	res.DestLoc = ModifyPrefixPath(res.DestLoc, "cmp_parser_")
+
+	err = res.WriteFile()
 	if err != nil {
 		return "", err
 	}
 
-	return dest, nil
+	return res.DestLoc, nil
 }
 
 func GenerateAST() (string, error) {
@@ -135,10 +161,53 @@ func GenerateAST() (string, error) {
 		return "", err
 	}
 
-	dest, err := res.WriteFile("_ast", "")
+	res.DestLoc = ModifyPrefixPath(res.DestLoc, "cmp_ast_")
+
+	err = res.WriteFile()
 	if err != nil {
 		return "", err
 	}
 
-	return dest, nil
+	return res.DestLoc, nil
+}
+
+func GenerateGrammar() (string, error) {
+	g := &gen.GrammarGen{}
+
+	res, err := gen.GrammarGenerator.Generate(gen.OutputLocFlag, "test.go", g)
+	if err != nil {
+		return "", err
+	}
+
+	res.DestLoc = ModifyPrefixPath(res.DestLoc, "grammar_")
+
+	err = res.WriteFile()
+	if err != nil {
+		return "", err
+	}
+
+	return res.DestLoc, nil
+}
+
+// ModifyPrefixPath modifies the path of the generated code.
+//
+// Parameters:
+//   - dest_loc: The destination location of the generated code.
+//   - prefix: The prefix to add to the file name. If empty, no prefix is added.
+//   - sub_directories: The sub directories to create the file in.
+//
+// The prefix is useful for when generating multiple files as it adds a prefix without
+// changing the extension.
+func ModifyPrefixPath(dest_loc string, prefix string, sub_directories ...string) string {
+	var loc string
+
+	dir, file := filepath.Split(dest_loc)
+
+	if len(sub_directories) > 0 {
+		loc = filepath.Join(dir, filepath.Join(sub_directories...), prefix+file)
+	} else {
+		loc = filepath.Join(dir, prefix+file)
+	}
+
+	return loc
 }

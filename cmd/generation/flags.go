@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	prx "github.com/PlayerR9/SLParser/parser"
 	ggen "github.com/PlayerR9/go-generator/generator"
+	gr "github.com/PlayerR9/grammar"
 )
 
 var (
@@ -89,23 +89,23 @@ func NewEnableVal(name string) *EnableVal {
 	return value
 }
 
-func (e *EnableVal) Get() prx.DebugSetting {
-	var sum prx.DebugSetting
+func (e *EnableVal) Get() gr.DebugSetting {
+	var sum gr.DebugSetting
 
 	if e.l {
-		sum |= prx.ShowLex
+		sum |= gr.ShowLex
 	}
 
 	if e.p {
-		sum |= prx.ShowTree
+		sum |= gr.ShowTree
 	}
 
 	if e.a {
-		sum |= prx.ShowAst
+		sum |= gr.ShowAst
 	}
 
 	if e.d {
-		sum |= prx.ShowData
+		sum |= gr.ShowData
 	}
 
 	return sum

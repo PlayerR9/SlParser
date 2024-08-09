@@ -49,7 +49,7 @@ func init() {
 			if len(items) == 1 {
 				x := g.Rules[key]
 
-				x[1] = []string{items[0].GetItemTempl("parser", "token_type")}
+				x[1] = []string{items[0].GetItemTempl("parsing", "token_type")}
 
 				g.Rules[key] = x
 			} else if len(items) > 1 {
@@ -66,7 +66,7 @@ func init() {
 				if !found {
 					x[1] = []string{"panic(\"not implemented\")"}
 				} else {
-					x[1] = []string{items[0].GetItemTempl("parser", "token_type")}
+					x[1] = []string{items[0].GetItemTempl("parsing", "token_type")}
 				}
 
 				g.Rules[key] = x
@@ -86,22 +86,22 @@ import (
 	"fmt"
 
 	"github.com/PlayerR9/grammar/grammar"
-	"github.com/PlayerR9/grammar/parser"
+	"github.com/PlayerR9/grammar/parsing"
 )
 
 var (
 	// internal_parser is the parser of the grammar.
-	internal_parser *parser.Parser[token_type]
+	internal_parser *parsing.Parser[token_type]
 )
 
 func init() {
-	decision_func := func(p *parser.Parser[token_type], lookahead *grammar.Token[token_type]) (parser.Actioner, error) {
+	decision_func := func(p *parsing.Parser[token_type], lookahead *grammar.Token[token_type]) (parsing.Actioner, error) {
 		top1, ok := p.Pop()
 		if !ok {
 			return nil, fmt.Errorf("p.stack is empty")
 		}
 
-		var act parser.Actioner
+		var act parsing.Actioner
 
 		switch top1.Type {
 		{{- range $key, $values := .Rules }}{{- if ne $key "ntk_Source" }}
@@ -120,5 +120,5 @@ func init() {
 		return act, nil
 	}
 
-	internal_parser = parser.NewParser(decision_func)
+	internal_parser = parsing.NewParser(decision_func)
 }`
