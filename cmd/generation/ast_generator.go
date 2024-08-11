@@ -1,15 +1,18 @@
 package generation
 
 import (
+	"slices"
+
 	"github.com/PlayerR9/SLParser/cmd/pkg"
+	uslc "github.com/PlayerR9/SLParser/util/slices"
 	ggen "github.com/PlayerR9/go-generator/generator"
 )
 
 type ASTGen struct {
 	PackageName string
 	Table       map[string][]*pkg.Rule
-	RuleTable   map[string][]string
-	RuleSizes   map[string][]int
+	Entries     []string
+	NodeTypes   []string
 }
 
 func (g *ASTGen) SetPackageName(pkg_name string) {
@@ -27,40 +30,32 @@ func init() {
 	}
 
 	f1 := func(a *ASTGen) error {
-		rule_table := make(map[string][]string)
+		a.NodeTypes = []string{"SourceNode"}
+
+		entries := make([]string, 0, len(a.Table))
 
 		for lhs, rules := range a.Table {
-			rule_table[lhs] = make([]string, 0, len(rules))
+			aeg := NewAstElemGen(lhs, rules)
+			if aeg == nil {
+				continue
+			}
 
-			for _, rule := range rules {
-				rule_table[lhs] = append(rule_table[lhs], rule.StringOriginal())
+			entries = append(entries, aeg.String())
+
+			pos, ok := slices.BinarySearch(a.NodeTypes, aeg.Target)
+			if !ok {
+				a.NodeTypes = slices.Insert(a.NodeTypes, pos, aeg.Target)
 			}
 		}
 
-		a.RuleTable = rule_table
+		a.Entries = entries
+
+		a.NodeTypes = uslc.DeleteElem(a.NodeTypes, "SourceNode")
 
 		return nil
 	}
 
 	tmp.AddDoFunc(f1)
-
-	f2 := func(a *ASTGen) error {
-		rule_sizes := make(map[string][]int)
-
-		for lhs, rules := range a.Table {
-			rule_sizes[lhs] = make([]int, 0, len(rules))
-
-			for _, rule := range rules {
-				rule_sizes[lhs] = append(rule_sizes[lhs], rule.Size())
-			}
-		}
-
-		a.RuleSizes = rule_sizes
-
-		return nil
-	}
-
-	tmp.AddDoFunc(f2)
 
 	ASTGenerator = tmp
 }
@@ -70,15 +65,25 @@ package {{ .PackageName }}
 
 import (
 	"github.com/PlayerR9/grammar/ast"
+	gr "github.com/PlayerR9/grammar/grammar"
 )
 
 // NodeType represents the type of a node in the AST tree.
 type NodeType int
 
-const (
+{{ if eq (len .NodeTypes) 0 }}const (
 	SourceNode NodeType = iota
+
 	// Add here your custom node types.
-)
+){{ else }}const (
+	SourceNode NodeType = iota
+
+	{{ range $index, $node := .NodeTypes }}
+	{{ $node }}
+	{{ end }}
+
+	// Add here your custom node types.
+){{ end }}
 
 // String implements the NodeTyper interface.
 func (t NodeType) String() string {
@@ -99,101 +104,7 @@ func init() {
 	parts := ast.NewPartsBuilder[*Node]()
 
 	// Add here your custom AST builder rules...
-
-	{{ range $key, $rules := .Table }}
-		{{- range $index, $rule := $rules }}// {{ $rule }}{{ end }}
-
-		parts.Add(func(a *ast.Result[*Node], prev any) (any, error) {
-		root := prev.(*gr.Token[token_type])
-
-		children, err := ast.ExtractChildren(root)
-		if err != nil {
-			return nil, err
-		}
-
-		if len(children) != 22 {
-			return nil, fmt.Errorf("expected 22 children, got %d", len(children))
-		}
-
-		a.SetNode(NewNode(SetComprehension, "", children[0].At))
-
-		var sub_nodes []ast.Noder
-
-		// Extract desired sub-nodes...
-
-		a.AppendChildren(sub_nodes)
-
-		return nil, nil
-	})
-
-	ast_builder.AddEntry(ntk_SetComprehension, parts.Build())
-	parts.Reset()
+	{{- range $index, $entry := .Entries }}
+		{{ $entry }}
 	{{ end }}
-
-	
-
-	
-
-	// Initialize the parts builder. (if needed)
-	// parts := ast.NewPartsBuilder[*Node]()
-
-	// Here's an example of how to use the parts builder:
-	/*
-	parts.Reset() // Reset any previous parts.
-
-	// 1st part: Extract the necessary children from the current token.
-	// As an example, this part extracts the source code from the token according to the following rule:
-	// 	Source = Source1 EOF .
-
-	parts.Add(func(a *ast.Result[*Node], prev any) (any, error) {
-		root := prev.(*gr.Token[token_type])
-
-		a.SetNode(ast.NewNode(SourceNode, ""))
-
-		children, err := ast.ExtractChildren(root)
-		if err != nil {
-			return nil, err
-		}
-
-		if len(children) != 2 {
-			return nil, fmt.Errorf("expected 2 children, got %d children instead", len(children))
-		}
-
-		return children[0], nil
-	})
-
-	// sub_part is an helper function for the second part, that is, a function that applies the
-	// ast_builder on the first token. This is because the rule is:
-	// 	Source1 = Rule [ Source1 ] .
-	sub_part := func(children []*gr.Token[token_type]) ([]*Node, error) {
-		nodes, err := ast_builder.ApplyToken(children[0])
-		if err != nil {
-			return nodes, err
-		}
-
-		return nodes, nil
-	}
-
-	// 2nd part: Left-recursive grammar rule.
-	parts.Add(func(a *ast.Result[*Node], prev any) (any, error) {
-		child := prev.(*gr.Token[token_type])
-
-		sub_nodes, err := ast.LeftRecursive(child, ntk_Source1, sub_part)
-		a_nodes := make([]ast.Noder, 0, len(sub_nodes))
-
-		for _, node := range sub_nodes {
-			a_nodes = append(a_nodes, node)
-		}
-
-		a.AppendChildren(a_nodes)
-
-		if err != nil {
-			return nil, err
-		}
-
-		return nil, nil
-	})
-
-	ast_builder.AddEntry(ntk_Source, parts.Build()) // Add the grammar rule to the AST builder.
-	*/
 }`

@@ -1,11 +1,14 @@
 package generation
 
 import (
+	"github.com/PlayerR9/SLParser/cmd/pkg"
+	uslc "github.com/PlayerR9/SLParser/util/slices"
 	ggen "github.com/PlayerR9/go-generator/generator"
 )
 
 type TokenGen struct {
 	PackageName  string
+	Data         *pkg.ExtractEnumsData
 	SpecialEnums []string
 	LexerEnums   []string
 	ParserEnums  []string
@@ -25,6 +28,26 @@ func init() {
 		Logger.Fatalf("Error creating code generator: %s", err.Error())
 	}
 
+	tmp.AddDoFunc(func(a *TokenGen) error {
+		a.SpecialEnums = a.Data.GetSpecialEnums()
+
+		a.SpecialEnums = uslc.DeleteElem(a.SpecialEnums, "etk_EOF")
+
+		return nil
+	})
+
+	tmp.AddDoFunc(func(a *TokenGen) error {
+		a.LexerEnums = a.Data.GetLexerEnums()
+
+		return nil
+	})
+
+	tmp.AddDoFunc(func(a *TokenGen) error {
+		a.ParserEnums = a.Data.GetParserEnums()
+
+		return nil
+	})
+
 	TokenGenerator = tmp
 }
 
@@ -35,8 +58,9 @@ package {{ .PackageName }}
 type token_type int
 
 const (
+	etk_EOF token_type = iota
    {{- range $index, $element := .SpecialEnums }}
-	{{ if eq $index 0 }} {{- $element }} token_type = iota {{ else }} {{- $element }} {{ end }}
+	{{ $element }}
 	{{- end }}
 	{{ range $index, $element := .LexerEnums }}
 	{{ $element }}
@@ -57,6 +81,7 @@ func (t token_type) String() string {
 // GoString implements the Grammar.TokenTyper interface.
 func (t token_type) GoString() string {
 	return [...]string{
+		"etk_EOF",
 		{{- range $index, $element := .SpecialEnums }}
 		"{{ $element }}",
 		{{- end }}

@@ -86,15 +86,17 @@ func (pr *PageRange) String() string {
 //   - *PageRangeIterator: The iterator that iterates over the pages in the interval. Never returns nil.
 func (pr *PageRange) Iterator() *PageRangeIterator {
 	return &PageRangeIterator{
-		from: pr.First,
-		to:   pr.Second,
+		from:    pr.First,
+		to:      pr.Second,
+		current: pr.First,
 	}
 }
 
 func (pr *PageRange) ReverseIterator() *PageRangeReverseIterator {
 	return &PageRangeReverseIterator{
-		from: pr.Second,
-		to:   pr.First,
+		from:    pr.Second,
+		to:      pr.First,
+		current: pr.Second,
 	}
 }
 

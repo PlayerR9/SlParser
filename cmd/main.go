@@ -73,6 +73,13 @@ func main() {
 		gen.Logger.Printf("Successfully generated grammar: %q", dest)
 	}
 
+	dest, err = GenerateErrors()
+	if err != nil {
+		gen.Logger.Fatalf("While generating errors: %s", err.Error())
+	} else {
+		gen.Logger.Printf("Successfully generated errors: %q", dest)
+	}
+
 	dir, _ := filepath.Split(dest)
 
 	cmd := exec.Command("go", "run", "github.com/PlayerR9/grammar/cmd", "-name=Node", "-type=NodeType", "-o="+filepath.Join(dir, "node.go"))
@@ -92,9 +99,7 @@ func GenerateTokens(root *ebnf.Node) (string, error) {
 	}
 
 	g := &gen.TokenGen{
-		SpecialEnums: ee_data.GetSpecialEnums(),
-		LexerEnums:   ee_data.GetLexerEnums(),
-		ParserEnums:  ee_data.GetParserEnums(),
+		Data: ee_data,
 	}
 
 	res, err := gen.TokenGenerator.Generate(gen.OutputLocFlag, "test.go", g)
@@ -193,6 +198,24 @@ func GenerateGrammar() (string, error) {
 	}
 
 	res.DestLoc = ModifyPrefixPath(res.DestLoc, "grammar_")
+
+	err = res.WriteFile()
+	if err != nil {
+		return "", err
+	}
+
+	return res.DestLoc, nil
+}
+
+func GenerateErrors() (string, error) {
+	g := &gen.ErrorGen{}
+
+	res, err := gen.ErrorGenerator.Generate(gen.OutputLocFlag, "test.go", g)
+	if err != nil {
+		return "", err
+	}
+
+	res.DestLoc = ModifyPrefixPath(res.DestLoc, "cmp_error_")
 
 	err = res.WriteFile()
 	if err != nil {

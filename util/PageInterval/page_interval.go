@@ -504,12 +504,13 @@ func (it *PageIterator) Consume() (int, error) {
 			return value, nil
 		}
 
+		it.current++
+
 		if it.current >= len(it.intervals) {
 			return -1, io.EOF
 		}
 
 		it.sub_iter = it.intervals[it.current].Iterator()
-		it.current++
 	}
 }
 
