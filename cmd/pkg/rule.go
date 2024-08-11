@@ -144,3 +144,24 @@ func (r *Rule) GetRuleTempl(pkg_name, tt_name string) string {
 
 	return builder.String()
 }
+
+// StringOriginal returns the original string of the rule.
+//
+// Returns:
+//   - string: The original string of the rule.
+func (r *Rule) StringOriginal() string {
+	rhss := make([]string, 0, len(r.rhss))
+
+	for i := len(r.rhss) - 1; i >= 0; i-- {
+		rhss = append(rhss, r.rhss[i])
+	}
+
+	var builder strings.Builder
+
+	builder.WriteString(r.lhs)
+	builder.WriteString(" : ")
+	builder.WriteString(strings.Join(rhss, " "))
+	builder.WriteString(" .")
+
+	return builder.String()
+}

@@ -1,11 +1,15 @@
 package generation
 
 import (
+	"github.com/PlayerR9/SLParser/cmd/pkg"
 	ggen "github.com/PlayerR9/go-generator/generator"
 )
 
 type ASTGen struct {
 	PackageName string
+	Table       map[string][]*pkg.Rule
+	RuleTable   map[string][]string
+	RuleSizes   map[string][]int
 }
 
 func (g *ASTGen) SetPackageName(pkg_name string) {
@@ -21,6 +25,42 @@ func init() {
 	if err != nil {
 		Logger.Fatalf("Error creating code generator: %s", err.Error())
 	}
+
+	f1 := func(a *ASTGen) error {
+		rule_table := make(map[string][]string)
+
+		for lhs, rules := range a.Table {
+			rule_table[lhs] = make([]string, 0, len(rules))
+
+			for _, rule := range rules {
+				rule_table[lhs] = append(rule_table[lhs], rule.StringOriginal())
+			}
+		}
+
+		a.RuleTable = rule_table
+
+		return nil
+	}
+
+	tmp.AddDoFunc(f1)
+
+	f2 := func(a *ASTGen) error {
+		rule_sizes := make(map[string][]int)
+
+		for lhs, rules := range a.Table {
+			rule_sizes[lhs] = make([]int, 0, len(rules))
+
+			for _, rule := range rules {
+				rule_sizes[lhs] = append(rule_sizes[lhs], rule.Size())
+			}
+		}
+
+		a.RuleSizes = rule_sizes
+
+		return nil
+	}
+
+	tmp.AddDoFunc(f2)
 
 	ASTGenerator = tmp
 }
@@ -56,7 +96,43 @@ var (
 func init() {
 	ast_builder = ast.NewMake[*Node, token_type]()
 
+	parts := ast.NewPartsBuilder[*Node]()
+
 	// Add here your custom AST builder rules...
+
+	{{ range $key, $rules := .Table }}
+		{{- range $index, $rule := $rules }}// {{ $rule }}{{ end }}
+
+		parts.Add(func(a *ast.Result[*Node], prev any) (any, error) {
+		root := prev.(*gr.Token[token_type])
+
+		children, err := ast.ExtractChildren(root)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(children) != 22 {
+			return nil, fmt.Errorf("expected 22 children, got %d", len(children))
+		}
+
+		a.SetNode(NewNode(SetComprehension, "", children[0].At))
+
+		var sub_nodes []ast.Noder
+
+		// Extract desired sub-nodes...
+
+		a.AppendChildren(sub_nodes)
+
+		return nil, nil
+	})
+
+	ast_builder.AddEntry(ntk_SetComprehension, parts.Build())
+	parts.Reset()
+	{{ end }}
+
+	
+
+	
 
 	// Initialize the parts builder. (if needed)
 	// parts := ast.NewPartsBuilder[*Node]()

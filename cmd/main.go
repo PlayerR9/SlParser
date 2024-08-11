@@ -47,14 +47,19 @@ func main() {
 		gen.Logger.Printf("Successfully generated lexer: %q", dest)
 	}
 
-	dest, err = GenerateParser(root)
+	rules, err := pkg.ExtractRules(root)
+	if err != nil {
+		gen.Logger.Fatalf("While extracting rules: %s", err.Error())
+	}
+
+	dest, err = GenerateParser(rules)
 	if err != nil {
 		gen.Logger.Fatalf("While generating parser: %s", err.Error())
 	} else {
 		gen.Logger.Printf("Successfully generated parser: %q", dest)
 	}
 
-	dest, err = GenerateAST()
+	dest, err = GenerateAST(rules)
 	if err != nil {
 		gen.Logger.Fatalf("While generating ast: %s", err.Error())
 	} else {
@@ -125,12 +130,7 @@ func GenerateLexer() (string, error) {
 	return res.DestLoc, nil
 }
 
-func GenerateParser(root *ebnf.Node) (string, error) {
-	rules, err := pkg.ExtractRules(root)
-	if err != nil {
-		return "", err
-	}
-
+func GenerateParser(rules []*pkg.Rule) (string, error) {
 	dt := pkg.NewDecisionTable(rules)
 
 	g := &gen.ParserGen{
@@ -152,8 +152,22 @@ func GenerateParser(root *ebnf.Node) (string, error) {
 	return res.DestLoc, nil
 }
 
-func GenerateAST() (string, error) {
-	g := &gen.ASTGen{}
+func GenerateAST(rules []*pkg.Rule) (string, error) {
+	table := make(map[string][]*pkg.Rule)
+
+	for _, rule := range rules {
+		prev, ok := table[rule.GetLhs()]
+		if ok {
+			prev = append(prev, rule)
+			table[rule.GetLhs()] = prev
+		} else {
+			table[rule.GetLhs()] = []*pkg.Rule{rule}
+		}
+	}
+
+	g := &gen.ASTGen{
+		Table: table,
+	}
 
 	res, err := gen.ASTGenerator.Generate(gen.OutputLocFlag, "test.go", g)
 	if err != nil {
