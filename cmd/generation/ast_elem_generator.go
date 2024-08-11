@@ -148,12 +148,11 @@ const ast_elem_templ string = `
 			return nil, NewErrInvalidNumberOfChildren({{ .Expected }}, len(children))
 		}
 
-		a.SetNode(NewNode({{ .Target }}, "", children[0].At))
-
 		var sub_nodes []ast.Noder
 
 		// Extract here any desired sub-node...
 
+		a.SetNode(NewNode({{ .Target }}, "", children[0].At))
 		a.AppendChildren(sub_nodes)
 
 		return nil, nil
