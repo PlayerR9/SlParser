@@ -74,9 +74,11 @@ type NodeType int
 {{ if eq (len .NodeTypes) 0 }}const (
 	SourceNode NodeType = iota
 
-	// Add here your custom node types.
+	// Add here your custom node names...
 ){{ else }}const (
 	SourceNode NodeType = iota
+
+	// Add here your custom node names...
 	{{- range $index, $node := .NodeTypes }}
 	{{ $node }}
 	{{- end }}
