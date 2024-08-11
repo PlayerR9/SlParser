@@ -3,7 +3,7 @@ package pkg
 import (
 	"fmt"
 
-	ebnf "github.com/PlayerR9/SLParser/pkg"
+	ebnf "github.com/PlayerR9/SLParser/ebnf"
 )
 
 func node_to_rule(root *ebnf.Node) *Rule {

@@ -1,4 +1,4 @@
-package pkg
+package ebnf
 
 // token_type is a type of token.
 type token_type int

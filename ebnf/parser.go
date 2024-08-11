@@ -1,4 +1,4 @@
-package pkg
+package ebnf
 
 import (
 	grammar "github.com/PlayerR9/grammar"

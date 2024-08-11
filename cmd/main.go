@@ -7,7 +7,7 @@ import (
 
 	gen "github.com/PlayerR9/SLParser/cmd/generation"
 	pkg "github.com/PlayerR9/SLParser/cmd/pkg"
-	ebnf "github.com/PlayerR9/SLParser/pkg"
+	ebnf "github.com/PlayerR9/SLParser/ebnf"
 )
 
 func main() {
