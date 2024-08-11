@@ -1,9 +1,8 @@
 package SLParser
 
 import (
+	ebnf "github.com/PlayerR9/SLParser/pkg"
 	gr "github.com/PlayerR9/grammar"
-
-	ebnf "github.com/PlayerR9/EbnfParser/pkg"
 )
 
 // ParseEbnf parses an EBNF file.

@@ -6,11 +6,10 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	ebnf "github.com/PlayerR9/EbnfParser/pkg"
+	ebnf "github.com/PlayerR9/SLParser/pkg"
+	gcch "github.com/PlayerR9/go-commons/runes"
 	gcslc "github.com/PlayerR9/go-commons/slices"
 	uast "github.com/PlayerR9/grammar/make"
-
-	gcch "github.com/PlayerR9/go-commons/runes"
 )
 
 // EnumType represents the type of enum.
