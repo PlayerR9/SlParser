@@ -23,15 +23,15 @@ type AstElemGen struct {
 	Rules []string
 
 	interval *upi.PageInterval
-	IfCond   string
 	Expected string
 	Target   string
+	Lengths  []int
 }
 
 func (aeg *AstElemGen) String() string {
 	var buff bytes.Buffer
 
-	err := t.Execute(&buff, aeg)
+	err := t.Execute(&buff, *aeg)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -55,7 +55,7 @@ func NewAstElemGen(key string, rules []*pkg.Rule) *AstElemGen {
 		aeg.Rules = append(aeg.Rules, rule.StringOriginal())
 	}
 
-	aeg.if_cond("len(children)")
+	aeg.if_cond()
 
 	return aeg
 }
@@ -71,45 +71,13 @@ func (aeg *AstElemGen) make_target() bool {
 	return true
 }
 
-func (aeg *AstElemGen) if_cond(thing string) {
+func (aeg *AstElemGen) if_cond() {
 	intervals := aeg.interval.Intervals()
 	if len(intervals) == 0 {
 		return
 	}
 
-	elems := make([]string, 0, len(intervals))
 	var builder strings.Builder
-
-	for _, pr := range intervals {
-		if pr.First == pr.Second {
-			// <thing> != pr.First
-			builder.WriteString(thing)
-			builder.WriteString(" != ")
-			builder.WriteString(strconv.Itoa(pr.First))
-
-			elems = append(elems, builder.String())
-		} else {
-			// (<thing> < pr.First || <thing> > pr.Second)
-
-			builder.WriteRune('(')
-			builder.WriteString(thing)
-			builder.WriteString(" < ")
-			builder.WriteString(strconv.Itoa(pr.First))
-			builder.WriteString(" || ")
-
-			builder.WriteString(thing)
-			builder.WriteString(" > ")
-			builder.WriteString(strconv.Itoa(pr.Second))
-			builder.WriteRune(')')
-
-			elems = append(elems, builder.String())
-
-		}
-
-		builder.Reset()
-	}
-
-	aeg.IfCond = strings.Join(elems, " && ")
 
 	expected := make([]string, 0, aeg.interval.PageCount())
 
@@ -122,6 +90,7 @@ func (aeg *AstElemGen) if_cond(thing string) {
 		}
 
 		expected = append(expected, strconv.Itoa(value))
+		aeg.Lengths = append(aeg.Lengths, value)
 	}
 
 	builder.WriteString("[]int{")
@@ -144,16 +113,32 @@ const ast_elem_templ string = `
 			return nil, err
 		}
 
-		if {{ .IfCond }} {
-			return nil, NewErrInvalidNumberOfChildren({{ .Expected }}, len(children))
-		}
+		{{ if eq (len .Lengths) 1 }}
+			if len(children) != {{ index .Lengths 0 }} {
+				return nil, NewErrInvalidNumberOfChildren({{ .Expected }}, len(children))
+			}
 
-		var sub_nodes []ast.Noder
+			var sub_nodes []ast.Noder
 
-		// Extract here any desired sub-node...
+			// Extract here any desired sub-node...
 
-		a.SetNode(NewNode({{ .Target }}, "", children[0].At))
-		_ = a.AppendChildren(sub_nodes)
+			a.SetNode(NewNode({{ .Target }}, "", children[0].At))
+			_ = a.AppendChildren(sub_nodes)
+		{{ else if gt (len .Lengths) 1 }}
+			switch len(children) {
+			{{ range $index, $length := .Lengths }}
+			case {{ $length }}:
+				var sub_nodes []ast.Noder
+
+				// Extract here any desired sub-node...
+
+				a.SetNode(NewNode({{ .Target }}, "", children[0].At))
+				_ = a.AppendChildren(sub_nodes)
+			{{ end }}
+			default:
+				return nil, NewErrInvalidNumberOfChildren({{ .Expected }}, len(children))
+			}
+		{{ end }}
 
 		return nil, nil
 	})

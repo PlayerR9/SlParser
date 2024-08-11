@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -8,6 +9,7 @@ import (
 	gen "github.com/PlayerR9/SLParser/cmd/generation"
 	pkg "github.com/PlayerR9/SLParser/cmd/pkg"
 	ebnf "github.com/PlayerR9/SLParser/ebnf"
+	"github.com/PlayerR9/grammar"
 )
 
 func main() {
@@ -21,11 +23,13 @@ func main() {
 		gen.Logger.Fatalf("Error reading file: %s", err.Error())
 	}
 
-	ebnf.Parser.SetDebug(fs.Enable.Get())
+	ebnf.Parser.SetDebug(grammar.ShowAst)
 
 	root, err := ebnf.Parser.Parse(data)
 	if err != nil {
-		gen.Logger.Fatalf("Error parsing file: %s", err.Error())
+		fmt.Println(grammar.DisplayError(data, err))
+
+		return
 	}
 
 	dest, err := GenerateTokens(root)
