@@ -77,9 +77,9 @@ type NodeType int
 	// Add here your custom node types.
 ){{ else }}const (
 	SourceNode NodeType = iota
-	{{ range $index, $node := .NodeTypes }}
+	{{- range $index, $node := .NodeTypes }}
 	{{ $node }}
-	{{ end }}
+	{{- end }}
 
 	// Add here your custom node types.
 ){{ end }}
