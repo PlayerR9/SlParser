@@ -157,4 +157,7 @@ const ast_elem_templ string = `
 		a.AppendChildren(sub_nodes)
 
 		return nil, nil
-	})`
+	})
+		
+	ast_builder.AddEntry({{ .Key }}, parts.Build())
+	parts.Reset()`
