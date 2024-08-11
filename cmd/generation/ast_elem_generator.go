@@ -153,7 +153,7 @@ const ast_elem_templ string = `
 		// Extract here any desired sub-node...
 
 		a.SetNode(NewNode({{ .Target }}, "", children[0].At))
-		a.AppendChildren(sub_nodes)
+		_ = a.AppendChildren(sub_nodes)
 
 		return nil, nil
 	})
