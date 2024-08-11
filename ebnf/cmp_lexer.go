@@ -167,85 +167,66 @@ var (
 	internal_lexer *grlx.Lexer[token_type]
 )
 
-func match_rules(lexer *grlx.Lexer[token_type]) (*gr.Token[token_type], error) {
-	at := lexer.Pos()
-
-	chars, err := grlx.RightLex(lexer, lex_whitespace)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(chars) != 0 {
-		return nil, nil
-	}
-
-	chars, err = grlx.RightLex(lexer, lex_newlines)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(chars) != 0 {
-		return gr.NewToken(ttk_Newline, "\n", at, nil), nil
-	}
-
-	chars, err = grlx.RightLex(lexer, frag_uppercases)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(chars) != 0 {
-		// do digits
-
-		digit, err := grlx.RightLex(lexer, lex_digit)
-		if err != nil {
-			return nil, err
-		}
-
-		chars = append(chars, digit...)
-
-		return gr.NewToken(ttk_UppercaseID, string(chars), at, nil), nil
-	}
-
-	chars, err = grlx.RightLex(lexer, frag_lowercases)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(chars) != 0 {
-		// do digits
-
-		digit, err := grlx.RightLex(lexer, lex_digit)
-		if err != nil {
-			return nil, err
-		}
-
-		chars = append(chars, digit...)
-
-		return gr.NewToken(ttk_LowercaseID, string(chars), at, nil), nil
-	}
-
-	return nil, fmt.Errorf("no match found at %d", at)
-}
-
 func init() {
 	f := func(lexer *grlx.Lexer[token_type]) (*gr.Token[token_type], error) {
 		at := lexer.Pos()
 
-		match, _ := matcher.Match(lexer)
-
-		if match.IsValidMatch() {
-			symbol, data := match.GetMatch()
-
-			return gr.NewToken(symbol, data, at, nil), nil
-		}
-
-		tk, err := match_rules(lexer)
+		chars, err := grlx.RightLex(lexer, lex_whitespace)
 		if err != nil {
 			return nil, err
 		}
 
-		return tk, nil
+		if len(chars) != 0 {
+			return nil, nil
+		}
+
+		chars, err = grlx.RightLex(lexer, lex_newlines)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(chars) != 0 {
+			return gr.NewToken(ttk_Newline, "\n", at, nil), nil
+		}
+
+		chars, err = grlx.RightLex(lexer, frag_uppercases)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(chars) != 0 {
+			// do digits
+
+			digit, err := grlx.RightLex(lexer, lex_digit)
+			if err != nil {
+				return nil, err
+			}
+
+			chars = append(chars, digit...)
+
+			return gr.NewToken(ttk_UppercaseID, string(chars), at, nil), nil
+		}
+
+		chars, err = grlx.RightLex(lexer, frag_lowercases)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(chars) != 0 {
+			// do digits
+
+			digit, err := grlx.RightLex(lexer, lex_digit)
+			if err != nil {
+				return nil, err
+			}
+
+			chars = append(chars, digit...)
+
+			return gr.NewToken(ttk_LowercaseID, string(chars), at, nil), nil
+		}
+
+		return nil, fmt.Errorf("no match found at %d", at)
 	}
 
-	internal_lexer = grlx.NewLexer(f)
+	internal_lexer = grlx.NewLexer(f, matcher)
 }

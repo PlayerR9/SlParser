@@ -51,20 +51,10 @@ var (
 
 func init() {
 	lex_one := func(l *lexing.Lexer[token_type]) (*grammar.Token[token_type], error) {
-		at := l.Pos()
-
-		match, _ := matcher.Match(l)
-
-		if match.IsValidMatch() {
-			symbol, data := match.GetMatch()
-
-			return grammar.NewToken(symbol, data, at, nil), nil
-		}
-
-		// Lex here...
+		// Lex here anything that matcher doesn't handle...
 	
 		panic("Implement me!")
 	}
 
-	internal_lexer = lexing.NewLexer(lex_one)
+	internal_lexer = lexing.NewLexer(lex_one, matcher)
 }`
