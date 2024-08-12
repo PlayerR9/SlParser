@@ -23,7 +23,7 @@ func main() {
 		gen.Logger.Fatalf("Error reading file: %s", err.Error())
 	}
 
-	ebnf.Parser.SetDebug(grammar.ShowAst)
+	ebnf.Parser.SetDebug(grammar.ShowTree | grammar.ShowAst)
 
 	root, err := ebnf.Parser.Parse(data)
 	if err != nil {

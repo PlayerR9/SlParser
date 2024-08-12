@@ -28,10 +28,10 @@ func init() {
 
 			act, _ = parsing.NewAcceptAction(parsing.NewRule(ntk_Source, []token_type{etk_EOF, ntk_Source1}))
 		case ntk_Identifier:
-			// [ ntk_Identifier ] -> ntk_Rhs : REDUCE .
 			// [ ntk_Identifier ] ttk_Pipe ntk_Identifier -> ntk_OrExpr : REDUCE .
 			// ntk_Identifier ttk_Pipe [ ntk_Identifier ] -> ntk_OrExpr : SHIFT .
 			// ntk_OrExpr ttk_Pipe [ ntk_Identifier ] -> ntk_OrExpr : SHIFT .
+			// [ ntk_Identifier ] -> ntk_Rhs : REDUCE .
 
 			panic("not implemented")
 		case ntk_OrExpr:
@@ -45,10 +45,10 @@ func init() {
 
 			panic("not implemented")
 		case ntk_RhsCls:
-			// ntk_RuleLine [ ntk_RhsCls ] ttk_Pipe ttk_Newline -> ntk_RuleLine : SHIFT .
-			// [ ntk_RhsCls ] ntk_Rhs -> ntk_RhsCls : REDUCE .
 			// ttk_Dot [ ntk_RhsCls ] ttk_Equal ttk_UppercaseId -> ntk_Rule : SHIFT .
 			// ntk_RuleLine [ ntk_RhsCls ] ttk_Equal ttk_Newline ttk_UppercaseId -> ntk_Rule : SHIFT .
+			// ntk_RuleLine [ ntk_RhsCls ] ttk_Pipe ttk_Newline -> ntk_RuleLine : SHIFT .
+			// [ ntk_RhsCls ] ntk_Rhs -> ntk_RhsCls : REDUCE .
 
 			panic("not implemented")
 		case ntk_Rule:
@@ -76,8 +76,8 @@ func init() {
 
 			panic("not implemented")
 		case ttk_Equal:
-			// ntk_RuleLine ntk_RhsCls [ ttk_Equal ] ttk_Newline ttk_UppercaseId -> ntk_Rule : SHIFT .
 			// ttk_Dot ntk_RhsCls [ ttk_Equal ] ttk_UppercaseId -> ntk_Rule : SHIFT .
+			// ntk_RuleLine ntk_RhsCls [ ttk_Equal ] ttk_Newline ttk_UppercaseId -> ntk_Rule : SHIFT .
 
 			act = parsing.NewShiftAction()
 		case ttk_LowercaseId:
@@ -102,9 +102,9 @@ func init() {
 
 			act = parsing.NewShiftAction()
 		case ttk_UppercaseId:
-			// ttk_Dot ntk_RhsCls ttk_Equal [ ttk_UppercaseId ] -> ntk_Rule : SHIFT .
 			// ntk_RuleLine ntk_RhsCls ttk_Equal ttk_Newline [ ttk_UppercaseId ] -> ntk_Rule : SHIFT .
 			// [ ttk_UppercaseId ] -> ntk_Identifier : REDUCE .
+			// ttk_Dot ntk_RhsCls ttk_Equal [ ttk_UppercaseId ] -> ntk_Rule : SHIFT .
 
 			panic("not implemented")
 		default:

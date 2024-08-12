@@ -10,12 +10,15 @@ import (
 	upi "github.com/PlayerR9/SLParser/util/PageInterval"
 )
 
-var (
-	t *template.Template
-)
+func aeg_make_target(key string) (string, bool) {
+	if !strings.HasPrefix(key, "ntk_") {
+		return "", false
+	}
 
-func init() {
-	t = template.Must(template.New("ast_elem").Parse(ast_elem_templ))
+	target := strings.TrimPrefix(key, "ntk_")
+	target += "Node"
+
+	return target, true
 }
 
 type AstElemGen struct {
@@ -25,13 +28,15 @@ type AstElemGen struct {
 	interval *upi.PageInterval
 	Expected string
 	Target   string
-	Lengths  []int
+	Lengths  []string
 }
 
-func (aeg *AstElemGen) String() string {
+func (aeg AstElemGen) String() string {
+	t := template.Must(template.New("ast_elem").Parse(ast_elem_templ))
+
 	var buff bytes.Buffer
 
-	err := t.Execute(&buff, *aeg)
+	err := t.Execute(&buff, aeg)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -40,14 +45,15 @@ func (aeg *AstElemGen) String() string {
 }
 
 func NewAstElemGen(key string, rules []*pkg.Rule) *AstElemGen {
+	target, ok := aeg_make_target(key)
+	if !ok {
+		return nil
+	}
+
 	aeg := &AstElemGen{
 		Key:      key,
 		interval: upi.NewPageInterval(),
-	}
-
-	ok := aeg.make_target()
-	if !ok {
-		return nil
+		Target:   target,
 	}
 
 	for _, rule := range rules {
@@ -58,17 +64,6 @@ func NewAstElemGen(key string, rules []*pkg.Rule) *AstElemGen {
 	aeg.if_cond()
 
 	return aeg
-}
-
-func (aeg *AstElemGen) make_target() bool {
-	if !strings.HasPrefix(aeg.Key, "ntk_") {
-		return false
-	}
-
-	aeg.Target = strings.TrimPrefix(aeg.Key, "ntk_")
-	aeg.Target += "Node"
-
-	return true
 }
 
 func (aeg *AstElemGen) if_cond() {
@@ -90,7 +85,6 @@ func (aeg *AstElemGen) if_cond() {
 		}
 
 		expected = append(expected, strconv.Itoa(value))
-		aeg.Lengths = append(aeg.Lengths, value)
 	}
 
 	builder.WriteString("[]int{")
@@ -98,6 +92,7 @@ func (aeg *AstElemGen) if_cond() {
 	builder.WriteRune('}')
 
 	aeg.Expected = builder.String()
+	aeg.Lengths = expected
 }
 
 const ast_elem_templ string = `
