@@ -8,7 +8,7 @@ import (
 
 type TokenGen struct {
 	PackageName  string
-	Data         *pkg.ExtractEnumsData
+	Data         *pkg.EnumExtractor
 	SpecialEnums []string
 	LexerEnums   []string
 	ParserEnums  []string

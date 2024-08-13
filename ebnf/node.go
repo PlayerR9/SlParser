@@ -2,10 +2,10 @@
 package ebnf
 
 import (
-	"io"
 	"strconv"
 	"strings"
 
+	"github.com/PlayerR9/go-commons/iterator"
 	"github.com/PlayerR9/grammar/ast"
 )
 
@@ -15,21 +15,50 @@ type NodeIterator struct {
 }
 
 // Consume implements the ast.Iterater interface.
-func (iter *NodeIterator) Consume() (ast.Noder, error) {
-	n := iter.current
-
-	if n == nil {
-		return nil, io.EOF
+func (iter *NodeIterator) Apply(fn iterator.IteratorFunc) error {
+	if iter.current == nil {
+		return iterator.ErrExausted
 	}
 
-	iter.current = n.NextSibling
+	err := fn(iter.current)
+	if err != nil {
+		return err
+	}
 
-	return n, nil
+	iter.current = iter.current.NextSibling
+
+	return nil
 }
 
 // Restart implements the ast.Iterater interface.
-func (iter *NodeIterator) Restart() {
+func (iter *NodeIterator) Reset() {
 	iter.current = iter.first
+}
+
+// NodeReverseIterator is a pull-based iterator that iterates over the children of a Node in reverse order.
+type NodeReverseIterator struct {
+	last, current *Node
+}
+
+// Consume implements the Iterater interface.
+func (iter *NodeReverseIterator) Apply(fn iterator.IteratorFunc) error {
+	if iter.current == nil {
+		return iterator.ErrExausted
+	}
+
+	err := fn(iter.current)
+	if err != nil {
+		return err
+	}
+
+	iter.current = iter.current.PrevSibling
+
+	return nil
+}
+
+// Restart implements the ast.Iterater interface.
+func (iter *NodeReverseIterator) Reset() {
+	iter.current = iter.last
 }
 
 // Node is a node in a ast.
@@ -42,7 +71,7 @@ type Node struct {
 }
 
 // IsLeaf implements the ast.Noder interface.
-func (tn *Node) IsLeaf() bool {
+func (tn Node) IsLeaf() bool {
 	return tn.FirstChild == nil
 }
 
@@ -133,15 +162,23 @@ func (tn *Node) AddChildren(children []ast.Noder) {
 }
 
 // Iterator implements the ast.Noder interface.
-func (tn *Node) Iterator() ast.Iterater {
+func (tn Node) Iterator() iterator.Iterable {
 	return &NodeIterator{
 		first:   tn.FirstChild,
 		current: tn.FirstChild,
 	}
 }
 
+// ReverseIterator implements the ast.Noder interface.
+func (tn Node) ReverseIterator() iterator.Iterable {
+	return &NodeReverseIterator{
+		last:    tn.LastChild,
+		current: tn.LastChild,
+	}
+}
+
 // String implements the ast.Noder interface.
-func (tn *Node) String() string {
+func (tn Node) String() string {
 	var builder strings.Builder
 
 	builder.WriteString(strconv.Itoa(tn.Pos))
@@ -167,9 +204,9 @@ func (tn *Node) String() string {
 //   - pos: The position of the node in the source code.
 //
 // Returns:
-//   - *Node: A pointer to the newly created node. It is never nil.
-func NewNode(n_type NodeType, data string, pos int) *Node {
-	return &Node{
+//   - Node: The newly created node.
+func NewNode(n_type NodeType, data string, pos int) Node {
+	return Node{
 		Type: n_type,
 		Data: data,
 		Pos:  pos,

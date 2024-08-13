@@ -10,4 +10,4 @@ require (
 	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa
 )
 
-require github.com/PlayerR9/go-debug v0.1.2 // indirect
+require github.com/PlayerR9/go-debug v0.1.2

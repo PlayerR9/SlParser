@@ -10,6 +10,7 @@ import (
 	pkg "github.com/PlayerR9/SLParser/cmd/pkg"
 	ebnf "github.com/PlayerR9/SLParser/ebnf"
 	"github.com/PlayerR9/grammar"
+	tr "github.com/PlayerR9/grammar/traversing"
 )
 
 func main() {
@@ -97,13 +98,15 @@ func main() {
 }
 
 func GenerateTokens(root *ebnf.Node) (string, error) {
-	ee_data, err := pkg.ExtractEnums.Apply(root)
+	var ee pkg.EnumExtractor
+
+	err := tr.Apply(&ee, root)
 	if err != nil {
 		return "", err
 	}
 
 	g := &gen.TokenGen{
-		Data: ee_data,
+		Data: &ee,
 	}
 
 	res, err := gen.TokenGenerator.Generate(gen.OutputLocFlag, "test.go", g)

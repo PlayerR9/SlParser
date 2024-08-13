@@ -97,7 +97,8 @@ func init() {
 			sub_nodes = append(sub_nodes, node)
 		}
 
-		a.SetNode(NewNode(SourceNode, "", children[0].At))
+		n := NewNode(SourceNode, "", children[0].At)
+		a.SetNode(&n)
 		_ = a.AppendChildren(sub_nodes)
 
 		return nil, nil
@@ -137,7 +138,7 @@ func init() {
 			node := NewNode(SourceNode, "", children[0].At)
 			node.AddChildren(sub_nodes)
 
-			return []*Node{node}, nil
+			return []*Node{&node}, nil
 		case 2:
 			// ntk_RuleLine : ttk_Newline ttk_Dot .
 
@@ -182,7 +183,8 @@ func init() {
 				sub_nodes = append(sub_nodes, n)
 			}
 
-			a.SetNode(NewNode(RuleNode, lhs, children[0].At))
+			n := NewNode(RuleNode, lhs, children[0].At)
+			a.SetNode(&n)
 			_ = a.AppendChildren(sub_nodes)
 		case 5:
 			// ntk_Rule : ttk_UppercaseId ttk_Newline ttk_Equal ntk_RhsCls ntk_RuleLine .
@@ -208,7 +210,7 @@ func init() {
 			node := NewNode(RuleNode, lhs, children[0].At)
 			node.AddChildren(sub_nodes)
 
-			nodes = []*Node{node}
+			nodes = []*Node{&node}
 
 			others, err := ast.LeftRecursive(children[4], ntk_RuleLine, f2)
 			if err != nil {
@@ -312,7 +314,8 @@ func init() {
 				sub_nodes = append(sub_nodes, n)
 			}
 
-			a.SetNode(NewNode(OrExprNode, "", children[0].At))
+			n := NewNode(OrExprNode, "", children[0].At)
+			a.SetNode(&n)
 			_ = a.AppendChildren(sub_nodes)
 		default:
 			return nil, NewErrInvalidNumberOfChildren([]int{1, 3}, len(children))
@@ -343,7 +346,8 @@ func init() {
 			return nil, parsing.NewErrUnexpectedToken(nil, &children[0].Type, ttk_UppercaseId, ttk_LowercaseId)
 		}
 
-		a.SetNode(NewNode(IdentifierNode, children[0].Data, children[0].At))
+		n := NewNode(IdentifierNode, children[0].Data, children[0].At)
+		a.SetNode(&n)
 
 		return nil, nil
 	})

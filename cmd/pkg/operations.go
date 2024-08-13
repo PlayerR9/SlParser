@@ -9,7 +9,8 @@ import (
 	ebnf "github.com/PlayerR9/SLParser/ebnf"
 	gcch "github.com/PlayerR9/go-commons/runes"
 	gcslc "github.com/PlayerR9/go-commons/slices"
-	uast "github.com/PlayerR9/grammar/traversing"
+	dbg "github.com/PlayerR9/go-debug/assert"
+	tr "github.com/PlayerR9/grammar/traversing"
 )
 
 // EnumType represents the type of enum.
@@ -25,20 +26,20 @@ const (
 // GetEnumType returns the type of enum.
 //
 // Parameters:
-//   - root: The root node of the AST tree.
+//   - data: The data to parse.
 //
 // Returns:
 //   - EnumType: The type of enum.
-func GetEnumType(root *ebnf.Node) EnumType {
-	if root == nil || root.Data == "" {
+func GetEnumType(data string) EnumType {
+	if data == "" {
 		return NotEnum
 	}
 
-	if root.Data == "EOF" {
+	if data == "EOF" {
 		return SpecialEnum
 	}
 
-	first_letter, _ := utf8.DecodeRuneInString(root.Data)
+	first_letter, _ := utf8.DecodeRuneInString(data)
 	if first_letter == utf8.RuneError || !unicode.IsLetter(first_letter) {
 		return NotEnum
 	}
@@ -113,103 +114,120 @@ func ToEnum(str string, t_type EnumType) (string, error) {
 	}
 }
 
-type ExtractEnumsData struct {
+type EnumExtractor struct {
 	special_enums []string
 	lexer_enums   []string
 	parser_enums  []string
 }
 
-func (d *ExtractEnumsData) AddLexerEnum(enum string) error {
+// Reset implements the traverser.Traverser interface.
+func (ee *EnumExtractor) Reset() {
+	ee.lexer_enums = ee.lexer_enums[:0]
+	ee.parser_enums = ee.parser_enums[:0]
+	ee.special_enums = ee.special_enums[:0]
+}
+
+// Copy implements the traverser.Traverser interface.
+//
+// Returns a pointer to itself.
+func (ee EnumExtractor) Copy() tr.Traverser {
+	return &ee
+}
+
+// Apply implements the traverser.Traverser interface.
+func (ee *EnumExtractor) Apply(node tr.TreeNoder) ([]tr.TravData, error) {
+	if node == nil {
+		return nil, nil
+	}
+
+	n := dbg.AssertConv[*ebnf.Node](node, "node")
+
+	e_type := GetEnumType(n.Data)
+
+	switch e_type {
+	case LexerEnum:
+		err := ee.AddLexerEnum(n.Data)
+		if err != nil {
+			return nil, fmt.Errorf("in node %q: %w", n.Data, err)
+		}
+	case ParserEnum:
+		err := ee.AddParserEnum(n.Data)
+		if err != nil {
+			return nil, fmt.Errorf("in node %q: %w", n.Data, err)
+		}
+	case SpecialEnum:
+		err := ee.AddSpecialEnum(n.Data)
+		if err != nil {
+			return nil, fmt.Errorf("in node %q: %w", n.Data, err)
+		}
+	}
+
+	var data []tr.TravData
+
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		d := tr.TravData{
+			Node: c,
+			Data: ee.Copy(),
+		}
+
+		data = append(data, d)
+	}
+
+	return data, nil
+}
+
+func (ee *EnumExtractor) AddLexerEnum(enum string) error {
 	new_enum, err := ToEnum(enum, LexerEnum)
 	if err != nil {
 		return err
 	}
 
-	d.lexer_enums = gcslc.TryInsert(d.lexer_enums, new_enum)
+	ee.lexer_enums = gcslc.TryInsert(ee.lexer_enums, new_enum)
 
 	return nil
 }
 
-func (d *ExtractEnumsData) AddParserEnum(enum string) error {
+func (ee *EnumExtractor) AddParserEnum(enum string) error {
 	new_enum, err := ToEnum(enum, ParserEnum)
 	if err != nil {
 		return err
 	}
 
-	d.parser_enums = gcslc.TryInsert(d.parser_enums, new_enum)
+	ee.parser_enums = gcslc.TryInsert(ee.parser_enums, new_enum)
 
 	return nil
 }
 
-func (d *ExtractEnumsData) AddSpecialEnum(enum string) error {
+func (ee *EnumExtractor) AddSpecialEnum(enum string) error {
 	new_enum, err := ToEnum(enum, SpecialEnum)
 	if err != nil {
 		return err
 	}
 
-	d.special_enums = gcslc.TryInsert(d.special_enums, new_enum)
+	ee.special_enums = gcslc.TryInsert(ee.special_enums, new_enum)
 
 	return nil
 }
 
-func (d *ExtractEnumsData) GetLexerEnums() []string {
-	return d.lexer_enums
+func (ee EnumExtractor) GetLexerEnums() []string {
+	return ee.lexer_enums
 }
 
-func (d *ExtractEnumsData) GetParserEnums() []string {
-	return d.parser_enums
+func (ee EnumExtractor) GetParserEnums() []string {
+	return ee.parser_enums
 }
 
-func (d *ExtractEnumsData) GetSpecialEnums() []string {
-	return d.special_enums
-}
-
-var (
-	ExtractEnums *uast.SimpleDFS[*ebnf.Node, *ExtractEnumsData]
-)
-
-func init() {
-	ee_do := func(node *ebnf.Node, data *ExtractEnumsData) error {
-		e_type := GetEnumType(node)
-
-		switch e_type {
-		case LexerEnum:
-			err := data.AddLexerEnum(node.Data)
-			if err != nil {
-				return fmt.Errorf("in node %q: %w", node.Data, err)
-			}
-		case ParserEnum:
-			err := data.AddParserEnum(node.Data)
-			if err != nil {
-				return fmt.Errorf("in node %q: %w", node.Data, err)
-			}
-		case SpecialEnum:
-			err := data.AddSpecialEnum(node.Data)
-			if err != nil {
-				return fmt.Errorf("in node %q: %w", node.Data, err)
-			}
-		}
-
-		return nil
-	}
-
-	ee_init := func() *ExtractEnumsData {
-		return &ExtractEnumsData{
-			lexer_enums:  make([]string, 0),
-			parser_enums: make([]string, 0),
-		}
-	}
-
-	ExtractEnums = uast.NewSimpleDFS(ee_do, ee_init)
+func (ee EnumExtractor) GetSpecialEnums() []string {
+	return ee.special_enums
 }
 
 var (
-	RenameNodes *uast.SimpleDFS[*ebnf.Node, any]
+	RenameNodes tr.SimpleDFS[*ebnf.Node]
 )
 
 func init() {
-	f := func(node *ebnf.Node, data any) error {
-		e_type := GetEnumType(node)
+	f := func(node *ebnf.Node) error {
+		e_type := GetEnumType(node.Data)
 
 		switch e_type {
 		case LexerEnum:
@@ -238,5 +256,5 @@ func init() {
 		return nil
 	}
 
-	RenameNodes = uast.NewSimpleDFS(f, nil)
+	RenameNodes.SetDoFunc(f)
 }
