@@ -28,7 +28,7 @@ func init() {
 
 	// Add here your custom matcher rules.
 
-	_ = matcher.AddToMatch(ttk_Dot, ".")
+	_ = matcher.AddToMatch(ttk_Semicolon, ";")
 	_ = matcher.AddToMatch(ttk_OpParen, "(")
 	_ = matcher.AddToMatch(ttk_ClParen, ")")
 	_ = matcher.AddToMatch(ttk_Pipe, "|")

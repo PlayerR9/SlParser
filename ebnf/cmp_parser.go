@@ -28,152 +28,165 @@ func init() {
 
 			act, _ = parsing.NewAcceptAction(parsing.NewRule(ntk_Source, []token_type{etk_EOF, ntk_Source1}))
 		case ntk_Identifier:
-			top2, ok := p.Pop()
-			if ok && top2.Type == ttk_Pipe {
-				top3, ok := p.Pop()
-				if ok && top3.Type == ntk_Identifier {
-					// [ ntk_Identifier ] ttk_Pipe ntk_Identifier -> ntk_OrExpr : REDUCE .
+			var has_la bool
 
-					act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_OrExpr, []token_type{ntk_Identifier, ttk_Pipe, ntk_Identifier}))
+			if lookahead == nil || lookahead.Type != ttk_Pipe {
+				has_la = false
+			} else {
+				has_la = true
+			}
+
+			top2, ok := p.Pop()
+			if !ok || top2.Type != ttk_Pipe {
+				if has_la {
+					// ntk_OrExpr1 [ ntk_Identifier ] -> ntk_OrExpr : SHIFT .
+
+					act = parsing.NewShiftAction()
 				} else {
 					// [ ntk_Identifier ] -> ntk_Rhs : REDUCE .
 
 					act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Rhs, []token_type{ntk_Identifier}))
 				}
 			} else {
-				if lookahead != nil && lookahead.Type == ttk_Pipe {
-					// ntk_Identifier ttk_Pipe [ ntk_Identifier ] -> ntk_OrExpr : SHIFT .
-					// ntk_OrExpr ttk_Pipe [ ntk_Identifier ] -> ntk_OrExpr : SHIFT .
+				if has_la {
+					// ntk_OrExpr1 [ ntk_Identifier ] ttk_Pipe -> ntk_OrExpr1 : SHIFT .
 
 					act = parsing.NewShiftAction()
-
 				} else {
-					// [ ntk_Identifier ] -> ntk_Rhs : REDUCE .
+					// [ ntk_Identifier ] ttk_Pipe -> ntk_OrExpr1 : REDUCE .
 
-					act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Rhs, []token_type{ntk_Identifier}))
+					act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_OrExpr1, []token_type{ntk_Identifier, ttk_Pipe}))
 				}
 			}
 		case ntk_OrExpr:
+			// ttk_ClParen [ ntk_OrExpr ] ttk_OpParen -> ntk_Rhs : SHIFT .
+
+			act = parsing.NewShiftAction()
+		case ntk_OrExpr1:
 			top2, ok := p.Pop()
-			if ok && top2.Type == ttk_Pipe {
-				// [ ntk_OrExpr ] ttk_Pipe ntk_Identifier -> ntk_OrExpr : REDUCE .
+			if !ok {
+				return nil, parsing.NewErrUnexpectedToken(&top1.Type, nil, ntk_Identifier)
+			} else if top2.Type != ntk_Identifier {
+				return nil, parsing.NewErrUnexpectedToken(&top1.Type, &top2.Type, ntk_Identifier)
+			}
 
-				act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_OrExpr, []token_type{ntk_OrExpr, ttk_Pipe, ntk_Identifier}))
+			top3, ok := p.Pop()
+			if !ok || top3.Type != ttk_Pipe {
+				// [ ntk_OrExpr1 ] ntk_Identifier -> ntk_OrExpr : REDUCE .
+
+				act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_OrExpr, []token_type{ntk_OrExpr1, ntk_Identifier}))
 			} else {
-				// ttk_ClParen [ ntk_OrExpr ] ttk_OpParen -> ntk_Rhs : SHIFT .
+				// [ ntk_OrExpr1 ] ntk_Identifier ttk_Pipe -> ntk_OrExpr1 : REDUCE .
 
-				act = parsing.NewShiftAction()
+				act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_OrExpr1, []token_type{ntk_OrExpr1, ntk_Identifier, ttk_Pipe}))
 			}
 		case ntk_Rhs:
-			if lookahead == nil || (lookahead.Type != ttk_LowercaseId && lookahead.Type != ttk_UppercaseId && lookahead.Type != ttk_OpParen) {
-				// [ ntk_Rhs ] -> ntk_RhsCls : REDUCE .
+			if lookahead == nil || (lookahead.Type != ttk_OpParen && lookahead.Type != ttk_LowercaseId && lookahead.Type != ttk_UppercaseId) {
+				// [ ntk_Rhs ] -> ntk_Rhs1 : REDUCE .
 
-				act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_RhsCls, []token_type{ntk_Rhs}))
+				act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Rhs1, []token_type{ntk_Rhs}))
 			} else {
-				// ntk_RhsCls [ ntk_Rhs ] -> ntk_RhsCls : SHIFT .
-				// -- [ ntk_Identifier ] -> ntk_Rhs : REDUCE .
-				// -- -- [ ttk_LowercaseId ] -> ntk_Identifier : REDUCE .
-				// -- -- [ ttk_UppercaseId ] -> ntk_Identifier : REDUCE .
-				// -- ttk_ClParen ntk_OrExpr ttk_OpParen -> ntk_Rhs : SHIFT .
+				// ntk_Rhs1 [ ntk_Rhs ] -> ntk_Rhs1 : SHIFT .
 
 				act = parsing.NewShiftAction()
 			}
-		case ntk_RhsCls:
+		case ntk_Rhs1:
 			top2, ok := p.Pop()
-			if ok && top2.Type == ntk_Rhs {
-				// [ ntk_RhsCls ] ntk_Rhs -> ntk_RhsCls : REDUCE .
+			if !ok {
+				return nil, parsing.NewErrUnexpectedToken(&top1.Type, nil, ttk_Equal, ttk_Pipe, ntk_Rhs)
+			}
 
-				act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_RhsCls, []token_type{ntk_RhsCls, ntk_Rhs}))
-			} else {
-				// ntk_RuleLine [ ntk_RhsCls ] ttk_Equal ttk_UppercaseId -> ntk_Rule : SHIFT .
-				// ntk_RuleLine [ ntk_RhsCls ] ttk_Pipe -> ntk_RuleLine : SHIFT .
+			switch top2.Type {
+			case ttk_Equal:
+				// ttk_Semicolon [ ntk_Rhs1 ] ttk_Equal ttk_LowercaseId -> ntk_Rule : SHIFT .
+				// ttk_Rule1 [ ntk_Rhs1 ] ttk_Equal ttk_LowercaseId -> ntk_Rule : SHIFT .
 
 				act = parsing.NewShiftAction()
+			case ttk_Pipe:
+				if lookahead == nil || lookahead.Type != ttk_Pipe {
+					// [ ntk_Rhs1 ] ttk_Pipe -> ntk_Rule1 : REDUCE .
+
+					act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Rule1, []token_type{ntk_Rhs1, ttk_Pipe}))
+				} else {
+					// ntk_Rule1 [ ntk_Rhs1 ] ttk_Pipe -> ntk_Rule1 : SHIFT .
+
+					act = parsing.NewShiftAction()
+				}
+			case ntk_Rhs:
+				// [ ntk_Rhs1 ] ntk_Rhs -> ntk_Rhs1 : REDUCE .
+
+				act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Rhs1, []token_type{ntk_Rhs1, ntk_Rhs}))
+			default:
+				return nil, parsing.NewErrUnexpectedToken(&top1.Type, &top2.Type, ttk_Equal, ttk_Pipe, ntk_Rhs)
 			}
 		case ntk_Rule:
-			if lookahead == nil || lookahead.Type != ttk_UppercaseId {
+			if lookahead == nil || lookahead.Type != ttk_LowercaseId {
 				// [ ntk_Rule ] -> ntk_Source1 : REDUCE .
 
 				act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Source1, []token_type{ntk_Rule}))
 			} else {
 				// ntk_Source1 [ ntk_Rule ] -> ntk_Source1 : SHIFT .
-				// -- ntk_Rule
-				// -- -- ttk_UppercaseId
 
 				act = parsing.NewShiftAction()
 			}
-		case ntk_RuleLine:
-			top2, ok := p.Pop()
-			if !ok {
-				return nil, parsing.NewErrUnexpectedToken(&top1.Type, nil, ntk_RhsCls)
-			} else if top2.Type != ntk_RhsCls {
-				return nil, parsing.NewErrUnexpectedToken(&top1.Type, &top2.Type, ntk_RhsCls)
-			}
+		case ntk_Rule1:
+			// [ ntk_Rule1 ] ntk_Rhs1 ttk_Pipe -> ntk_Rule1 : REDUCE .
 
-			top3, ok := p.Pop()
-			if !ok {
-				return nil, parsing.NewErrUnexpectedToken(&top2.Type, nil, ttk_Equal, ttk_Pipe)
-			}
-
-			switch top3.Type {
-			case ttk_Equal:
-				// [ ntk_RuleLine ] ntk_RhsCls ttk_Equal ttk_UppercaseId -> ntk_Rule : REDUCE .
-
-				act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Rule, []token_type{ntk_RuleLine, ntk_RhsCls, ttk_Equal, ttk_UppercaseId}))
-			case ttk_Pipe:
-				// [ ntk_RuleLine ] ntk_RhsCls ttk_Pipe -> ntk_RuleLine : REDUCE .
-
-				act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_RuleLine, []token_type{ntk_RuleLine, ntk_RhsCls, ttk_Pipe}))
-			default:
-				return nil, parsing.NewErrUnexpectedToken(&top3.Type, &top2.Type, ttk_Equal, ttk_Pipe)
-			}
+			act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Rule1, []token_type{ntk_Rule1, ntk_Rhs1, ttk_Pipe}))
 		case ntk_Source1:
 			top2, ok := p.Pop()
-			if ok && top2.Type == ntk_Rule {
-				// [ ntk_Source1 ] ntk_Rule -> ntk_Source1 : REDUCE .
-
-				act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Source1, []token_type{ntk_Source1, ntk_Rule}))
-			} else {
+			if !ok || top2.Type != ntk_Rule {
 				// etk_EOF [ ntk_Source1 ] -> ntk_Source : SHIFT .
 
 				act = parsing.NewShiftAction()
+			} else {
+				// [ ntk_Source1 ] ntk_Rule -> ntk_Source1 : REDUCE .
+
+				act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Source1, []token_type{ntk_Source1, ntk_Rule}))
 			}
 		case ttk_ClParen:
 			// [ ttk_ClParen ] ntk_OrExpr ttk_OpParen -> ntk_Rhs : REDUCE .
 
 			act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Rhs, []token_type{ttk_ClParen, ntk_OrExpr, ttk_OpParen}))
-		case ttk_Dot:
-			// [ ttk_Dot ] -> ntk_RuleLine : REDUCE .
-
-			act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_RuleLine, []token_type{ttk_Dot}))
 		case ttk_Equal:
-			// ntk_RuleLine ntk_RhsCls [ ttk_Equal ] ttk_UppercaseId -> ntk_Rule : SHIFT .
+			// ttk_Semicolon ntk_Rhs1 [ ttk_Equal ] ttk_LowercaseId -> ntk_Rule : SHIFT .
+			// ttk_Rule1 ntk_Rhs1 [ ttk_Equal ] ttk_LowercaseId -> ntk_Rule : SHIFT .
 
 			act = parsing.NewShiftAction()
 		case ttk_LowercaseId:
-			// [ ttk_LowercaseId ] -> ntk_Identifier : REDUCE .
+			if lookahead == nil || lookahead.Type != ttk_Equal {
+				// [ ttk_LowercaseId ] -> ntk_Identifier : REDUCE .
 
-			act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Identifier, []token_type{ttk_LowercaseId}))
+				act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Identifier, []token_type{ttk_LowercaseId}))
+			} else {
+				// ttk_Semicolon ntk_Rhs1 ttk_Equal [ ttk_LowercaseId ] -> ntk_Rule : SHIFT .
+				// ttk_Rule1 ntk_Rhs1 ttk_Equal [ ttk_LowercaseId ] -> ntk_Rule : SHIFT .
+
+				act = parsing.NewShiftAction()
+			}
 		case ttk_OpParen:
 			// ttk_ClParen ntk_OrExpr [ ttk_OpParen ] -> ntk_Rhs : SHIFT .
 
 			act = parsing.NewShiftAction()
 		case ttk_Pipe:
-			// ntk_RuleLine ntk_RhsCls [ ttk_Pipe ] -> ntk_RuleLine : SHIFT .
-			// ntk_Identifier [ ttk_Pipe ] ntk_Identifier -> ntk_OrExpr : SHIFT .
-			// ntk_OrExpr [ ttk_Pipe ] ntk_Identifier -> ntk_OrExpr : SHIFT .
+			// ntk_Identifier [ ttk_Pipe ] -> ntk_OrExpr1 : SHIFT .
+			// ntk_OrExpr1 ntk_Identifier [ ttk_Pipe ] -> ntk_OrExpr1 : SHIFT .
+			// ntk_Rhs1 [ ttk_Pipe ] -> ntk_Rule1 : SHIFT .
+			// ntk_Rule1 ntk_Rhs1 [ ttk_Pipe ] -> ntk_Rule1 : SHIFT .
 
 			act = parsing.NewShiftAction()
+		case ttk_Rule1:
+			// [ ttk_Rule1 ] ntk_Rhs1 ttk_Equal ttk_LowercaseId -> ntk_Rule : REDUCE .
+
+			act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Rule, []token_type{ttk_Rule1, ntk_Rhs1, ttk_Equal, ttk_LowercaseId}))
+		case ttk_Semicolon:
+			// [ ttk_Semicolon ] ntk_Rhs1 ttk_Equal ttk_LowercaseId -> ntk_Rule : REDUCE .
+
+			act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Rule, []token_type{ttk_Semicolon, ntk_Rhs1, ttk_Equal, ttk_LowercaseId}))
 		case ttk_UppercaseId:
-			if lookahead == nil || lookahead.Type != ttk_Equal {
-				// [ ttk_UppercaseId ] -> ntk_Identifier : REDUCE .
+			// [ ttk_UppercaseId ] -> ntk_Identifier : REDUCE .
 
-				act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Identifier, []token_type{ttk_UppercaseId}))
-			} else {
-				// ntk_RuleLine ntk_RhsCls ttk_Equal [ ttk_UppercaseId ] -> ntk_Rule : SHIFT .
-
-				act = parsing.NewShiftAction()
-			}
+			act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Identifier, []token_type{ttk_UppercaseId}))
 		default:
 			return nil, fmt.Errorf("unexpected token: %s", top1.String())
 		}

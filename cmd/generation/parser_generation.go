@@ -1,6 +1,8 @@
 package generation
 
 import (
+	"fmt"
+
 	ggen "github.com/PlayerR9/go-generator/generator"
 
 	pkg "github.com/PlayerR9/SLParser/cmd/pkg"
@@ -29,6 +31,8 @@ func init() {
 	tmp.AddDoFunc(func(g *ParserGen) error {
 		table := g.Table.GetTable()
 
+		delete(table, "ntk_Source")
+
 		g.Rules = make(map[string][2][]string)
 
 		for symbol, items := range table {
@@ -45,7 +49,11 @@ func init() {
 	})
 
 	tmp.AddDoFunc(func(g *ParserGen) error {
-		for key, items := range g.Table.GetTable() {
+		table := g.Table.GetTable()
+
+		delete(table, "ntk_Source")
+
+		for key, items := range table {
 			if len(items) == 1 {
 				x := g.Rules[key]
 
@@ -70,6 +78,8 @@ func init() {
 				}
 
 				g.Rules[key] = x
+			} else {
+				return fmt.Errorf("lhs has no items: %q", key)
 			}
 		}
 
@@ -104,14 +114,13 @@ func init() {
 		var act parsing.Actioner
 
 		switch top1.Type {
-		{{- range $key, $values := .Rules }}{{- if ne $key "ntk_Source" }}
+		{{- range $key, $values := .Rules }}
 		case {{ $key }}:
 			{{- range $index, $element := ( index $values 0 ) }}
 			// {{ $element }}
 			{{- end }}
 
-			{{ index $values 1 0 }}
-		{{- end }}
+			{{ index (index $values 1) 0 }}
 		{{- end }}
 		default:
 			return nil, fmt.Errorf("unexpected token: %s", top1.String())

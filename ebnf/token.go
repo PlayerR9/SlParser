@@ -8,19 +8,21 @@ const (
 	etk_EOF token_type = iota
 
 	ttk_ClParen
-	ttk_Dot
 	ttk_Equal
 	ttk_LowercaseId
 	ttk_OpParen
 	ttk_Pipe
+	ttk_Rule1
+	ttk_Semicolon
 	ttk_UppercaseId
 
 	ntk_Identifier
 	ntk_OrExpr
+	ntk_OrExpr1
 	ntk_Rhs
-	ntk_RhsCls
+	ntk_Rhs1
 	ntk_Rule
-	ntk_RuleLine
+	ntk_Rule1
 	ntk_Source
 	ntk_Source1
 )
@@ -32,11 +34,11 @@ func (t token_type) String() string {
 		// Add here your custom token names.
 
 		"close parenthesis",
-		"dot",
 		"equal sign",
 		"lowercase identifier",
 		"open parenthesis",
 		"pipe",
+		"semicolon",
 		"uppercase identifier",
 
 		"Identifier",
@@ -56,20 +58,21 @@ func (t token_type) GoString() string {
 		"etk_EOF",
 
 		"ttk_ClParen",
-		"ttk_Dot",
 		"ttk_Equal",
 		"ttk_LowercaseId",
-		"ttk_Newline",
 		"ttk_OpParen",
 		"ttk_Pipe",
+		"ttk_Rule1",
+		"ttk_Semicolon",
 		"ttk_UppercaseId",
 
 		"ntk_Identifier",
 		"ntk_OrExpr",
+		"ntk_OrExpr1",
 		"ntk_Rhs",
-		"ntk_RhsCls",
+		"ntk_Rhs1",
 		"ntk_Rule",
-		"ntk_RuleLine",
+		"ntk_Rule1",
 		"ntk_Source",
 		"ntk_Source1",
 	}[t]

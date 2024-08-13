@@ -114,3 +114,31 @@ cl_paren OrExpr [ op_paren ] -> Rhs : shift .
 
 [ lowercase_id ] -> Identifier : reduce .
 `
+
+
+source : source1 EOF ;
+source1
+   : rule
+   | rule source1
+   ;
+rule : UPPERCASE_ID EQUAL rhs1 DOT ;
+rule : UPPERCASE_ID EQUAL rhs1 rule1 ;
+rule1
+   : PIPE rhs1
+   | PIPE rhs1 rule1
+   ; 
+rhs1
+   : rhs
+   | rhs rhs1
+   ;
+rhs
+   : identifier
+   | OP_PAREN orExpr CL_PAREN
+   ;
+orExpr : identifier orExpr1 ;
+orExpr1
+   : PIPE identifier
+   | PIPE identifier orExpr1
+   ;
+identifier : UPPERCASE_ID ;
+identifier : LOWERCASE_ID ;

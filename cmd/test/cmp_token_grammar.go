@@ -6,23 +6,21 @@ type token_type int
 
 const (
 	etk_EOF token_type = iota
-	
+
 	ttk_ClParen
-	ttk_Dot
 	ttk_Equal
 	ttk_LowercaseId
 	ttk_OpParen
-	ttk_Or
 	ttk_Pipe
 	ttk_Rule1
+	ttk_Semicolon
 	ttk_UppercaseId
-	ttk_Xpr1
-	
+
 	ntk_Identifier
 	ntk_OrExpr
 	ntk_OrExpr1
 	ntk_Rhs
-	ntk_RhsCls
+	ntk_Rhs1
 	ntk_Rule
 	ntk_Rule1
 	ntk_Source
@@ -41,23 +39,21 @@ func (t token_type) String() string {
 func (t token_type) GoString() string {
 	return [...]string{
 		"etk_EOF",
-		
+
 		"ttk_ClParen",
-		"ttk_Dot",
 		"ttk_Equal",
 		"ttk_LowercaseId",
 		"ttk_OpParen",
-		"ttk_Or",
 		"ttk_Pipe",
 		"ttk_Rule1",
+		"ttk_Semicolon",
 		"ttk_UppercaseId",
-		"ttk_Xpr1",
-		
+
 		"ntk_Identifier",
 		"ntk_OrExpr",
 		"ntk_OrExpr1",
 		"ntk_Rhs",
-		"ntk_RhsCls",
+		"ntk_Rhs1",
 		"ntk_Rule",
 		"ntk_Rule1",
 		"ntk_Source",
