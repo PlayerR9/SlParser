@@ -4,9 +4,67 @@ import (
 	"slices"
 
 	"github.com/PlayerR9/SLParser/cmd/pkg"
-	uslc "github.com/PlayerR9/SLParser/util/slices"
+	uslc "github.com/PlayerR9/go-commons/cmp"
 	ggen "github.com/PlayerR9/go-generator/generator"
 )
+
+/*
+func X(root *) {
+	0:Node[Source]
+    └── 0:Node[Rule ("Source")]
+    │   ├── 9:Node[Identifier ("Source1")]
+    │   └── 17:Node[Identifier ("EOF")]
+    └── 23:Node[Rule ("Source1")]
+    │   └── 33:Node[Identifier ("Rule")]
+    └── 40:Node[Rule ("Source1")]
+    │   ├── 50:Node[Identifier ("Rule")]
+    │   ├── 55:Node[Identifier ("newline")]
+    │   └── 63:Node[Identifier ("Source1")]
+    └── 73:Node[Rule ("Rule")]
+    │   ├── 80:Node[Identifier ("uppercase_id")]
+    │   ├── 93:Node[Identifier ("equal")]
+    │   ├── 99:Node[Identifier ("RhsCls")]
+    │   └── 106:Node[Identifier ("dot")]
+    └── 112:Node[Rule ("Rule")]
+    │   ├── 119:Node[Identifier ("uppercase_id")]
+    │   ├── 132:Node[Identifier ("newline")]
+    │   ├── 140:Node[Identifier ("equal")]
+    │   ├── 146:Node[Identifier ("RhsCls")]
+    │   └── 153:Node[Identifier ("RuleLine")]
+    └── 164:Node[Rule ("RuleLine")]
+    │   ├── 175:Node[Identifier ("newline")]
+    │   ├── 183:Node[Identifier ("pipe")]
+    │   ├── 188:Node[Identifier ("RhsCls")]
+    │   └── 195:Node[Identifier ("RuleLine")]
+    └── 206:Node[Rule ("RuleLine")]
+    │   ├── 217:Node[Identifier ("newline")]
+    │   └── 225:Node[Identifier ("dot")]
+    └── 231:Node[Rule ("RhsCls")]
+    │   └── 240:Node[Identifier ("Rhs")]
+    └── 246:Node[Rule ("RhsCls")]
+    │   ├── 255:Node[Identifier ("Rhs")]
+    │   └── 259:Node[Identifier ("RhsCls")]
+    └── 268:Node[Rule ("Rhs")]
+    │   └── 274:Node[Identifier ("Identifier")]
+    └── 287:Node[Rule ("Rhs")]
+    │   ├── 293:Node[Identifier ("op_paren")]
+    │   ├── 302:Node[Identifier ("OrExpr")]
+    │   └── 309:Node[Identifier ("cl_paren")]
+    └── 320:Node[Rule ("OrExpr")]
+    │   ├── 329:Node[Identifier ("Identifier")]
+    │   ├── 340:Node[Identifier ("pipe")]
+    │   └── 345:Node[Identifier ("Identifier")]
+    └── 358:Node[Rule ("OrExpr")]
+    │   ├── 367:Node[Identifier ("Identifier")]
+    │   ├── 378:Node[Identifier ("pipe")]
+    │   └── 383:Node[Identifier ("OrExpr")]
+    └── 392:Node[Rule ("Identifier")]
+    │   └── 405:Node[Identifier ("uppercase_id")]
+    └── 420:Node[Rule ("Identifier")]
+        └── 433:Node[Identifier ("lowercase_id")]
+}
+
+*/
 
 type ASTGen struct {
 	PackageName string
@@ -107,5 +165,5 @@ func init() {
 	// Add here your custom AST builder rules...
 	{{- range $index, $entry := .Entries }}
 		{{ $entry }}
-	{{ end }}
+	{{- end }}
 }`

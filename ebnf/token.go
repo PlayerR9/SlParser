@@ -11,7 +11,6 @@ const (
 	ttk_Dot
 	ttk_Equal
 	ttk_LowercaseId
-	ttk_Newline
 	ttk_OpParen
 	ttk_Pipe
 	ttk_UppercaseId
@@ -36,7 +35,6 @@ func (t token_type) String() string {
 		"dot",
 		"equal sign",
 		"lowercase identifier",
-		"newline",
 		"open parenthesis",
 		"pipe",
 		"uppercase identifier",

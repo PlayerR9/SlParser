@@ -70,7 +70,7 @@ func init() {
 	}
 
 	lex_newlines = func(scanner io.RuneScanner) ([]rune, error) {
-		// ([\r]?[\n])+
+		// [\r]?[\n]
 
 		c1, _, err := scanner.ReadRune()
 		if err != nil {
@@ -193,7 +193,7 @@ func init() {
 		}
 
 		if len(chars) != 0 {
-			return grammar.NewToken(ttk_Newline, "\n", at, nil), nil
+			return nil, nil
 		}
 
 		chars, err = lexing.RightLex(l, frag_uppercases)

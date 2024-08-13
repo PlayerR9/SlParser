@@ -11,17 +11,20 @@ const (
 	ttk_Dot
 	ttk_Equal
 	ttk_LowercaseId
-	ttk_Newline
 	ttk_OpParen
+	ttk_Or
 	ttk_Pipe
+	ttk_Rule1
 	ttk_UppercaseId
+	ttk_Xpr1
 	
 	ntk_Identifier
 	ntk_OrExpr
+	ntk_OrExpr1
 	ntk_Rhs
 	ntk_RhsCls
 	ntk_Rule
-	ntk_RuleLine
+	ntk_Rule1
 	ntk_Source
 	ntk_Source1
 )
@@ -43,17 +46,20 @@ func (t token_type) GoString() string {
 		"ttk_Dot",
 		"ttk_Equal",
 		"ttk_LowercaseId",
-		"ttk_Newline",
 		"ttk_OpParen",
+		"ttk_Or",
 		"ttk_Pipe",
+		"ttk_Rule1",
 		"ttk_UppercaseId",
+		"ttk_Xpr1",
 		
 		"ntk_Identifier",
 		"ntk_OrExpr",
+		"ntk_OrExpr1",
 		"ntk_Rhs",
 		"ntk_RhsCls",
 		"ntk_Rule",
-		"ntk_RuleLine",
+		"ntk_Rule1",
 		"ntk_Source",
 		"ntk_Source1",
 	}[t]

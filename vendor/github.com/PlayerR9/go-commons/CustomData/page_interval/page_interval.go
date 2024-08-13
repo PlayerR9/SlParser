@@ -1,24 +1,126 @@
 // Package PageInterval provides a data structure for managing page intervals.
-package PageInterval
+package page_interval
 
 import (
-	"io"
+	"slices"
 	"sort"
 	"strings"
 
 	gcers "github.com/PlayerR9/go-commons/errors"
+	itr "github.com/PlayerR9/go-commons/iterator"
 )
+
+// PageIterator represents an iterator that iterates over a collection of
+// page ranges.
+type PageIterator struct {
+	// intervals is the collection of page ranges.
+	intervals []PageRange
+
+	// sub_iter is the sub iterator of the current page range.
+	sub_iter itr.Iterable
+
+	// current is the current page number of the iterator.
+	current int
+}
+
+// Apply implements the iterator.Iterable interface.
+//
+// The argument passed to the function is the current page number of the
+// iterator and it is of type int.
+func (it *PageIterator) Apply(fn itr.IteratorFunc) error {
+	if it.sub_iter == nil {
+		if it.current >= len(it.intervals) {
+			return itr.ErrExausted
+		}
+
+		it.sub_iter = it.intervals[it.current].Iterator()
+	}
+
+	for {
+		err := it.sub_iter.Apply(fn)
+		if err == nil {
+			return nil
+		} else if err != itr.ErrExausted {
+			return err
+		}
+
+		it.current++
+
+		if it.current >= len(it.intervals) {
+			break
+		}
+
+		it.sub_iter = it.intervals[it.current].Iterator()
+	}
+
+	return itr.ErrExausted
+}
+
+// Reset implements the iterator.Iterable interface.
+func (it *PageIterator) Reset() {
+	it.current = 0
+	it.sub_iter = nil
+}
+
+// PageReverseIterator represents an iterator that iterates over a
+// collection of page ranges in reverse order.
+type PageReverseIterator struct {
+	// intervals is the collection of page ranges.
+	intervals []PageRange
+
+	// sub_iter is the sub iterator of the current page range.
+	sub_iter itr.Iterable
+
+	// current is the current page number of the iterator.
+	current int
+}
+
+// Apply implements the iterator.Iterable interface.
+//
+// The argument passed to the function is the current page number of the
+// iterator and it is of type int.
+func (it *PageReverseIterator) Apply(fn itr.IteratorFunc) error {
+	if it.sub_iter == nil {
+		if it.current < 0 {
+			return itr.ErrExausted
+		}
+
+		it.sub_iter = it.intervals[it.current].ReverseIterator()
+	}
+
+	for {
+		err := it.sub_iter.Apply(fn)
+		if err == nil {
+			return nil
+		} else if err != itr.ErrExausted {
+			return err
+		}
+
+		if it.current < 0 {
+			return itr.ErrExausted
+		}
+
+		it.sub_iter = it.intervals[it.current].ReverseIterator()
+		it.current--
+	}
+}
+
+// Reset implements the iterator.Iterable interface.
+func (it *PageReverseIterator) Reset() {
+	it.current = len(it.intervals) - 1
+	it.sub_iter = nil
+}
 
 // PageInterval represents a collection of page intervals, where each
 // interval is represented by a pair of integers.
 type PageInterval struct {
 	// The 'intervals' field is a slice of integer pairs, where each pair
 	// represents a start and end page number of an interval.
-	intervals []*PageRange
+	intervals []PageRange
 
-	// The 'pageCount' field represents the total number of pages across all
+	// The 'page_count' field represents the total number of pages across all
 	// intervals.
-	pageCount int
+	page_count int
 }
 
 /* // FString is a method of the PageInterval type that returns the formatted
@@ -81,13 +183,12 @@ func (pi *PageInterval) FString(trav *ffs.Traversor, opts ...ffs.Option) error {
 	return nil
 } */
 
-// String is a method of the PageInterval type that returns a string
-// representation of the PageInterval.
-// Each interval is represented as "start : end" separated by a comma.
+// String implements the fmt.Stringer interface.
 //
-// Returns:
-//   - string: A formatted string representation of the PageInterval.
-func (pi *PageInterval) String() string {
+// Format:
+//
+//	<from>:<to>, <from>:<to>, ... // for example, 1:5, 6:10
+func (pi PageInterval) String() string {
 	values := make([]string, 0, len(pi.intervals))
 
 	for _, interval := range pi.intervals {
@@ -97,43 +198,17 @@ func (pi *PageInterval) String() string {
 	return strings.Join(values, ",")
 }
 
-// Iterator is a method of the PageInterval type that returns an iterator for
-// iterating over the pages in the PageInterval.
-//
-// Panics if an error occurs while creating the iterator.
-//
-// Returns:
-//   - *PageIterator: An iterator for iterating over the pages in the PageInterval. Never returns nil.
-func (pi *PageInterval) Iterator() *PageIterator {
+// Iterator implements the iterator.Iterater interface.
+func (pi PageInterval) Iterator() itr.Iterable {
 	return &PageIterator{
 		intervals: pi.intervals,
 		current:   0,
 	}
 }
 
-// PageCount is a method of the PageInterval type that returns the total number
-// of pages across all intervals in the PageInterval.
-//
-// Returns:
-//   - pageCount: The total number of pages across all intervals in the PageInterval.
-func (pi *PageInterval) PageCount() int {
-	return pi.pageCount
-}
-
-// Intervals is a method of the PageInterval type that returns the intervals
-// stored in the PageInterval.
-// Each interval is represented as a pair of integers, where the first integer
-// is the start page number and the second integer is the end page number.
-//
-// Returns:
-//   - []*PageRange: A slice of integer pairs representing the intervals in the
-//     PageInterval.
-func (pi *PageInterval) Intervals() []*PageRange {
-	return pi.intervals
-}
-
 // NewPageInterval creates a new instance of PageInterval with
-// empty intervals and a page count of 0.
+// empty intervals and a page count of 0. This is not necessary as
+// var pi PageInterval is equivalent to NewPageInterval().
 //
 // Returns:
 //   - PageInterval: The new PageInterval.
@@ -150,11 +225,32 @@ func (pi *PageInterval) Intervals() []*PageRange {
 //
 //	fmt.Println(pi.Intervals()) // Output: [[1 5] [10 15]]
 //	fmt.Println(pi.PageCount()) // Output: 11
-func NewPageInterval() *PageInterval {
-	return &PageInterval{
-		intervals: make([]*PageRange, 0),
-		pageCount: 0,
+func NewPageInterval() PageInterval {
+	return PageInterval{
+		intervals:  make([]PageRange, 0),
+		page_count: 0,
 	}
+}
+
+// PageCount is a method of the PageInterval type that returns the total number
+// of pages across all intervals in the PageInterval.
+//
+// Returns:
+//   - int: The total number of pages across all intervals in the PageInterval.
+func (pi PageInterval) PageCount() int {
+	return pi.page_count
+}
+
+// Intervals is a method of the PageInterval type that returns the intervals
+// stored in the PageInterval.
+// Each interval is represented as a pair of integers, where the first integer
+// is the start page number and the second integer is the end page number.
+//
+// Returns:
+//   - []PageRange: A slice of integer pairs representing the intervals in the
+//     PageInterval.
+func (pi PageInterval) Intervals() []PageRange {
+	return pi.intervals
 }
 
 // HasPages is a method of the PageInterval type that checks if the PageInterval
@@ -163,8 +259,8 @@ func NewPageInterval() *PageInterval {
 // Returns:
 //   - bool: A boolean value that is true if the PageInterval has pages, and
 //     false otherwise.
-func (pi *PageInterval) HasPages() bool {
-	return pi.pageCount > 0
+func (pi PageInterval) HasPages() bool {
+	return pi.page_count > 0
 }
 
 // GetFirstPage is a method of the PageInterval type that returns the first
@@ -172,13 +268,13 @@ func (pi *PageInterval) HasPages() bool {
 //
 // Returns:
 //   - int: The first page number in the PageInterval.
-//   - error: An error of type *uc.ErrNoPagesInInterval if no pages have been set.
-func (pi *PageInterval) GetFirstPage() (int, error) {
-	if pi.pageCount <= 0 {
-		return 0, NewErrNoPagesInInterval()
+//   - bool: True if the PageInterval has pages, and false otherwise.
+func (pi PageInterval) GetFirstPage() (int, bool) {
+	if pi.page_count <= 0 {
+		return 0, false
 	}
 
-	return pi.intervals[0].First, nil
+	return pi.intervals[0].first, true
 }
 
 // GetLastPage is a method of the PageInterval type that returns the last
@@ -186,13 +282,13 @@ func (pi *PageInterval) GetFirstPage() (int, error) {
 //
 // Returns:
 //   - int: The last page number in the PageInterval.
-//   - error: An error of type *uc.ErrNoPagesInInterval if no pages have been set.
-func (pi *PageInterval) GetLastPage() (int, error) {
-	if pi.pageCount <= 0 {
-		return 0, NewErrNoPagesInInterval()
+//   - bool: True if the PageInterval has pages, and false otherwise.
+func (pi PageInterval) GetLastPage() (int, bool) {
+	if pi.page_count <= 0 {
+		return 0, false
 	}
 
-	return pi.intervals[len(pi.intervals)-1].Second, nil
+	return pi.intervals[len(pi.intervals)-1].second, true
 }
 
 // AddPage is a method of the PageInterval type that adds a page to the
@@ -222,46 +318,46 @@ func (pi *PageInterval) AddPage(page int) error {
 		)
 	}
 
-	criteriaPageGTE := func(i int) bool {
-		return pi.intervals[i].First >= page
+	criteria_page_gte := func(i int) bool {
+		return pi.intervals[i].first >= page
 	}
 
 	if len(pi.intervals) == 0 {
-		pi.intervals = append(pi.intervals, newPageRange(page, page))
+		pi.intervals = append(pi.intervals, NewPageRange(page, page))
 	} else {
-		insertPos := sort.Search(len(pi.intervals), criteriaPageGTE)
+		insert_pos := sort.Search(len(pi.intervals), criteria_page_gte)
 
-		if insertPos > 0 && pi.intervals[insertPos-1].Second >= page-1 {
-			insertPos--
+		if insert_pos > 0 && pi.intervals[insert_pos-1].second >= page-1 {
+			insert_pos--
 
 			var max int
 
-			if page > pi.intervals[insertPos].Second {
+			if page > pi.intervals[insert_pos].second {
 				max = page
 			} else {
-				max = pi.intervals[insertPos].Second
+				max = pi.intervals[insert_pos].second
 			}
 
-			pi.intervals[insertPos].Second = max
-		} else if insertPos < len(pi.intervals) && pi.intervals[insertPos].First <= page+1 {
+			pi.intervals[insert_pos].second = max
+		} else if insert_pos < len(pi.intervals) && pi.intervals[insert_pos].first <= page+1 {
 			var min int
 
-			if page < pi.intervals[insertPos].First {
+			if page < pi.intervals[insert_pos].first {
 				min = page
 			} else {
-				min = pi.intervals[insertPos].First
+				min = pi.intervals[insert_pos].first
 			}
 
-			pi.intervals[insertPos].First = min
+			pi.intervals[insert_pos].first = min
 		} else {
-			pi.intervals = append(pi.intervals[:insertPos],
-				append([]*PageRange{newPageRange(page, page)}, pi.intervals[insertPos:]...)...,
+			pi.intervals = append(pi.intervals[:insert_pos],
+				append([]PageRange{NewPageRange(page, page)}, pi.intervals[insert_pos:]...)...,
 			)
 		}
 	}
 
-	pi.pageCount++
-	reduce(pi)
+	pi.page_count++
+	pi.reduce()
 
 	return nil
 }
@@ -289,38 +385,38 @@ func (pi *PageInterval) RemovePage(page int) {
 		return // No-op
 	}
 
-	index := pi.findPageInterval(page)
+	index := pi.find_page_interval(page)
 	if index == -1 {
 		return
 	}
 
-	if pi.intervals[index].First == pi.intervals[index].Second {
+	if pi.intervals[index].first == pi.intervals[index].second {
 		pi.intervals = append(pi.intervals[:index], pi.intervals[index+1:]...)
-	} else if pi.intervals[index].First == page {
-		pi.intervals[index].First++
-	} else if pi.intervals[index].Second == page {
-		pi.intervals[index].Second--
+	} else if pi.intervals[index].first == page {
+		pi.intervals[index].first++
+	} else if pi.intervals[index].second == page {
+		pi.intervals[index].second--
 	} else {
-		newIntervals := make([]*PageRange, len(pi.intervals)+1)
+		new_intervals := make([]PageRange, len(pi.intervals)+1)
 
 		// Copy the intervals before the split
-		copy(newIntervals, pi.intervals[:index+1])
+		copy(new_intervals, pi.intervals[:index+1])
 
 		// Modify the interval at the split index
-		newIntervals[index] = newPageRange(pi.intervals[index].First, page-1)
+		new_intervals[index] = NewPageRange(pi.intervals[index].first, page-1)
 
 		// Add the new interval
-		newIntervals[index+1] = newPageRange(page+1, pi.intervals[index].Second)
+		new_intervals[index+1] = NewPageRange(page+1, pi.intervals[index].second)
 
 		// Copy the intervals after the split
-		copy(newIntervals[index+2:], pi.intervals[index+1:])
+		copy(new_intervals[index+2:], pi.intervals[index+1:])
 
-		pi.intervals = newIntervals
+		pi.intervals = new_intervals
 	}
 
-	pi.pageCount--
+	pi.page_count--
 
-	reduce(pi)
+	pi.reduce()
 }
 
 // HasPage is a method of the PageInterval type that checks if the given page
@@ -342,8 +438,8 @@ func (pi *PageInterval) RemovePage(page int) {
 //
 //	hasPage := pi.HasPage(3)
 //	fmt.Println(hasPage) // Output: true
-func (pi *PageInterval) HasPage(page int) bool {
-	return pi.findPageInterval(page) != -1
+func (pi PageInterval) HasPage(page int) bool {
+	return pi.find_page_interval(page) != -1
 }
 
 // AddPagesBetween is a method of the PageInterval type that adds pages between
@@ -430,12 +526,10 @@ func (pi *PageInterval) RemovePagesBetween(first, last int) {
 // PageIntervalReverseIterator for iterating over the intervals in the
 // PageInterval in reverse order.
 //
-// Panics if an error occurs while creating the iterator.
-//
 // Returns:
-//   - uc.Iterater[int]: An iterator for iterating over the intervals in the
-//     PageInterval in reverse order.
-func (pi *PageInterval) ReverseIterator() *PageReverseIterator {
+//   - itr.Iterable: An iterator for iterating over the intervals in the
+//     PageInterval in reverse order. Never returns nil.
+func (pi PageInterval) ReverseIterator() itr.Iterable {
 	return &PageReverseIterator{
 		intervals: pi.intervals,
 		current:   len(pi.intervals) - 1,
@@ -451,107 +545,52 @@ func (pi *PageInterval) ReverseIterator() *PageReverseIterator {
 //
 // Parameters:
 //   - pi: A pointer to the PageInterval to reduce.
-func reduce(pi *PageInterval) {
+func (pi *PageInterval) reduce() {
 	if len(pi.intervals) < 2 {
 		return
 	}
 
-	criteriaSort := func(i, j int) bool {
-		return pi.intervals[i].First < pi.intervals[j].First
+	criteria_sort := func(i, j int) bool {
+		return pi.intervals[i].first < pi.intervals[j].first
 	}
 
-	sort.Slice(pi.intervals, criteriaSort)
+	sort.SliceStable(pi.intervals, criteria_sort)
 
-	mergedIntervals := make([]*PageRange, 0, len(pi.intervals))
-	currentInterval := pi.intervals[0]
+	merged_intervals := make([]PageRange, 0, len(pi.intervals))
+	current_interval := pi.intervals[0]
 
 	for i := 1; i < len(pi.intervals); i++ {
 		nextInterval := pi.intervals[i]
-		if currentInterval.Second >= nextInterval.First-1 {
-			if nextInterval.Second > currentInterval.Second {
-				currentInterval.Second = nextInterval.Second
+		if current_interval.second >= nextInterval.first-1 {
+			if nextInterval.second > current_interval.second {
+				current_interval.second = nextInterval.second
 			}
 		} else {
-			mergedIntervals = append(mergedIntervals, currentInterval)
-			currentInterval = nextInterval
+			merged_intervals = append(merged_intervals, current_interval)
+			current_interval = nextInterval
 		}
 	}
 
-	mergedIntervals = append(mergedIntervals, currentInterval)
-	pi.intervals = mergedIntervals
+	merged_intervals = append(merged_intervals, current_interval)
+	pi.intervals = merged_intervals
 }
 
-type PageIterator struct {
-	intervals []*PageRange
-
-	sub_iter *PageRangeIterator
-
-	current int
-}
-
-func (it *PageIterator) Consume() (int, error) {
-	if it.sub_iter == nil {
-		if it.current >= len(it.intervals) {
-			return -1, io.EOF
-		}
-
-		it.sub_iter = it.intervals[it.current].Iterator()
+// find_page_interval searches for the interval that contains the given page
+// number in the PageInterval.
+//
+// Parameters:
+//   - page: The page number to search for in the PageInterval.
+//
+// Returns:
+//   - int: The index of the interval in the intervals slice if found, otherwise -1.
+func (pi PageInterval) find_page_interval(page int) int {
+	if page < 1 || pi.page_count == 0 {
+		return -1
 	}
 
-	for {
-		value, err := it.sub_iter.Consume()
-		if err == nil {
-			return value, nil
-		}
-
-		it.current++
-
-		if it.current >= len(it.intervals) {
-			return -1, io.EOF
-		}
-
-		it.sub_iter = it.intervals[it.current].Iterator()
-	}
-}
-
-func (it *PageIterator) Reset() {
-	it.current = 0
-	it.sub_iter = nil
-}
-
-type PageReverseIterator struct {
-	intervals []*PageRange
-
-	sub_iter *PageRangeReverseIterator
-
-	current int
-}
-
-func (it *PageReverseIterator) Consume() (int, error) {
-	if it.sub_iter == nil {
-		if it.current < 0 {
-			return -1, io.EOF
-		}
-
-		it.sub_iter = it.intervals[it.current].ReverseIterator()
+	is_page_between := func(pr PageRange) bool {
+		return pr.first <= page && page <= pr.second
 	}
 
-	for {
-		value, err := it.sub_iter.Consume()
-		if err == nil {
-			return value, nil
-		}
-
-		if it.current < 0 {
-			return -1, io.EOF
-		}
-
-		it.sub_iter = it.intervals[it.current].ReverseIterator()
-		it.current--
-	}
-}
-
-func (it *PageReverseIterator) Reset() {
-	it.current = len(it.intervals) - 1
-	it.sub_iter = nil
+	return slices.IndexFunc(pi.intervals, is_page_between)
 }

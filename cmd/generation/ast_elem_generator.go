@@ -7,7 +7,9 @@ import (
 	"text/template"
 
 	"github.com/PlayerR9/SLParser/cmd/pkg"
-	upi "github.com/PlayerR9/SLParser/util/PageInterval"
+	upi "github.com/PlayerR9/go-commons/CustomData/page_interval"
+	itr "github.com/PlayerR9/go-commons/iterator"
+	dbg "github.com/PlayerR9/go-debug/assert"
 )
 
 func aeg_make_target(key string) (string, bool) {
@@ -25,10 +27,11 @@ type AstElemGen struct {
 	Key   string
 	Rules []string
 
-	interval *upi.PageInterval
+	interval upi.PageInterval
 	Expected string
 	Target   string
 	Lengths  []string
+	Cases    string
 }
 
 func (aeg AstElemGen) String() string {
@@ -76,16 +79,16 @@ func (aeg *AstElemGen) if_cond() {
 
 	expected := make([]string, 0, aeg.interval.PageCount())
 
-	iter := aeg.interval.Iterator()
-
-	for {
-		value, err := iter.Consume()
-		if err != nil {
-			break
-		}
+	fn := func(elem any) error {
+		value := dbg.AssertConv[int](elem, "elem")
 
 		expected = append(expected, strconv.Itoa(value))
+
+		return nil
 	}
+
+	err := itr.Iterate(aeg.interval, fn)
+	dbg.AssertErr(err, "iterator.Iterate(aeg.interval, fn)")
 
 	builder.WriteString("[]int{")
 	builder.WriteString(strings.Join(expected, ", "))
@@ -93,6 +96,7 @@ func (aeg *AstElemGen) if_cond() {
 
 	aeg.Expected = builder.String()
 	aeg.Lengths = expected
+	aeg.Cases = NewAstCaseGen(aeg.Target, expected).Generate(2)
 }
 
 const ast_elem_templ string = `
@@ -100,7 +104,28 @@ const ast_elem_templ string = `
 	// {{ $rule }}
 {{- end }}
 
-	parts.Add(func(a *ast.Result[*Node], prev any) (any, error) {
+	{{ if eq (len .Lengths) 1 }}parts.Add(func(a *ast.Result[*Node], prev any) (any, error) {
+		root := prev.(*gr.Token[token_type])
+
+		children, err := ast.ExtractChildren(root)
+		if err != nil {
+			return nil, err
+		}
+		
+		if len(children) != {{ index .Lengths 0 }} {
+			return nil, NewErrInvalidNumberOfChildren({{ .Expected }}, len(children))
+		}
+
+		var sub_nodes []ast.Noder
+
+		// Extract here any desired sub-node...
+
+		n := NewNode({{ .Target }}, "", children[0].At)
+		a.SetNode(&n)
+		_ = a.AppendChildren(sub_nodes)
+
+		return nil, nil
+	}){{ else if gt (len .Lengths) 1 }}parts.Add(func(a *ast.Result[*Node], prev any) (any, error) {
 		root := prev.(*gr.Token[token_type])
 
 		children, err := ast.ExtractChildren(root)
@@ -108,35 +133,14 @@ const ast_elem_templ string = `
 			return nil, err
 		}
 
-		{{ if eq (len .Lengths) 1 }}
-			if len(children) != {{ index .Lengths 0 }} {
-				return nil, NewErrInvalidNumberOfChildren({{ .Expected }}, len(children))
-			}
-
-			var sub_nodes []ast.Noder
-
-			// Extract here any desired sub-node...
-
-			a.SetNode(NewNode({{ .Target }}, "", children[0].At))
-			_ = a.AppendChildren(sub_nodes)
-		{{ else if gt (len .Lengths) 1 }}
-			switch len(children) {
-			{{ range $index, $length := .Lengths }}
-			case {{ $length }}:
-				var sub_nodes []ast.Noder
-
-				// Extract here any desired sub-node...
-
-				a.SetNode(NewNode({{ .Target }}, "", children[0].At))
-				_ = a.AppendChildren(sub_nodes)
-			{{ end }}
-			default:
-				return nil, NewErrInvalidNumberOfChildren({{ .Expected }}, len(children))
-			}
-		{{ end }}
+		switch len(children) {
+		{{ .Cases }}
+		default:
+			return nil, NewErrInvalidNumberOfChildren({{ .Expected }}, len(children))
+		}
 
 		return nil, nil
 	})
-		
+	
 	ast_builder.AddEntry({{ .Key }}, parts.Build())
-	parts.Reset()`
+	parts.Reset(){{ end }}`

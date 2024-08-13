@@ -1,4 +1,4 @@
-package PageInterval
+package page_interval
 
 /* type settingsTable struct {
 	ws  string

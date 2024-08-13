@@ -127,13 +127,6 @@ func (ee *EnumExtractor) Reset() {
 	ee.special_enums = ee.special_enums[:0]
 }
 
-// Copy implements the traverser.Traverser interface.
-//
-// Returns a pointer to itself.
-func (ee EnumExtractor) Copy() tr.Traverser {
-	return &ee
-}
-
 // Apply implements the traverser.Traverser interface.
 func (ee *EnumExtractor) Apply(node tr.TreeNoder) ([]tr.TravData, error) {
 	if node == nil {
@@ -167,7 +160,7 @@ func (ee *EnumExtractor) Apply(node tr.TreeNoder) ([]tr.TravData, error) {
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
 		d := tr.TravData{
 			Node: c,
-			Data: ee.Copy(),
+			Data: ee,
 		}
 
 		data = append(data, d)
