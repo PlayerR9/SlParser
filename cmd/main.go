@@ -39,7 +39,7 @@ func main() {
 		gen.Logger.Printf("Successfully generated tokens: %q", dest)
 	}
 
-	_, err = pkg.RenameNodes.Apply(root)
+	err = pkg.RenameNodes.Apply(root)
 	if err != nil {
 		gen.Logger.Fatalf("Error renaming nodes: %s", err.Error())
 	}

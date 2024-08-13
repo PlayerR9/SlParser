@@ -9,7 +9,7 @@ import (
 	ebnf "github.com/PlayerR9/SLParser/ebnf"
 	gcch "github.com/PlayerR9/go-commons/runes"
 	gcslc "github.com/PlayerR9/go-commons/slices"
-	uast "github.com/PlayerR9/grammar/make"
+	uast "github.com/PlayerR9/grammar/traversing"
 )
 
 // EnumType represents the type of enum.
