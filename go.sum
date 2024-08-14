@@ -6,6 +6,8 @@ github.com/PlayerR9/go-commons v0.1.6 h1:egPiwGH4RvDdQN6FZXkUH4gZkaR9m3uwoVVdBef
 github.com/PlayerR9/go-commons v0.1.6/go.mod h1:KiUBY1LoHPaHh0kJ03VhF2Jkny6cU+Zbwn31ZykKmZI=
 github.com/PlayerR9/go-commons v0.1.7 h1:bwdu23OlN5W+pI4Guwgb9wXiGmaV05wUf988tEW9UJk=
 github.com/PlayerR9/go-commons v0.1.7/go.mod h1:KiUBY1LoHPaHh0kJ03VhF2Jkny6cU+Zbwn31ZykKmZI=
+github.com/PlayerR9/go-commons v0.1.8 h1:PTSmjJN6gXfNJLrtPe10FVtCe3oW6vMsEeOZkpYdchs=
+github.com/PlayerR9/go-commons v0.1.8/go.mod h1:KiUBY1LoHPaHh0kJ03VhF2Jkny6cU+Zbwn31ZykKmZI=
 github.com/PlayerR9/go-debug v0.1.2 h1:0+hj6efkOoo5qIAFL40m0o9MsC0lXkGrhZPG60bCH3M=
 github.com/PlayerR9/go-debug v0.1.2/go.mod h1:yYYZsByI9o+60slzs3Yw3H7LNUjTX0CxQojQ3mbTCcs=
 github.com/PlayerR9/go-generator v0.1.4 h1:Q48rtIvqmdaHUtb866xhmP4syd8u1N0yqj5oxOD3xHc=
@@ -16,6 +18,8 @@ github.com/PlayerR9/go-generator v0.1.6 h1:6xwAtM1o/bp6IPgpdcYHDOTLeuVet827P+XZh
 github.com/PlayerR9/go-generator v0.1.6/go.mod h1:65R4WDxmTwr7QeGTIKOSb+ResfWQd9ioNZgFDUH+GGQ=
 github.com/PlayerR9/go-generator v0.1.7 h1:U6PoZB83wjtIsCT+ZLNZt6eNb7LfVkLpPlyLnzklyy8=
 github.com/PlayerR9/go-generator v0.1.7/go.mod h1:SOzc1ZKc0LxRWPpHwIcq7JK16J/XJ1m8B285rA1019w=
+github.com/PlayerR9/go-generator v0.1.8 h1:L9h9EwbxUq8lXry4VEJY1+KDkLV3mH4YqhHsqKX0VlI=
+github.com/PlayerR9/go-generator v0.1.8/go.mod h1:g3aDphgqMnOBJVHcLe6JxV8R0+Ssvc/F23DoAO29gzA=
 github.com/PlayerR9/grammar v0.1.11 h1:WkjYRv6ifeKccie+IQKktyFefRYdX6xIsot3TLysI+I=
 github.com/PlayerR9/grammar v0.1.11/go.mod h1:fgbQajIrSAw/uT8ihAON6Wg2B1+CrgcIWzZ1SmJRqxg=
 github.com/PlayerR9/grammar v0.1.12 h1:o7/1zuZyn3xhUskg71RQemZCUH/Y9CVpSPPC0Yxeuzc=
@@ -26,5 +30,7 @@ github.com/PlayerR9/grammar v0.1.14 h1:jadwEX5AJEM1ToQHzqXZB/EHngoLQrD5mLWS/39p5
 github.com/PlayerR9/grammar v0.1.14/go.mod h1:uqy3b1bdeFpvatprbqadxMOUJdMAfSCkNC9iEhSLERE=
 github.com/PlayerR9/grammar v0.1.15 h1:fkxGaazRZBBqs0KjxNcVoLqBOgJLostS1NQZSqunMDU=
 github.com/PlayerR9/grammar v0.1.15/go.mod h1:oybQjw6YjkT9VLZUK5pcoXwVhHF7DQ3Jn8/QKToUSzc=
+github.com/PlayerR9/grammar v0.1.16 h1:kyOycH84nOOlUtN0HIQjzyKraHT16SEDpN06y6SxVek=
+github.com/PlayerR9/grammar v0.1.16/go.mod h1:HwszlnVNlSvSRfXlTBHimHsrtZ+7LMtFuoNoATsDALQ=
 golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa h1:ELnwvuAXPNtPk1TJRuGkI9fDTwym6AYBu0qzT8AcHdI=
 golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa/go.mod h1:akd2r19cwCdwSwWeIdzYQGa/EZZyqcOdwWiwj5L5eKQ=

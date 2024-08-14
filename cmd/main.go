@@ -10,6 +10,7 @@ import (
 	pkg "github.com/PlayerR9/SLParser/cmd/pkg"
 	ebnf "github.com/PlayerR9/SLParser/ebnf"
 	"github.com/PlayerR9/grammar"
+	grd "github.com/PlayerR9/grammar/displayer"
 	tr "github.com/PlayerR9/grammar/traversing"
 )
 
@@ -28,7 +29,7 @@ func main() {
 
 	root, err := ebnf.Parser.Parse(data)
 	if err != nil {
-		fmt.Println(grammar.DisplayError(data, err))
+		fmt.Println(grd.DisplayError(data, err))
 
 		return
 	}

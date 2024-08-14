@@ -2,13 +2,14 @@
 package test
 
 import (
+	gccdm "github.com/PlayerR9/go-commons/CustomData/matcher"
 	"github.com/PlayerR9/grammar/grammar"
 	"github.com/PlayerR9/grammar/lexing"
 )
 
 var (
 	// matcher is the matcher of the grammar.
-	matcher lexing.Matcher[token_type]
+	matcher gccdm.Matcher[token_type]
 )
 
 func init() {
