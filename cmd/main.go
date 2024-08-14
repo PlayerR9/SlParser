@@ -25,7 +25,8 @@ func main() {
 		gen.Logger.Fatalf("Error reading file: %s", err.Error())
 	}
 
-	ebnf.Parser.SetDebug(grammar.ShowTree | grammar.ShowAst | grammar.ShowParsing)
+	ebnf.Parser.SetDebug(grammar.ShowTree | grammar.ShowAst | grammar.ShowLex)
+	// ebnf.Parser.SetDebug(grammar.ShowTree | grammar.ShowAst | grammar.ShowParsing)
 
 	root, err := ebnf.Parser.Parse(data)
 	if err != nil {
