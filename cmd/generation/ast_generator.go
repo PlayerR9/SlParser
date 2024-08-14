@@ -154,14 +154,10 @@ func (t NodeType) String() string {
 
 var (
 	// ast_builder is the AST builder of the parser.
-	ast_builder *ast.Make[*Node, token_type]
+	ast_builder ast.Make[*Node, token_type]
 )
 
 func init() {
-	ast_builder = ast.NewMake[*Node, token_type]()
-
-	parts := ast.NewPartsBuilder[*Node]()
-
 	// Add here your custom AST builder rules...
 	{{- range $index, $entry := .Entries }}
 		{{ $entry }}

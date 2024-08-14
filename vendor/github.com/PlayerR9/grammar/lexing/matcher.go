@@ -10,9 +10,9 @@ import (
 
 	gcers "github.com/PlayerR9/go-commons/errors"
 	gcch "github.com/PlayerR9/go-commons/runes"
-	gr "github.com/PlayerR9/grammar/grammar"
-
 	gcslc "github.com/PlayerR9/go-commons/slices"
+	gcstr "github.com/PlayerR9/go-commons/strings"
+	gr "github.com/PlayerR9/grammar/grammar"
 )
 
 // MatchRule is a rule to match.
@@ -22,6 +22,9 @@ type MatchRule[S gr.TokenTyper] struct {
 
 	// chars are the characters to match.
 	chars []rune
+
+	// should_skip is true if the rule should be skipped.
+	should_skip bool
 }
 
 // CharAt returns the character at the given index.
@@ -35,6 +38,90 @@ func (r *MatchRule[S]) CharAt(at int) (rune, bool) {
 	}
 
 	return r.chars[at], true
+}
+
+// Matched is the matched result.
+type Matched[S gr.TokenTyper] struct {
+	// symbol is the matched symbol.
+	symbol *S
+
+	// chars are the matched characters.
+	chars []rune
+
+	// should_skip is true if the rule should be skipped.
+	should_skip bool
+}
+
+// new_err_matched creates a new matched with an error.
+//
+// Parameters:
+//   - chars: The matched characters.
+//   - should_skip: True if the rule should be skipped.
+//
+// Returns:
+//   - Matched: The new matched with an error.
+func new_err_matched[S gr.TokenTyper](chars []rune, should_skip bool) Matched[S] {
+	return Matched[S]{
+		symbol:      nil,
+		chars:       chars,
+		should_skip: should_skip,
+	}
+}
+
+// new_matched creates a new matched.
+//
+// Parameters:
+//   - symbol: The matched symbol.
+//   - chars: The matched characters.
+//   - should_skip: True if the rule should be skipped.
+//
+// Returns:
+//   - Matched: The new matched.
+func new_matched[S gr.TokenTyper](symbol S, chars []rune, should_skip bool) Matched[S] {
+	return Matched[S]{
+		symbol:      &symbol,
+		chars:       chars,
+		should_skip: should_skip,
+	}
+}
+
+// GetMatch returns the matched symbol and the matched characters.
+//
+// Returns:
+//   - S: The matched symbol.
+//   - string: The matched characters.
+func (m Matched[S]) GetMatch() (S, string) {
+	if m.symbol == nil {
+		return S(0), ""
+	}
+
+	symbol := *m.symbol
+
+	return symbol, string(m.chars)
+}
+
+// GetChars returns the matched characters.
+//
+// Returns:
+//   - []rune: The matched characters.
+func (m *Matched[S]) GetChars() []rune {
+	return m.chars
+}
+
+// IsValidMatch returns true if the matched symbol is not nil.
+//
+// Returns:
+//   - bool: True if the matched symbol is not nil, false otherwise.
+func (m *Matched[S]) IsValidMatch() bool {
+	return m.symbol != nil
+}
+
+// IsShouldSkip returns true if the rule should be skipped.
+//
+// Returns:
+//   - bool: True if the rule should be skipped, false otherwise.
+func (m *Matched[S]) IsShouldSkip() bool {
+	return m.should_skip
 }
 
 // Matcher is the matcher of the grammar.
@@ -58,12 +145,21 @@ type Matcher[S gr.TokenTyper] struct {
 	chars []rune
 }
 
-// NewMatcher creates a new matcher.
+// NewMatcher creates a new matcher. This is unnecessary since it is
+// equivalent to var matcher Matcher.
 //
 // Returns:
-//   - *Matcher: The new matcher. Never returns nil.
-func NewMatcher[S gr.TokenTyper]() *Matcher[S] {
-	return new(Matcher[S])
+//   - Matcher: The new matcher.
+func NewMatcher[S gr.TokenTyper]() Matcher[S] {
+	return Matcher[S]{}
+}
+
+// IsEmpty checks whether the matcher has at least one rule.
+//
+// Returns:
+//   - bool: True if matcher is empty, false otherwise.
+func (m Matcher[S]) IsEmpty() bool {
+	return len(m.rules) == 0
 }
 
 // find_index finds the index of the rule to match.
@@ -128,6 +224,57 @@ func (m *Matcher[S]) AddToMatch(symbol S, word string) error {
 	return nil
 }
 
+// AddToSkipRule adds a rule to skip.
+//
+// Parameters:
+//   - words: The words to skip.
+//
+// Returns:
+//   - error: An error if the rule to skip is invalid.
+func (m *Matcher[S]) AddToSkipRule(words ...string) error {
+	words = gcstr.FilterNonEmpty(words)
+	if len(words) == 0 {
+		return nil
+	}
+
+	for _, word := range words {
+		var chars []rune
+
+		for at := 0; len(word) > 0; at++ {
+			c, size := utf8.DecodeRuneInString(word)
+			if c == utf8.RuneError {
+				return gcch.NewErrInvalidUTF8Encoding(at)
+			}
+
+			chars = append(chars, c)
+			at += size
+			word = word[size:]
+		}
+
+		rule := &MatchRule[S]{
+			symbol:      S(0),
+			chars:       chars,
+			should_skip: true,
+		}
+
+		idx := m.find_index(chars)
+		if idx == -1 {
+			m.rules = append(m.rules, rule)
+		} else {
+			m.rules[idx] = rule
+		}
+	}
+
+	return nil
+}
+
+// match_first matches the first character of the matcher.
+//
+// Parameters:
+//   - scanner: The scanner to match.
+//
+// Returns:
+//   - error: An error if the first character does not match.
 func (m *Matcher[S]) match_first(scanner io.RuneScanner) error {
 	c, _, err := scanner.ReadRune()
 	if err != nil {
@@ -245,27 +392,18 @@ func (m *Matcher[S]) make_error() error {
 //   - error: An error if the next characters do not match.
 func (m *Matcher[S]) Match(scanner io.RuneScanner) (Matched[S], error) {
 	if scanner == nil {
-		return Matched[S]{
-			symbol: nil,
-			chars:  m.chars,
-		}, gcers.NewErrNilParameter("scanner")
+		return new_err_matched[S](m.chars, false), gcers.NewErrNilParameter("scanner")
 	}
 
 	err := m.match_first(scanner)
 	if err != nil {
-		return Matched[S]{
-			symbol: nil,
-			chars:  m.chars,
-		}, err
+		return new_err_matched[S](m.chars, false), err
 	}
 
 	for {
 		is_done, err := m.filter(scanner)
 		if err != nil {
-			return Matched[S]{
-				symbol: nil,
-				chars:  m.chars,
-			}, err
+			return new_err_matched[S](m.chars, false), err
 		}
 
 		if is_done {
@@ -274,10 +412,7 @@ func (m *Matcher[S]) Match(scanner io.RuneScanner) (Matched[S], error) {
 	}
 
 	if len(m.indices) == 0 {
-		return Matched[S]{
-			symbol: nil,
-			chars:  m.chars,
-		}, m.make_error()
+		return new_err_matched[S](m.chars, false), m.make_error()
 	}
 
 	if len(m.indices) > 1 {
@@ -289,30 +424,29 @@ func (m *Matcher[S]) Match(scanner io.RuneScanner) (Matched[S], error) {
 			words = append(words, string(rule.chars))
 		}
 
-		return Matched[S]{
-			symbol: nil,
-			chars:  m.chars,
-		}, fmt.Errorf("ambiguous match: %s", strings.Join(words, ", "))
+		return new_err_matched[S](m.chars, false), fmt.Errorf("ambiguous match: %s", strings.Join(words, ", "))
 	}
 
 	tmp, ok := m.filter_size(m.indices)
 	if !ok {
-		return Matched[S]{
-			symbol: nil,
-			chars:  m.chars,
-		}, m.make_error()
+		return new_err_matched[S](m.chars, false), m.make_error()
 	}
 
 	m.indices = tmp
 
 	rule := m.rules[m.indices[0]]
 
-	return Matched[S]{
-		symbol: &rule.symbol,
-		chars:  m.chars,
-	}, nil
+	return new_matched(rule.symbol, m.chars, rule.should_skip), nil
 }
 
+// filter_size filters the rules to match.
+//
+// Parameters:
+//   - indices: The indices to filter.
+//
+// Returns:
+//   - []int: The filtered indices.
+//   - bool: True if the indices are valid, false otherwise.
 func (m *Matcher[S]) filter_size(indices []int) ([]int, bool) {
 	f := func(idx int) bool {
 		rule := m.rules[idx]
@@ -322,27 +456,51 @@ func (m *Matcher[S]) filter_size(indices []int) ([]int, bool) {
 	return gcslc.SFSeparateEarly(indices, f)
 }
 
-type Matched[S gr.TokenTyper] struct {
-	symbol *S
-	chars  []rune
-}
+// GetWords returns the words of the matcher.
+//
+// Returns:
+//   - []string: The words of the matcher.
+func (m *Matcher[S]) GetWords() []string {
+	var words []string
 
-func (m *Matched[S]) GetMatch() (S, string) {
-	if m.symbol == nil {
-		return S(0), ""
+	for _, rule := range m.rules {
+		words = append(words, string(rule.chars))
 	}
 
-	symbol := *m.symbol
-
-	return symbol, string(m.chars)
+	return words
 }
 
-func (m *Matched[S]) GetChars() []rune {
-	return m.chars
+// GetRuleNames returns the names of the rules of the matcher.
+//
+// Returns:
+//   - []string: The names of the rules of the matcher.
+func (m Matcher[S]) GetRuleNames() []string {
+	var names []string
+
+	for _, rule := range m.rules {
+		word := rule.symbol.String()
+
+		pos, ok := slices.BinarySearch(names, word)
+		if !ok {
+			names = slices.Insert(names, pos, word)
+		}
+	}
+
+	return names
 }
 
-func (m *Matched[S]) IsValidMatch() bool {
-	return m.symbol != nil
+// HasSkipped checks whether the matcher has skipped any characters.
+//
+// Returns:
+//   - bool: True if the matcher has skipped any characters, false otherwise.
+func (m Matcher[S]) HasSkipped() bool {
+	for _, rule := range m.rules {
+		if rule.should_skip {
+			return true
+		}
+	}
+
+	return false
 }
 
 var (
@@ -408,14 +566,4 @@ func RightLex(scanner io.RuneScanner, lex_f LexFunc) ([]rune, error) {
 	}
 
 	return chars, nil
-}
-
-func (m *Matcher[S]) GetWords() []string {
-	var words []string
-
-	for _, rule := range m.rules {
-		words = append(words, string(rule.chars))
-	}
-
-	return words
 }

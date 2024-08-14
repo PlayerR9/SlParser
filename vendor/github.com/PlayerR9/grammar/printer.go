@@ -2,6 +2,7 @@ package grammar
 
 import (
 	"bytes"
+	"errors"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -9,6 +10,7 @@ import (
 	gfch "github.com/PlayerR9/go-commons/Formatting/runes"
 	gcby "github.com/PlayerR9/go-commons/bytes"
 	gcint "github.com/PlayerR9/go-commons/ints"
+	dbg "github.com/PlayerR9/go-debug/assert"
 	"github.com/PlayerR9/grammar/lexing"
 	"github.com/PlayerR9/grammar/parsing"
 )
@@ -82,18 +84,12 @@ type PrintSettings struct {
 //
 // Returns:
 //   - []byte: The arrow data.
-func (s *PrintSettings) make_arrow(faulty_line []byte, start_pos int) []byte {
+func (s *PrintSettings) make_arrow(faulty_line []byte, start_pos int) ([]byte, error) {
 	var buffer bytes.Buffer
 
 	buffer.Grow(len(faulty_line))
 
-	var first_tab []byte
-
-	if s.tab_size > 0 {
-		first_tab = bytes.Repeat([]byte{' '}, s.tab_size)
-	} else {
-		first_tab = []byte{'\t'}
-	}
+	first_tab := gcby.FixTabSize(s.tab_size, []byte{' '})
 
 	for i := 0; i < start_pos; i++ {
 		if faulty_line[i] == '\t' {
@@ -105,6 +101,17 @@ func (s *PrintSettings) make_arrow(faulty_line []byte, start_pos int) []byte {
 
 	if s.delta < 0 {
 		faulty_line = faulty_line[start_pos:]
+
+		dbg.Assert(len(faulty_line) > 0, "faulty_line is empty; this should never happen")
+
+		r, size := utf8.DecodeRune(faulty_line)
+		faulty_line = faulty_line[size:]
+
+		if r == utf8.RuneError {
+			return nil, errors.New("invalid utf8 sequence")
+		}
+
+		buffer.WriteRune('^')
 
 		for len(faulty_line) > 0 {
 			r, size := utf8.DecodeRune(faulty_line)
@@ -121,13 +128,7 @@ func (s *PrintSettings) make_arrow(faulty_line []byte, start_pos int) []byte {
 			buffer.WriteRune('^')
 		}
 	} else {
-		var second_tab []byte
-
-		if s.tab_size > 0 {
-			second_tab = bytes.Repeat([]byte{'~'}, s.tab_size)
-		} else {
-			second_tab = []byte{'\t'}
-		}
+		second_tab := gcby.FixTabSize(s.tab_size, []byte{'~'})
 
 		for i := start_pos; i < start_pos+s.delta; i++ {
 			if faulty_line[i] != '\t' {
@@ -138,7 +139,7 @@ func (s *PrintSettings) make_arrow(faulty_line []byte, start_pos int) []byte {
 		}
 	}
 
-	return buffer.Bytes()
+	return buffer.Bytes(), nil
 }
 
 // PrintSyntaxError is a helper function that prints the syntax error.
@@ -202,7 +203,8 @@ func PrintSyntaxError(data []byte, start_pos int, opts ...PrintOption) []byte {
 		}
 	}
 
-	arrow_data := s.make_arrow(faulty_line, start_pos-len(before))
+	arrow_data, err := s.make_arrow(faulty_line, start_pos-len(before))
+	dbg.AssertErr(err, "PrintSettings.make_arrow(%q, %d)", string(faulty_line), start_pos-len(before))
 
 	before = gcby.LimitReverseLines(before, s.prev_lines)
 	after = gcby.LimitLines(after, s.next_lines)
@@ -286,9 +288,9 @@ func DisplayError(data []byte, err error, opts ...PrintOption) string {
 		x, y := DetermineCoords(data, reason.StartPos)
 
 		builder.WriteString("Lexing error at the ")
-		builder.WriteString(gcint.GetOrdinalSuffix(x))
+		builder.WriteString(gcint.GetOrdinalSuffix(x + 1))
 		builder.WriteString(" character of the ")
-		builder.WriteString(gcint.GetOrdinalSuffix(y))
+		builder.WriteString(gcint.GetOrdinalSuffix(y + 1))
 		builder.WriteString(" line:")
 		builder.WriteRune('\n')
 		builder.WriteRune('\t')

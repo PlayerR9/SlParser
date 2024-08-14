@@ -415,3 +415,27 @@ func TrimEmpty(values []string) []string {
 
 	return values
 }
+
+// FilterNonEmpty removes empty strings from a slice of strings.
+//
+// Parameters:
+//   - values: The slice of strings to trim.
+//
+// Returns:
+//   - []string: The slice of strings with empty strings removed.
+func FilterNonEmpty(values []string) []string {
+	if len(values) == 0 {
+		return nil
+	}
+
+	var top int
+
+	for i := 0; i < len(values); i++ {
+		if values[i] != "" {
+			values[top] = values[i]
+			top++
+		}
+	}
+
+	return values[:top:top]
+}

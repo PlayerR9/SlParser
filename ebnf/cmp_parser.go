@@ -99,7 +99,7 @@ func init() {
 			switch top2.Type {
 			case ttk_Equal:
 				// ttk_Semicolon [ ntk_Rhs1 ] ttk_Equal ttk_LowercaseId -> ntk_Rule : SHIFT .
-				// ttk_Rule1 [ ntk_Rhs1 ] ttk_Equal ttk_LowercaseId -> ntk_Rule : SHIFT .
+				// ntk_Rule1 [ ntk_Rhs1 ] ttk_Equal ttk_LowercaseId -> ntk_Rule : SHIFT .
 
 				act = parsing.NewShiftAction()
 			case ttk_Pipe:
@@ -130,9 +130,30 @@ func init() {
 				act = parsing.NewShiftAction()
 			}
 		case ntk_Rule1:
-			// [ ntk_Rule1 ] ntk_Rhs1 ttk_Pipe -> ntk_Rule1 : REDUCE .
+			top2, ok := p.Pop()
+			if !ok {
+				return nil, parsing.NewErrUnexpectedToken(&top1.Type, nil, ntk_Rhs1)
+			} else if top2.Type != ntk_Rhs1 {
+				return nil, parsing.NewErrUnexpectedToken(&top1.Type, &top2.Type, ntk_Rhs1)
+			}
 
-			act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Rule1, []token_type{ntk_Rule1, ntk_Rhs1, ttk_Pipe}))
+			top3, ok := p.Pop()
+			if !ok {
+				return nil, parsing.NewErrUnexpectedToken(&top2.Type, nil, ttk_Pipe, ttk_Equal)
+			}
+
+			switch top3.Type {
+			case ttk_Pipe:
+				// [ ntk_Rule1 ] ntk_Rhs1 ttk_Pipe -> ntk_Rule1 : REDUCE .
+
+				act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Rule1, []token_type{ntk_Rule1, ntk_Rhs1, ttk_Pipe}))
+			case ttk_Equal:
+				// [ ntk_Rule1 ] ntk_Rhs1 ttk_Equal ttk_LowercaseId -> ntk_Rule : REDUCE .
+
+				act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Rule, []token_type{ntk_Rule1, ntk_Rhs1, ttk_Equal, ttk_LowercaseId}))
+			default:
+				return nil, parsing.NewErrUnexpectedToken(&top2.Type, &top3.Type, ttk_Pipe, ttk_Equal)
+			}
 		case ntk_Source1:
 			top2, ok := p.Pop()
 			if !ok || top2.Type != ntk_Rule {
@@ -150,7 +171,7 @@ func init() {
 			act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Rhs, []token_type{ttk_ClParen, ntk_OrExpr, ttk_OpParen}))
 		case ttk_Equal:
 			// ttk_Semicolon ntk_Rhs1 [ ttk_Equal ] ttk_LowercaseId -> ntk_Rule : SHIFT .
-			// ttk_Rule1 ntk_Rhs1 [ ttk_Equal ] ttk_LowercaseId -> ntk_Rule : SHIFT .
+			// ntk_Rule1 ntk_Rhs1 [ ttk_Equal ] ttk_LowercaseId -> ntk_Rule : SHIFT .
 
 			act = parsing.NewShiftAction()
 		case ttk_LowercaseId:
@@ -160,7 +181,7 @@ func init() {
 				act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Identifier, []token_type{ttk_LowercaseId}))
 			} else {
 				// ttk_Semicolon ntk_Rhs1 ttk_Equal [ ttk_LowercaseId ] -> ntk_Rule : SHIFT .
-				// ttk_Rule1 ntk_Rhs1 ttk_Equal [ ttk_LowercaseId ] -> ntk_Rule : SHIFT .
+				// ntk_Rule1 ntk_Rhs1 ttk_Equal [ ttk_LowercaseId ] -> ntk_Rule : SHIFT .
 
 				act = parsing.NewShiftAction()
 			}
@@ -175,10 +196,6 @@ func init() {
 			// ntk_Rule1 ntk_Rhs1 [ ttk_Pipe ] -> ntk_Rule1 : SHIFT .
 
 			act = parsing.NewShiftAction()
-		case ttk_Rule1:
-			// [ ttk_Rule1 ] ntk_Rhs1 ttk_Equal ttk_LowercaseId -> ntk_Rule : REDUCE .
-
-			act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Rule, []token_type{ttk_Rule1, ntk_Rhs1, ttk_Equal, ttk_LowercaseId}))
 		case ttk_Semicolon:
 			// [ ttk_Semicolon ] ntk_Rhs1 ttk_Equal ttk_LowercaseId -> ntk_Rule : REDUCE .
 

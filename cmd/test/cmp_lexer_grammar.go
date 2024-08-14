@@ -8,12 +8,10 @@ import (
 
 var (
 	// matcher is the matcher of the grammar.
-	matcher *lexing.Matcher[token_type]
+	matcher lexing.Matcher[token_type]
 )
 
 func init() {
-	matcher = lexing.NewMatcher[token_type]()
-
 	// Add here your custom matcher rules.
 }
 
@@ -25,7 +23,7 @@ var (
 func init() {
 	lex_one := func(l *lexing.Lexer[token_type]) (*grammar.Token[token_type], error) {
 		// Lex here anything that matcher doesn't handle...
-	
+
 		panic("Implement me!")
 	}
 

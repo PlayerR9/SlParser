@@ -12,7 +12,6 @@ const (
 	ttk_LowercaseId
 	ttk_OpParen
 	ttk_Pipe
-	ttk_Rule1
 	ttk_Semicolon
 	ttk_UppercaseId
 
@@ -43,10 +42,11 @@ func (t token_type) String() string {
 
 		"Identifier",
 		"OR expression",
+		"OR expression (I)",
 		"Right-hand side",
-		"Right-hand side clause",
+		"Right-hand side (I)",
 		"Rule",
-		"Rule line",
+		"Rule (I)",
 		"Source",
 		"Source (I)",
 	}[t]

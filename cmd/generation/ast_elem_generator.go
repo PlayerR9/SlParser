@@ -104,16 +104,14 @@ const ast_elem_templ string = `
 	// {{ $rule }}
 {{- end }}
 
-	{{ if eq (len .Lengths) 1 }}parts.Add(func(a *ast.Result[*Node], prev any) (any, error) {
-		root := prev.(*gr.Token[token_type])
-
+	{{ if eq (len .Lengths) 1 }}ast_builder.AddEntry({{ .Key }}, func(a *ast.Result[*Node], root *gr.Token[token_type]) error {
 		children, err := ast.ExtractChildren(root)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		
 		if len(children) != {{ index .Lengths 0 }} {
-			return nil, NewErrInvalidNumberOfChildren({{ .Expected }}, len(children))
+			return NewErrInvalidNumberOfChildren({{ .Expected }}, len(children))
 		}
 
 		var sub_nodes []ast.Noder
@@ -124,23 +122,18 @@ const ast_elem_templ string = `
 		a.SetNode(&n)
 		_ = a.AppendChildren(sub_nodes)
 
-		return nil, nil
-	}){{ else if gt (len .Lengths) 1 }}parts.Add(func(a *ast.Result[*Node], prev any) (any, error) {
-		root := prev.(*gr.Token[token_type])
-
+		return nil
+	}){{ else if gt (len .Lengths) 1 }}ast_builder.AddEntry({{ .Key }}, func(a *ast.Result[*Node], root *gr.Token[token_type]) error {
 		children, err := ast.ExtractChildren(root)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		switch len(children) {
 		{{ .Cases }}
 		default:
-			return nil, NewErrInvalidNumberOfChildren({{ .Expected }}, len(children))
+			return NewErrInvalidNumberOfChildren({{ .Expected }}, len(children))
 		}
 
-		return nil, nil
-	})
-	
-	ast_builder.AddEntry({{ .Key }}, parts.Build())
-	parts.Reset(){{ end }}`
+		return nil
+	}){{ end }}`

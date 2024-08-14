@@ -35,12 +35,10 @@ import (
 
 var (
 	// matcher is the matcher of the grammar.
-	matcher *lexing.Matcher[token_type]
+	matcher lexing.Matcher[token_type]
 )
 
 func init() {
-	matcher = lexing.NewMatcher[token_type]()
-
 	// Add here your custom matcher rules.
 }
 

@@ -2,7 +2,7 @@
 package ebnf
 
 import (
-	"fmt"
+	"errors"
 	"io"
 	"unicode"
 
@@ -12,20 +12,18 @@ import (
 
 var (
 	// matcher is the matcher of the grammar.
-	matcher *lexing.Matcher[token_type]
+	matcher lexing.Matcher[token_type]
 
-	lex_whitespace lexing.LexFunc
-	lex_digit      lexing.LexFunc
-	lex_lowercase  lexing.LexFunc
-	lex_newlines   lexing.LexFunc
+	// lex_whitespace lexing.LexFunc
+	// lex_newlines   lexing.LexFunc
+	lex_digit     lexing.LexFunc
+	lex_lowercase lexing.LexFunc
 
 	frag_uppercases lexing.LexFunc
 	frag_lowercases lexing.LexFunc
 )
 
 func init() {
-	matcher = lexing.NewMatcher[token_type]()
-
 	// Add here your custom matcher rules.
 
 	_ = matcher.AddToMatch(ttk_Semicolon, ";")
@@ -34,8 +32,10 @@ func init() {
 	_ = matcher.AddToMatch(ttk_Pipe, "|")
 	_ = matcher.AddToMatch(ttk_Equal, "=")
 	_ = matcher.AddToMatch(ttk_UppercaseId, "EOF")
+	_ = matcher.AddToSkipRule(" ", "\t")
+	_ = matcher.AddToSkipRule("\r\n", "\n")
 
-	lex_whitespace = func(scanner io.RuneScanner) ([]rune, error) {
+	/* lex_whitespace = func(scanner io.RuneScanner) ([]rune, error) {
 		// [ \t]+
 
 		c, _, err := scanner.ReadRune()
@@ -50,26 +50,9 @@ func init() {
 		}
 
 		return []rune{c}, nil
-	}
+	} */
 
-	lex_digit = func(scanner io.RuneScanner) ([]rune, error) {
-		// [0-9]+
-
-		c, _, err := scanner.ReadRune()
-		if err != nil {
-			return nil, err
-		}
-
-		if !unicode.IsDigit(c) {
-			_ = scanner.UnreadRune()
-
-			return nil, lexing.Done
-		}
-
-		return []rune{c}, nil
-	}
-
-	lex_newlines = func(scanner io.RuneScanner) ([]rune, error) {
+	/* lex_newlines = func(scanner io.RuneScanner) ([]rune, error) {
 		// [\r]?[\n]
 
 		c1, _, err := scanner.ReadRune()
@@ -101,6 +84,23 @@ func init() {
 		}
 
 		return []rune{c2}, nil
+	} */
+
+	lex_digit = func(scanner io.RuneScanner) ([]rune, error) {
+		// [0-9]+
+
+		c, _, err := scanner.ReadRune()
+		if err != nil {
+			return nil, err
+		}
+
+		if !unicode.IsDigit(c) {
+			_ = scanner.UnreadRune()
+
+			return nil, lexing.Done
+		}
+
+		return []rune{c}, nil
 	}
 
 	lex_lowercase = func(scanner io.RuneScanner) ([]rune, error) {
@@ -178,7 +178,7 @@ func init() {
 
 		at := l.Pos()
 
-		chars, err := lexing.RightLex(l, lex_whitespace)
+		/* chars, err := lexing.RightLex(l, lex_whitespace)
 		if err != nil {
 			return nil, err
 		}
@@ -194,9 +194,9 @@ func init() {
 
 		if len(chars) != 0 {
 			return nil, nil
-		}
+		} */
 
-		chars, err = lexing.RightLex(l, frag_uppercases)
+		chars, err := lexing.RightLex(l, frag_uppercases)
 		if err != nil {
 			return nil, err
 		}
@@ -232,7 +232,7 @@ func init() {
 			return grammar.NewToken(ttk_LowercaseId, string(chars), at, nil), nil
 		}
 
-		return nil, fmt.Errorf("no match found at %d", at)
+		return nil, errors.New("no match found")
 	}
 
 	internal_lexer = lexing.NewLexer(lex_one, matcher)

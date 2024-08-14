@@ -4,7 +4,6 @@ package ebnf
 import (
 	"github.com/PlayerR9/grammar/ast"
 	gr "github.com/PlayerR9/grammar/grammar"
-	"github.com/PlayerR9/grammar/parsing"
 )
 
 // NodeType represents the type of a node in the AST tree.
@@ -17,6 +16,8 @@ const (
 	IdentifierNode
 	OrExprNode
 	RuleNode
+
+	// Add here your custom node types.
 )
 
 // String implements the NodeTyper interface.
@@ -33,325 +34,230 @@ func (t NodeType) String() string {
 
 var (
 	// ast_builder is the AST builder of the parser.
-	ast_builder *ast.Make[*Node, token_type]
+	ast_builder ast.Make[*Node, token_type]
 )
 
 func init() {
-	ast_builder = ast.NewMake[*Node, token_type]()
-
-	parts := ast.NewPartsBuilder[*Node]()
-
 	// Add here your custom AST builder rules...
-
-	f1 := func(children []*gr.Token[token_type]) ([]*Node, error) {
-		var nodes []*Node
-
-		switch len(children) {
-		case 1:
-			// ntk_Source1 : ntk_Rule .
-
-			tmp, err := ast_builder.ApplyToken(children[0])
-			if err != nil {
-				return nil, err
-			}
-
-			nodes = tmp
-		case 2:
-			// ntk_Source1 : ntk_Rule ttk_Newline ntk_Source1 .
-
-			tmp, err := ast_builder.ApplyToken(children[0])
-			if err != nil {
-				return nil, err
-			}
-
-			nodes = tmp
-		default:
-			return nil, NewErrInvalidNumberOfChildren([]int{1, 2}, len(children))
-		}
-
-		return nodes, nil
-	}
-
-	// ntk_Source : ntk_Source1 etk_EOF .
-
-	parts.Add(func(a *ast.Result[*Node], prev any) (any, error) {
-		root := prev.(*gr.Token[token_type])
-
-		children, err := ast.ExtractChildren(root)
-		if err != nil {
-			return nil, err
-		}
-
-		if len(children) != 2 {
-			return nil, NewErrInvalidNumberOfChildren([]int{2}, len(children))
-		}
-
-		var sub_nodes []ast.Noder
-
-		tmp, err := ast.LeftRecursive(children[0], ntk_Source1, f1)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, node := range tmp {
-			sub_nodes = append(sub_nodes, node)
-		}
-
-		n := NewNode(SourceNode, "", children[0].At)
-		a.SetNode(&n)
-		_ = a.AppendChildren(sub_nodes)
-
-		return nil, nil
-	})
-
-	ast_builder.AddEntry(ntk_Source, parts.Build())
-	parts.Reset()
-
-	f3 := func(children []*gr.Token[token_type]) ([]*Node, error) {
-		// ntk_RhsCls : ntk_Rhs .
-		// ntk_RhsCls : ntk_Rhs ntk_RhsCls .
-
-		nodes, err := ast_builder.ApplyToken(children[0])
-		if err != nil {
-			return nil, err
-		}
-
-		return nodes, nil
-	}
-
-	f2 := func(children []*gr.Token[token_type]) ([]*Node, error) {
-		switch len(children) {
-		case 3:
-			// ntk_RuleLine : ttk_Newline ttk_Pipe ntk_RhsCls ntk_RuleLine .
-
-			var sub_nodes []ast.Noder
-
-			tmp, err := ast.LeftRecursive(children[2], ntk_RhsCls, f3)
-			if err != nil {
-				return nil, err
-			}
-
-			for _, node := range tmp {
-				sub_nodes = append(sub_nodes, node)
-			}
-
-			node := NewNode(SourceNode, "", children[0].At)
-			node.AddChildren(sub_nodes)
-
-			return []*Node{&node}, nil
-		case 2:
-			// ntk_RuleLine : ttk_Newline ttk_Dot .
-
-			// Do nothing.
-
-			return nil, nil
-		default:
-			return nil, NewErrInvalidNumberOfChildren([]int{2, 3}, len(children))
-		}
-	}
-
-	// ntk_Rule : ttk_UppercaseId ttk_Equal ntk_RhsCls ttk_Dot .
-	// ntk_Rule : ttk_UppercaseId ttk_Newline ttk_Equal ntk_RhsCls ntk_RuleLine .
-
-	parts.Add(func(a *ast.Result[*Node], prev any) (any, error) {
-		root := prev.(*gr.Token[token_type])
-
-		children, err := ast.ExtractChildren(root)
-		if err != nil {
-			return nil, err
-		}
-
-		var nodes []*Node
-
-		switch len(children) {
-		case 4:
-			err := ast.CheckTokenType(children[0], ttk_UppercaseId)
-			if err != nil {
-				return nil, err
-			}
-
-			lhs := children[0].Data
-
-			var sub_nodes []ast.Noder
-
-			tmp, err := ast.LeftRecursive(children[2], ntk_RhsCls, f3)
-			if err != nil {
-				return nil, err
-			}
-
-			for _, n := range tmp {
-				sub_nodes = append(sub_nodes, n)
-			}
-
-			n := NewNode(RuleNode, lhs, children[0].At)
-			a.SetNode(&n)
-			_ = a.AppendChildren(sub_nodes)
-		case 5:
-			// ntk_Rule : ttk_UppercaseId ttk_Newline ttk_Equal ntk_RhsCls ntk_RuleLine .
-
-			err := ast.CheckTokenType(children[0], ttk_UppercaseId)
-			if err != nil {
-				return nil, err
-			}
-
-			lhs := children[0].Data
-
-			var sub_nodes []ast.Noder
-
-			tmp, err := ast.LeftRecursive(children[3], ntk_RhsCls, f3)
-			if err != nil {
-				return nil, err
-			}
-
-			for _, n := range tmp {
-				sub_nodes = append(sub_nodes, n)
-			}
-
-			node := NewNode(RuleNode, lhs, children[0].At)
-			node.AddChildren(sub_nodes)
-
-			nodes = []*Node{&node}
-
-			others, err := ast.LeftRecursive(children[4], ntk_RuleLine, f2)
-			if err != nil {
-				return nil, err
-			}
-
-			for _, node := range others {
-				node.Type = RuleNode
-				node.Data = lhs
-
-				nodes = append(nodes, node)
-			}
-
-			a.SetNodes(nodes)
-		default:
-			return nil, NewErrInvalidNumberOfChildren([]int{4, 5}, len(children))
-		}
-
-		return nil, nil
-	})
-
-	ast_builder.AddEntry(ntk_Rule, parts.Build())
-	parts.Reset()
-
-	f4 := func(children []*gr.Token[token_type]) ([]*Node, error) {
-		var nodes []*Node
-
-		switch len(children) {
-		case 3:
-			// ntk_OrExpr : ntk_Identifier ttk_Pipe ntk_Identifier .
-
-			tmp, err := ast_builder.ApplyToken(children[0])
-			if err != nil {
-				return nil, err
-			} else if len(tmp) != 1 {
-				return nil, NewErrInvalidNumberOfChildren([]int{1}, len(tmp))
-			}
-
-			nodes = tmp
-
-			tmp, err = ast_builder.ApplyToken(children[2])
-			if err != nil {
-				return nil, err
-			} else if len(tmp) != 1 {
-				return nil, NewErrInvalidNumberOfChildren([]int{1}, len(tmp))
-			}
-
-			nodes = append(nodes, tmp[0])
-		case 2:
-			// ntk_OrExpr : ntk_Identifier ttk_Pipe ntk_OrExpr .
-
-			tmp, err := ast_builder.ApplyToken(children[0])
-			if err != nil {
-				return nil, err
-			} else if len(tmp) != 1 {
-				return nil, NewErrInvalidNumberOfChildren([]int{1}, len(tmp))
-			}
-
-			nodes = tmp
-		default:
-			return nil, NewErrInvalidNumberOfChildren([]int{2, 3}, len(children))
-		}
-
-		return nodes, nil
-	}
 
 	// ntk_Rhs : ntk_Identifier .
 	// ntk_Rhs : ttk_OpParen ntk_OrExpr ttk_ClParen .
 
-	parts.Add(func(a *ast.Result[*Node], prev any) (any, error) {
-		root := prev.(*gr.Token[token_type])
-
+	ast_builder.AddEntry(ntk_Rhs, func(a *ast.Result[*Node], root *gr.Token[token_type]) error {
 		children, err := ast.ExtractChildren(root)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		switch len(children) {
 		case 1:
 			// ntk_Rhs : ntk_Identifier .
 
-			tmp, err := ast_builder.ApplyToken(children[0])
+			tmp, err := ast_builder.Apply(children[0])
 			if err != nil {
-				return nil, err
-			} else if len(tmp) != 1 {
-				return nil, NewErrInvalidNumberOfChildren([]int{1}, len(tmp))
+				return err
 			}
 
-			a.SetNode(tmp[0])
+			a.AppendNodes(tmp)
 		case 3:
 			// ntk_Rhs : ttk_OpParen ntk_OrExpr ttk_ClParen .
 
-			var sub_nodes []ast.Noder
-
-			tmp, err := ast.LeftRecursive(children[1], ntk_OrExpr, f4)
+			tmp, err := ast_builder.Apply(children[0])
 			if err != nil {
-				return nil, err
+				return err
 			}
 
-			for _, n := range tmp {
-				sub_nodes = append(sub_nodes, n)
-			}
-
-			n := NewNode(OrExprNode, "", children[0].At)
-			a.SetNode(&n)
-			_ = a.AppendChildren(sub_nodes)
+			a.AppendNodes(tmp)
 		default:
-			return nil, NewErrInvalidNumberOfChildren([]int{1, 3}, len(children))
+			return NewErrInvalidNumberOfChildren([]int{1, 3}, len(children))
 		}
 
-		return nil, nil
+		return nil
 	})
 
-	ast_builder.AddEntry(ntk_Rhs, parts.Build())
-	parts.Reset()
+	// ntk_OrExpr1 : ttk_Pipe ntk_Identifier .
+	// ntk_OrExpr1 : ttk_Pipe ntk_Identifier ntk_OrExpr1 .
 
-	// ntk_Identifier : ttk_UppercaseId .
-	// ntk_Identifier : ttk_LowercaseId .
-
-	parts.Add(func(a *ast.Result[*Node], prev any) (any, error) {
-		root := prev.(*gr.Token[token_type])
-
-		children, err := ast.ExtractChildren(root)
+	f1 := func(children []*gr.Token[token_type]) ([]*Node, error) {
+		tmp, err := ast_builder.Apply(children[1])
 		if err != nil {
 			return nil, err
 		}
 
-		if len(children) != 1 {
-			return nil, NewErrInvalidNumberOfChildren([]int{1}, len(children))
+		return tmp, nil
+	}
+
+	// ntk_Source1 : ntk_Rule .
+	// ntk_Source1 : ntk_Rule ntk_Source1 .
+
+	f4 := func(children []*gr.Token[token_type]) ([]*Node, error) {
+		tmp, err := ast_builder.Apply(children[0])
+		if err != nil {
+			return nil, err
 		}
 
-		if children[0].Type != ttk_UppercaseId && children[0].Type != ttk_LowercaseId {
-			return nil, parsing.NewErrUnexpectedToken(nil, &children[0].Type, ttk_UppercaseId, ttk_LowercaseId)
+		return tmp, nil
+	}
+
+	// ntk_Source : ntk_Source1 etk_EOF .
+
+	ast_builder.AddEntry(ntk_Source, func(a *ast.Result[*Node], root *gr.Token[token_type]) error {
+		children, err := ast.ExtractChildren(root)
+		if err != nil {
+			return err
 		}
+
+		if len(children) != 2 {
+			return NewErrInvalidNumberOfChildren([]int{2}, len(children))
+		}
+
+		tmp, err := ast.LeftRecursive(children[0], ntk_Source1, f4)
+		if err != nil {
+			return err
+		}
+
+		a.AppendNodes(tmp)
+
+		return nil
+	})
+
+	// ntk_Rule1 : ttk_Pipe ntk_Rhs1 .
+	// ntk_Rule1 : ttk_Pipe ntk_Rhs1 ntk_Rule1 .
+
+	f2 := func(children []*gr.Token[token_type]) ([]*Node, error) {
+		tmp, err := ast_builder.Apply(children[1])
+		if err != nil {
+			return nil, err
+		}
+
+		return tmp, nil
+	}
+
+	// ntk_Rhs1 : ntk_Rhs .
+	// ntk_Rhs1 : ntk_Rhs ntk_Rhs1 .
+
+	f3 := func(children []*gr.Token[token_type]) ([]*Node, error) {
+		tmp, err := ast_builder.Apply(children[0])
+		if err != nil {
+			return nil, err
+		}
+
+		return tmp, nil
+	}
+
+	// ntk_OrExpr : ntk_Identifier ntk_OrExpr1 .
+
+	ast_builder.AddEntry(ntk_OrExpr, func(a *ast.Result[*Node], root *gr.Token[token_type]) error {
+		children, err := ast.ExtractChildren(root)
+		if err != nil {
+			return err
+		}
+
+		if len(children) != 2 {
+			return NewErrInvalidNumberOfChildren([]int{2}, len(children))
+		}
+
+		var sub_nodes []ast.Noder
+
+		// Extract here any desired sub-node...
+
+		tmp, err := ast_builder.Apply(children[0])
+		if err != nil {
+			return err
+		}
+
+		for _, n := range tmp {
+			sub_nodes = append(sub_nodes, n)
+		}
+
+		tmp, err = ast.LeftRecursive(children[1], ntk_OrExpr1, f1)
+		if err != nil {
+			return err
+		}
+
+		for _, n := range tmp {
+			sub_nodes = append(sub_nodes, n)
+		}
+
+		n := NewNode(OrExprNode, "", children[0].At)
+		a.SetNode(&n)
+		_ = a.AppendChildren(sub_nodes)
+
+		return nil
+	})
+
+	// ntk_Identifier : ttk_UppercaseId .
+	// ntk_Identifier : ttk_LowercaseId .
+
+	ast_builder.AddEntry(ntk_Identifier, func(a *ast.Result[*Node], root *gr.Token[token_type]) error {
+		children, err := ast.ExtractChildren(root)
+		if err != nil {
+			return err
+		}
+
+		if len(children) != 1 {
+			return NewErrInvalidNumberOfChildren([]int{1}, len(children))
+		}
+
+		var sub_nodes []ast.Noder
+
+		// Extract here any desired sub-node...
 
 		n := NewNode(IdentifierNode, children[0].Data, children[0].At)
 		a.SetNode(&n)
+		_ = a.AppendChildren(sub_nodes)
 
-		return nil, nil
+		return nil
 	})
 
-	ast_builder.AddEntry(ntk_Identifier, parts.Build())
-	parts.Reset()
+	// ntk_Rule : ttk_LowercaseId ttk_Equal ntk_Rhs1 ttk_Semicolon .
+	// ntk_Rule : ttk_LowercaseId ttk_Equal ntk_Rhs1 ttk_Rule1 .
+
+	ast_builder.AddEntry(ntk_Rule, func(a *ast.Result[*Node], root *gr.Token[token_type]) error {
+		children, err := ast.ExtractChildren(root)
+		if err != nil {
+			return err
+		}
+
+		if len(children) != 4 {
+			return NewErrInvalidNumberOfChildren([]int{4}, len(children))
+		}
+
+		// ntk_Rule : ttk_LowercaseId ttk_Equal ntk_Rhs1 ttk_Semicolon .
+
+		lhs := children[0].Data
+
+		var sub_nodes []ast.Noder
+
+		tmp, err := ast.LeftRecursive(children[2], ntk_Rhs1, f3)
+		if err != nil {
+			return err
+		}
+
+		for _, n := range tmp {
+			sub_nodes = append(sub_nodes, n)
+		}
+
+		n := NewNode(RuleNode, lhs, children[0].At)
+		a.SetNode(&n)
+		_ = a.AppendChildren(sub_nodes)
+
+		if children[3].Type != ttk_Semicolon {
+			// ntk_Rule : ttk_LowercaseId ttk_Equal ntk_Rhs1 ttk_Rule1 .
+
+			tmp, err = ast.LeftRecursive(children[3], ntk_Rule1, f2)
+			if err != nil {
+				return err
+			}
+
+			for _, n := range tmp {
+				nn := NewNode(RuleNode, lhs, children[0].At)
+				nn.AddChildren([]ast.Noder{n})
+
+				a.AppendNodes([]*Node{&nn})
+			}
+		}
+
+		return nil
+	})
 }

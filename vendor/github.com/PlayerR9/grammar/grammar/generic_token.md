@@ -5,34 +5,6 @@ import (
 	"github.com/PlayerR9/lib_units/common"
 )
 
-// TokenIterator is a pull-based iterator that iterates
-// over the children of a Token.
-type TokenIterator[T TokenTyper] struct {
-	parent, current *Token[T]
-}
-
-// Consume implements the common.Iterater interface.
-//
-// The only error type that can be returned by this function is the *common.ErrExhaustedIter type.
-//
-// Moreover, the return value is always of type *Token[T] and never nil; unless the iterator
-// has reached the end of the branch.
-func (iter *TokenIterator[T]) Consume() (TreeNoder, error) {
-	if iter.current == nil {
-		return nil, common.NewErrExhaustedIter()
-	}
-
-	node := iter.current
-	iter.current = iter.current.NextSibling
-
-	return node, nil
-}
-
-// Restart implements the common.Iterater interface.
-func (iter *TokenIterator[T]) Restart() {
-	iter.current = iter.parent.FirstChild
-}
-
 // Token is a node in a tree.
 type Token[T TokenTyper] struct {
 	Parent, FirstChild, NextSibling, LastChild, PrevSibling *Token[T]
@@ -42,10 +14,6 @@ type Token[T TokenTyper] struct {
 	Type                                                    T
 }
 
-// IsLeaf implements the Tokener interface.
-func (tn *Token[T]) IsLeaf() bool {
-	return tn.FirstChild == nil
-}
 
 /* // GetParent implements the Tokener interface.
 func (tn *Token[T]) GetParent() Tokener {
@@ -55,35 +23,6 @@ func (tn *Token[T]) GetParent() Tokener {
 // IsSingleton implements the Tokener interface.
 func (tn *Token[T]) IsSingleton() bool {
 	return tn.FirstChild != nil && tn.FirstChild == tn.LastChild
-}
-
-// Cleanup implements the Tokener interface.
-func (tn *Token[T]) Cleanup() []Tokener {
-	var children []Tokener
-
-	for c := tn.FirstChild; c != nil; c = c.NextSibling {
-		children = append(children, c)
-	}
-
-	tn.FirstChild = nil
-	tn.LastChild = nil
-	tn.Parent = nil
-
-	prev := tn.PrevSibling
-	next := tn.NextSibling
-
-	if prev != nil {
-		prev.NextSibling = next
-	}
-
-	if next != nil {
-		next.PrevSibling = prev
-	}
-
-	tn.PrevSibling = nil
-	tn.NextSibling = nil
-
-	return children
 }
 
 // DeleteChild implements the Tokener interface.
@@ -314,42 +253,6 @@ func (tn *Token[T]) Copy() common.Copier {
 
 	return tn_copy
 } */
-
-// Iterator implements the Tokener interface.
-//
-// This function returns an iterator that iterates over the direct children of the node.
-// Implemented as a pull-based iterator, this function never returns nil and any of the
-// values is guaranteed to be a non-nil node of type Token[T].
-func (tn *Token[T]) Iterator() common.Iterater[TreeNoder] {
-	return &TokenIterator[T]{
-		parent:  tn,
-		current: tn.FirstChild,
-	}
-}
-
-// NewToken creates a new node with the given data.
-//
-// Parameters:
-//
-//   - At: The At of the node.
-//
-//   - Data: The Data of the node.
-//
-//   - Lookahead: The Lookahead of the node.
-//
-//   - Type: The Type of the node.
-//
-// Returns:
-//   - *Token[T]: A pointer to the newly created node. It is
-//     never nil.
-func NewToken[T TokenTyper](t_type T, data string, at int, lookahead *Token[T]) *Token[T] {
-	return &Token[T]{
-		At:        at,
-		Data:      data,
-		Lookahead: lookahead,
-		Type:      t_type,
-	}
-}
 
 /* // GetLastSibling returns the last sibling of the node. If it has a parent,
 // it returns the last child of the parent. Otherwise, it returns the last
