@@ -18,7 +18,7 @@ func init() {
 
 var (
 	// internal_lexer is the lexer of the grammar.
-	internal_lexer *lexing.Lexer[token_type]
+	internal_lexer lexing.Lexer[token_type]
 )
 
 func init() {
@@ -28,5 +28,5 @@ func init() {
 		panic("Implement me!")
 	}
 
-	internal_lexer = lexing.NewLexer(lex_one, matcher)
+	internal_lexer = *lexing.NewLexer(lex_one, matcher)
 }

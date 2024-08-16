@@ -11,7 +11,7 @@ var (
 )
 
 func init() {
-	Parser = grammar.NewParser(
+	Parser.Init(
 		internal_lexer,
 		internal_parser,
 		ast_builder,

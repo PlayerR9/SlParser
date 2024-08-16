@@ -101,7 +101,7 @@ import (
 
 var (
 	// internal_parser is the parser of the grammar.
-	internal_parser *parsing.Parser[token_type]
+	internal_parser parsing.Parser[token_type]
 )
 
 func init() {
@@ -129,5 +129,5 @@ func init() {
 		return act, nil
 	}
 
-	internal_parser = parsing.NewParser(decision_func)
+	internal_parser = *parsing.NewParser(decision_func)
 }`

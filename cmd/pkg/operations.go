@@ -10,7 +10,7 @@ import (
 	gcch "github.com/PlayerR9/go-commons/runes"
 	gcslc "github.com/PlayerR9/go-commons/slices"
 	dbg "github.com/PlayerR9/go-debug/assert"
-	tr "github.com/PlayerR9/grammar/traversing"
+	ast "github.com/PlayerR9/grammar/ast"
 )
 
 // EnumType represents the type of enum.
@@ -128,7 +128,7 @@ func (ee *EnumExtractor) Reset() {
 }
 
 // Apply implements the traverser.Traverser interface.
-func (ee *EnumExtractor) Apply(node tr.TreeNoder) ([]tr.TravData, error) {
+func (ee *EnumExtractor) Apply(node ast.Noder) ([]ast.TravData[ast.Noder], error) {
 	if node == nil {
 		return nil, nil
 	}
@@ -155,10 +155,10 @@ func (ee *EnumExtractor) Apply(node tr.TreeNoder) ([]tr.TravData, error) {
 		}
 	}
 
-	var data []tr.TravData
+	var data []ast.TravData[ast.Noder]
 
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		d := tr.TravData{
+		d := ast.TravData[ast.Noder]{
 			Node: c,
 			Data: ee,
 		}
@@ -215,7 +215,7 @@ func (ee EnumExtractor) GetSpecialEnums() []string {
 }
 
 var (
-	RenameNodes tr.SimpleDFS[*ebnf.Node]
+	RenameNodes ast.SimpleDFS[*ebnf.Node]
 )
 
 func init() {

@@ -8,8 +8,6 @@ import (
 
 	"github.com/PlayerR9/SLParser/cmd/pkg"
 	upi "github.com/PlayerR9/go-commons/CustomData/page_interval"
-	itr "github.com/PlayerR9/go-commons/iterator"
-	dbg "github.com/PlayerR9/go-debug/assert"
 )
 
 func aeg_make_target(key string) (string, bool) {
@@ -79,16 +77,9 @@ func (aeg *AstElemGen) if_cond() {
 
 	expected := make([]string, 0, aeg.interval.PageCount())
 
-	fn := func(elem any) error {
-		value := dbg.AssertConv[int](elem, "elem")
-
-		expected = append(expected, strconv.Itoa(value))
-
-		return nil
+	for page := range aeg.interval.All() {
+		expected = append(expected, strconv.Itoa(page))
 	}
-
-	err := itr.Iterate(aeg.interval, fn)
-	dbg.AssertErr(err, "iterator.Iterate(aeg.interval, fn)")
 
 	builder.WriteString("[]int{")
 	builder.WriteString(strings.Join(expected, ", "))

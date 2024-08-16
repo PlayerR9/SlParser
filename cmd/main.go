@@ -10,8 +10,8 @@ import (
 	pkg "github.com/PlayerR9/SLParser/cmd/pkg"
 	ebnf "github.com/PlayerR9/SLParser/ebnf"
 	"github.com/PlayerR9/grammar"
+	ast "github.com/PlayerR9/grammar/ast"
 	grd "github.com/PlayerR9/grammar/displayer"
-	tr "github.com/PlayerR9/grammar/traversing"
 )
 
 func main() {
@@ -102,7 +102,7 @@ func main() {
 func GenerateTokens(root *ebnf.Node) (string, error) {
 	var ee pkg.EnumExtractor
 
-	err := tr.Apply(&ee, root)
+	err := ast.Apply[ast.Noder](&ee, root)
 	if err != nil {
 		return "", err
 	}

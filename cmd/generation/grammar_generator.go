@@ -34,11 +34,11 @@ import (
 
 var (
 	// Parser is the complete parser of the grammar.
-	Parser *grammar.Parser[*Node, token_type]
+	Parser grammar.Parser[*Node, token_type]
 )
 
 func init() {
-	Parser = grammar.NewParser(
+	Parser.Init(
 		internal_lexer,
 		internal_parser,
 		ast_builder,
