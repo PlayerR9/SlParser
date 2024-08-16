@@ -6,25 +6,24 @@ type token_type int
 
 const (
 	etk_EOF token_type = iota
-
-	ttk_ClParen
-	ttk_Equal
-	ttk_LowercaseId
-	ttk_OpParen
-	ttk_Pipe
+	
+	ttk_Identifier
+	ttk_OrExpr
+	ttk_OrExpr1
+	ttk_Rhs
+	ttk_Rhs1
+	ttk_Rule
 	ttk_Rule1
-	ttk_Semicolon
-	ttk_UppercaseId
-
-	ntk_Identifier
-	ntk_OrExpr
-	ntk_OrExpr1
-	ntk_Rhs
-	ntk_Rhs1
-	ntk_Rule
-	ntk_Rule1
-	ntk_Source
-	ntk_Source1
+	ttk_Source
+	ttk_Source1
+	
+	ntk_CL_PAREN
+	ntk_COLON
+	ntk_LOWERCASE_ID
+	ntk_OP_PAREN
+	ntk_PIPE
+	ntk_SEMICOLON
+	ntk_UPPERCASE_ID
 )
 
 // String implements the Grammar.TokenTyper interface.
@@ -39,24 +38,23 @@ func (t token_type) String() string {
 func (t token_type) GoString() string {
 	return [...]string{
 		"etk_EOF",
-
-		"ttk_ClParen",
-		"ttk_Equal",
-		"ttk_LowercaseId",
-		"ttk_OpParen",
-		"ttk_Pipe",
+		
+		"ttk_Identifier",
+		"ttk_OrExpr",
+		"ttk_OrExpr1",
+		"ttk_Rhs",
+		"ttk_Rhs1",
+		"ttk_Rule",
 		"ttk_Rule1",
-		"ttk_Semicolon",
-		"ttk_UppercaseId",
-
-		"ntk_Identifier",
-		"ntk_OrExpr",
-		"ntk_OrExpr1",
-		"ntk_Rhs",
-		"ntk_Rhs1",
-		"ntk_Rule",
-		"ntk_Rule1",
-		"ntk_Source",
-		"ntk_Source1",
+		"ttk_Source",
+		"ttk_Source1",
+		
+		"ntk_CL_PAREN",
+		"ntk_COLON",
+		"ntk_LOWERCASE_ID",
+		"ntk_OP_PAREN",
+		"ntk_PIPE",
+		"ntk_SEMICOLON",
+		"ntk_UPPERCASE_ID",
 	}[t]
 }

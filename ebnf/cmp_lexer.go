@@ -2,7 +2,6 @@
 package ebnf
 
 import (
-	"errors"
 	"io"
 	"unicode"
 
@@ -12,7 +11,7 @@ import (
 )
 
 var (
-	// [0-9]*
+	// [0-9]+
 	cat_digits lexing.LexFunc
 
 	// [A-Z]+
@@ -29,9 +28,9 @@ var (
 )
 
 func init() {
-	cat_digits = lexing.MakeCategoryLexer(unicode.IsDigit, lexing.LexMany)
+	cat_digits = lexing.MakeCategoryLexer(unicode.IsDigit, lexing.MustLexMany)
 	cat_uppercases = lexing.MakeCategoryLexer(unicode.IsUpper, lexing.MustLexMany)
-	cat_lowercases = lexing.MakeCategoryLexer(unicode.IsLower, lexing.LexMany)
+	cat_lowercases = lexing.MakeCategoryLexer(unicode.IsLower, lexing.MustLexMany)
 	cat_must_lowercases = lexing.MakeCategoryLexer(unicode.IsLower, lexing.MustLexMany)
 
 	lex_lowercase = func(scanner io.RuneScanner) ([]rune, error) {
@@ -142,42 +141,34 @@ func init() {
 		} */
 
 		chars, err := lexing.RightLex(l, lex_uppercase)
-		if err != nil {
-			return nil, err
-		}
-
-		if len(chars) != 0 {
-			// do digits
-
+		if err == nil {
 			digits, err := lexing.RightLex(l, cat_digits)
-			if err != nil {
+			if err != nil && err != lexing.NoMatch {
 				return nil, err
 			}
 
 			chars = append(chars, digits...)
 
 			return grammar.NewToken(ttk_UppercaseId, string(chars), at, nil), nil
-		}
-
-		chars, err = lexing.RightLex(l, lex_lowercase)
-		if err != nil {
+		} else if err != lexing.NoMatch {
 			return nil, err
 		}
 
-		if len(chars) != 0 {
-			// do digits
-
+		chars, err = lexing.RightLex(l, lex_lowercase)
+		if err == nil {
 			digits, err := lexing.RightLex(l, cat_digits)
-			if err != nil {
+			if err != nil && err != lexing.NoMatch {
 				return nil, err
 			}
 
 			chars = append(chars, digits...)
 
 			return grammar.NewToken(ttk_LowercaseId, string(chars), at, nil), nil
+		} else if err != lexing.NoMatch {
+			return nil, err
 		}
 
-		return nil, errors.New("no match found")
+		return nil, lexing.NoMatch
 	}
 
 	internal_lexer.WithLexFunc(lex_one)
@@ -188,7 +179,7 @@ func init() {
 	_ = internal_lexer.AddToMatch(ttk_OpParen, "(")
 	_ = internal_lexer.AddToMatch(ttk_ClParen, ")")
 	_ = internal_lexer.AddToMatch(ttk_Pipe, "|")
-	_ = internal_lexer.AddToMatch(ttk_Equal, "=")
+	_ = internal_lexer.AddToMatch(ttk_Colon, ":")
 	_ = internal_lexer.AddToMatch(ttk_UppercaseId, "EOF")
 	_ = internal_lexer.AddToSkipRule(" ", "\t")
 	_ = internal_lexer.AddToSkipRule("\r\n", "\n")

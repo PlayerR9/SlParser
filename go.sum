@@ -4,8 +4,6 @@ github.com/PlayerR9/go-debug v0.1.3 h1:VuVWKHjmZssXF+Ic4O2Gyq6irCMKshtPIowfnILcO
 github.com/PlayerR9/go-debug v0.1.3/go.mod h1:R6GtxxinA0pX78jZ65VSNsb58keLk4oDq02vEN21X7Y=
 github.com/PlayerR9/go-generator v0.1.9 h1:NkEQyEk1nbSeN+I6rKTsOhiDH547Cjg4kfapXMgWQik=
 github.com/PlayerR9/go-generator v0.1.9/go.mod h1:GSmQyC+Q1VAr7obdsZT1kR4/Q6Rkw/ELhimzZmsmDvE=
-github.com/PlayerR9/grammar v0.1.17 h1:LrPqlNAD4Mv0tWRekETSOKHgiQiklDS+dvohEjEBMkU=
-github.com/PlayerR9/grammar v0.1.17/go.mod h1:q5NYLQhkR3uzylcgyqYVHg3dTRLxHaZtJ08LG/BuK5A=
 github.com/PlayerR9/grammar v0.1.18 h1:rojHPyIbHyRFw5CMItLW+LLr9HOkd954JCL6awIuaBE=
 github.com/PlayerR9/grammar v0.1.18/go.mod h1:q5NYLQhkR3uzylcgyqYVHg3dTRLxHaZtJ08LG/BuK5A=
 golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa h1:ELnwvuAXPNtPk1TJRuGkI9fDTwym6AYBu0qzT8AcHdI=

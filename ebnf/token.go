@@ -8,7 +8,7 @@ const (
 	etk_EOF token_type = iota
 
 	ttk_ClParen
-	ttk_Equal
+	ttk_Colon
 	ttk_LowercaseId
 	ttk_OpParen
 	ttk_Pipe
@@ -33,7 +33,7 @@ func (t token_type) String() string {
 		// Add here your custom token names.
 
 		"close parenthesis",
-		"equal sign",
+		"colon",
 		"lowercase identifier",
 		"open parenthesis",
 		"pipe",
@@ -58,7 +58,7 @@ func (t token_type) GoString() string {
 		"etk_EOF",
 
 		"ttk_ClParen",
-		"ttk_Equal",
+		"ttk_Colon",
 		"ttk_LowercaseId",
 		"ttk_OpParen",
 		"ttk_Pipe",

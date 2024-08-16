@@ -93,13 +93,13 @@ func init() {
 		case ntk_Rhs1:
 			top2, ok := p.Pop()
 			if !ok {
-				return nil, parsing.NewErrUnexpectedToken(&top1.Type, nil, ttk_Equal, ttk_Pipe, ntk_Rhs)
+				return nil, parsing.NewErrUnexpectedToken(&top1.Type, nil, ttk_Colon, ttk_Pipe, ntk_Rhs)
 			}
 
 			switch top2.Type {
-			case ttk_Equal:
-				// ttk_Semicolon [ ntk_Rhs1 ] ttk_Equal ttk_LowercaseId -> ntk_Rule : SHIFT .
-				// ntk_Rule1 [ ntk_Rhs1 ] ttk_Equal ttk_LowercaseId -> ntk_Rule : SHIFT .
+			case ttk_Colon:
+				// ttk_Semicolon [ ntk_Rhs1 ] ttk_Colon ttk_LowercaseId -> ntk_Rule : SHIFT .
+				// ntk_Rule1 [ ntk_Rhs1 ] ttk_Colon ttk_LowercaseId -> ntk_Rule : SHIFT .
 
 				act = parsing.NewShiftAction()
 			case ttk_Pipe:
@@ -117,7 +117,7 @@ func init() {
 
 				act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Rhs1, []token_type{ntk_Rhs1, ntk_Rhs}))
 			default:
-				return nil, parsing.NewErrUnexpectedToken(&top1.Type, &top2.Type, ttk_Equal, ttk_Pipe, ntk_Rhs)
+				return nil, parsing.NewErrUnexpectedToken(&top1.Type, &top2.Type, ttk_Colon, ttk_Pipe, ntk_Rhs)
 			}
 		case ntk_Rule:
 			if lookahead == nil || lookahead.Type != ttk_LowercaseId {
@@ -139,7 +139,7 @@ func init() {
 
 			top3, ok := p.Pop()
 			if !ok {
-				return nil, parsing.NewErrUnexpectedToken(&top2.Type, nil, ttk_Pipe, ttk_Equal)
+				return nil, parsing.NewErrUnexpectedToken(&top2.Type, nil, ttk_Pipe, ttk_Colon)
 			}
 
 			switch top3.Type {
@@ -147,12 +147,12 @@ func init() {
 				// [ ntk_Rule1 ] ntk_Rhs1 ttk_Pipe -> ntk_Rule1 : REDUCE .
 
 				act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Rule1, []token_type{ntk_Rule1, ntk_Rhs1, ttk_Pipe}))
-			case ttk_Equal:
-				// [ ntk_Rule1 ] ntk_Rhs1 ttk_Equal ttk_LowercaseId -> ntk_Rule : REDUCE .
+			case ttk_Colon:
+				// [ ntk_Rule1 ] ntk_Rhs1 ttk_Colon ttk_LowercaseId -> ntk_Rule : REDUCE .
 
-				act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Rule, []token_type{ntk_Rule1, ntk_Rhs1, ttk_Equal, ttk_LowercaseId}))
+				act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Rule, []token_type{ntk_Rule1, ntk_Rhs1, ttk_Colon, ttk_LowercaseId}))
 			default:
-				return nil, parsing.NewErrUnexpectedToken(&top2.Type, &top3.Type, ttk_Pipe, ttk_Equal)
+				return nil, parsing.NewErrUnexpectedToken(&top2.Type, &top3.Type, ttk_Pipe, ttk_Colon)
 			}
 		case ntk_Source1:
 			top2, ok := p.Pop()
@@ -169,19 +169,19 @@ func init() {
 			// [ ttk_ClParen ] ntk_OrExpr ttk_OpParen -> ntk_Rhs : REDUCE .
 
 			act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Rhs, []token_type{ttk_ClParen, ntk_OrExpr, ttk_OpParen}))
-		case ttk_Equal:
-			// ttk_Semicolon ntk_Rhs1 [ ttk_Equal ] ttk_LowercaseId -> ntk_Rule : SHIFT .
-			// ntk_Rule1 ntk_Rhs1 [ ttk_Equal ] ttk_LowercaseId -> ntk_Rule : SHIFT .
+		case ttk_Colon:
+			// ttk_Semicolon ntk_Rhs1 [ ttk_Colon ] ttk_LowercaseId -> ntk_Rule : SHIFT .
+			// ntk_Rule1 ntk_Rhs1 [ ttk_Colon ] ttk_LowercaseId -> ntk_Rule : SHIFT .
 
 			act = parsing.NewShiftAction()
 		case ttk_LowercaseId:
-			if lookahead == nil || lookahead.Type != ttk_Equal {
+			if lookahead == nil || lookahead.Type != ttk_Colon {
 				// [ ttk_LowercaseId ] -> ntk_Identifier : REDUCE .
 
 				act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Identifier, []token_type{ttk_LowercaseId}))
 			} else {
-				// ttk_Semicolon ntk_Rhs1 ttk_Equal [ ttk_LowercaseId ] -> ntk_Rule : SHIFT .
-				// ntk_Rule1 ntk_Rhs1 ttk_Equal [ ttk_LowercaseId ] -> ntk_Rule : SHIFT .
+				// ttk_Semicolon ntk_Rhs1 ttk_Colon [ ttk_LowercaseId ] -> ntk_Rule : SHIFT .
+				// ntk_Rule1 ntk_Rhs1 ttk_Colon [ ttk_LowercaseId ] -> ntk_Rule : SHIFT .
 
 				act = parsing.NewShiftAction()
 			}
@@ -197,9 +197,9 @@ func init() {
 
 			act = parsing.NewShiftAction()
 		case ttk_Semicolon:
-			// [ ttk_Semicolon ] ntk_Rhs1 ttk_Equal ttk_LowercaseId -> ntk_Rule : REDUCE .
+			// [ ttk_Semicolon ] ntk_Rhs1 ttk_Colon ttk_LowercaseId -> ntk_Rule : REDUCE .
 
-			act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Rule, []token_type{ttk_Semicolon, ntk_Rhs1, ttk_Equal, ttk_LowercaseId}))
+			act, _ = parsing.NewReduceAction(parsing.NewRule(ntk_Rule, []token_type{ttk_Semicolon, ntk_Rhs1, ttk_Colon, ttk_LowercaseId}))
 		case ttk_UppercaseId:
 			// [ ttk_UppercaseId ] -> ntk_Identifier : REDUCE .
 

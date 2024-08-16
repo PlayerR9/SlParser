@@ -1,8 +1,9 @@
-source : source1 EOF ;
+source : sourceRule source1 EOF ;
+sourceRule : SOURCE_ID source1 EOF_ID ;
 source1 : rule ;
 source1 : rule source1 ;
-rule : LOWERCASE_ID EQUAL rhs1 SEMICOLON ;
-rule : LOWERCASE_ID EQUAL rhs1 rule1 ;
+rule : LOWERCASE_ID COLON rhs1 SEMICOLON ;
+rule : LOWERCASE_ID COLON rhs1 rule1 ;
 rule1 : PIPE rhs1 ;
 rule1 : PIPE rhs1 rule1 ;
 rhs1 : rhs ;

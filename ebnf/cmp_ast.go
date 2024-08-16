@@ -111,12 +111,21 @@ func init() {
 			return NewErrInvalidNumberOfChildren([]int{2}, len(children))
 		}
 
+		var sub_nodes []ast.Noder
+
 		tmp, err := ast.LeftRecursive(children[0], ntk_Source1, f4)
 		if err != nil {
 			return err
 		}
 
-		a.AppendNodes(tmp)
+		for _, node := range tmp {
+			sub_nodes = append(sub_nodes, node)
+		}
+
+		n := NewNode(SourceNode, "", root.At)
+		a.SetNode(&n)
+
+		_ = a.AppendChildren(sub_nodes)
 
 		return nil
 	})
@@ -210,8 +219,8 @@ func init() {
 		return nil
 	})
 
-	// ntk_Rule : ttk_LowercaseId ttk_Equal ntk_Rhs1 ttk_Semicolon .
-	// ntk_Rule : ttk_LowercaseId ttk_Equal ntk_Rhs1 ttk_Rule1 .
+	// ntk_Rule : ttk_LowercaseId ttk_Colon ntk_Rhs1 ttk_Semicolon .
+	// ntk_Rule : ttk_LowercaseId ttk_Colon ntk_Rhs1 ttk_Rule1 .
 
 	ast_builder.AddEntry(ntk_Rule, func(a *ast.Result[*Node], root *gr.Token[token_type]) error {
 		children, err := ast.ExtractChildren(root)
@@ -223,7 +232,7 @@ func init() {
 			return NewErrInvalidNumberOfChildren([]int{4}, len(children))
 		}
 
-		// ntk_Rule : ttk_LowercaseId ttk_Equal ntk_Rhs1 ttk_Semicolon .
+		// ntk_Rule : ttk_LowercaseId ttk_Colon ntk_Rhs1 ttk_Semicolon .
 
 		lhs := children[0].Data
 
@@ -243,7 +252,7 @@ func init() {
 		_ = a.AppendChildren(sub_nodes)
 
 		if children[3].Type != ttk_Semicolon {
-			// ntk_Rule : ttk_LowercaseId ttk_Equal ntk_Rhs1 ttk_Rule1 .
+			// ntk_Rule : ttk_LowercaseId ttk_Colon ntk_Rhs1 ttk_Rule1 .
 
 			tmp, err = ast.LeftRecursive(children[3], ntk_Rule1, f2)
 			if err != nil {
