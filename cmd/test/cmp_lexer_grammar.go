@@ -2,19 +2,9 @@
 package test
 
 import (
-	gccdm "github.com/PlayerR9/go-commons/CustomData/matcher"
 	"github.com/PlayerR9/grammar/grammar"
 	"github.com/PlayerR9/grammar/lexing"
 )
-
-var (
-	// matcher is the matcher of the grammar.
-	matcher gccdm.Matcher[token_type]
-)
-
-func init() {
-	// Add here your custom matcher rules.
-}
 
 var (
 	// internal_lexer is the lexer of the grammar.
@@ -28,5 +18,7 @@ func init() {
 		panic("Implement me!")
 	}
 
-	internal_lexer = *lexing.NewLexer(lex_one, matcher)
+	internal_lexer.WithLexFunc(lex_one)
+
+	// Add here your custom matcher rules.
 }

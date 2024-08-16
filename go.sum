@@ -6,5 +6,7 @@ github.com/PlayerR9/go-generator v0.1.9 h1:NkEQyEk1nbSeN+I6rKTsOhiDH547Cjg4kfapX
 github.com/PlayerR9/go-generator v0.1.9/go.mod h1:GSmQyC+Q1VAr7obdsZT1kR4/Q6Rkw/ELhimzZmsmDvE=
 github.com/PlayerR9/grammar v0.1.17 h1:LrPqlNAD4Mv0tWRekETSOKHgiQiklDS+dvohEjEBMkU=
 github.com/PlayerR9/grammar v0.1.17/go.mod h1:q5NYLQhkR3uzylcgyqYVHg3dTRLxHaZtJ08LG/BuK5A=
+github.com/PlayerR9/grammar v0.1.18 h1:rojHPyIbHyRFw5CMItLW+LLr9HOkd954JCL6awIuaBE=
+github.com/PlayerR9/grammar v0.1.18/go.mod h1:q5NYLQhkR3uzylcgyqYVHg3dTRLxHaZtJ08LG/BuK5A=
 golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa h1:ELnwvuAXPNtPk1TJRuGkI9fDTwym6AYBu0qzT8AcHdI=
 golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa/go.mod h1:akd2r19cwCdwSwWeIdzYQGa/EZZyqcOdwWiwj5L5eKQ=

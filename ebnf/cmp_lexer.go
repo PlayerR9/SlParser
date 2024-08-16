@@ -6,259 +6,107 @@ import (
 	"io"
 	"unicode"
 
-	gccdm "github.com/PlayerR9/go-commons/CustomData/matcher"
+	dbg "github.com/PlayerR9/go-debug/assert"
 	"github.com/PlayerR9/grammar/grammar"
 	"github.com/PlayerR9/grammar/lexing"
 )
 
 var (
-	// matcher is the matcher of the grammar.
-	matcher gccdm.Matcher[token_type]
+	// [0-9]*
+	cat_digits lexing.LexFunc
 
-	// lex_whitespace lexing.LexFunc
-	// lex_newlines   lexing.LexFunc
-	cat_decimal   lexing.LexFunc
-	cat_uppercase lexing.LexFunc
-	cat_lowercase lexing.LexFunc
+	// [A-Z]+
+	cat_uppercases lexing.LexFunc
+
+	// [a-z]+
+	cat_must_lowercases lexing.LexFunc
+
+	// [a-z]+
+	cat_lowercases lexing.LexFunc
 
 	lex_uppercase lexing.LexFunc
 	lex_lowercase lexing.LexFunc
-
-	frag_digits     lexing.LexFunc
-	frag_uppercases lexing.LexFunc
-	frag_lowercases lexing.LexFunc
 )
 
 func init() {
-	// Add here your custom matcher rules.
-
-	_ = matcher.AddToMatch(ttk_Semicolon, ";")
-	_ = matcher.AddToMatch(ttk_OpParen, "(")
-	_ = matcher.AddToMatch(ttk_ClParen, ")")
-	_ = matcher.AddToMatch(ttk_Pipe, "|")
-	_ = matcher.AddToMatch(ttk_Equal, "=")
-	_ = matcher.AddToMatch(ttk_UppercaseId, "EOF")
-	_ = matcher.AddToSkipRule(" ", "\t")
-	_ = matcher.AddToSkipRule("\r\n", "\n")
-
-	/* lex_whitespace = func(scanner io.RuneScanner) ([]rune, error) {
-		// [ \t]+
-
-		c, _, err := scanner.ReadRune()
-		if err != nil {
-			return nil, err
-		}
-
-		if c != ' ' && c != '\t' {
-			_ = scanner.UnreadRune()
-
-			return nil, lexing.Done
-		}
-
-		return []rune{c}, nil
-	} */
-
-	/* lex_newlines = func(scanner io.RuneScanner) ([]rune, error) {
-		// [\r]?[\n]
-
-		c1, _, err := scanner.ReadRune()
-		if err != nil {
-			return nil, err
-		}
-
-		if c1 == '\n' {
-			return []rune{c1}, nil
-		}
-
-		if c1 != '\r' {
-			_ = scanner.UnreadRune()
-
-			return nil, lexing.Done
-		}
-
-		c2, _, err := scanner.ReadRune()
-		if err == io.EOF {
-			return nil, lexing.NewErrUnexpectedRune(&c1, nil, '\n')
-		} else if err != nil {
-			return nil, err
-		}
-
-		if c2 != '\n' {
-			_ = scanner.UnreadRune()
-
-			return nil, lexing.NewErrUnexpectedRune(&c1, &c2, '\n')
-		}
-
-		return []rune{c2}, nil
-	} */
-
-	cat_decimal = func(scanner io.RuneScanner) ([]rune, error) {
-		// [0-9]
-
-		c, _, err := scanner.ReadRune()
-		if err != nil {
-			return nil, err
-		}
-
-		if !unicode.IsDigit(c) {
-			_ = scanner.UnreadRune()
-
-			return nil, lexing.Done
-		}
-
-		return []rune{c}, lexing.Done
-	}
-
-	cat_uppercase = func(scanner io.RuneScanner) ([]rune, error) {
-		// [A-Z]
-
-		c, _, err := scanner.ReadRune()
-		if err != nil {
-			return nil, err
-		}
-
-		if !unicode.IsUpper(c) {
-			_ = scanner.UnreadRune()
-
-			return nil, lexing.Done
-		}
-
-		return []rune{c}, lexing.Done
-	}
-
-	cat_lowercase = func(scanner io.RuneScanner) ([]rune, error) {
-		// [a-z]
-
-		c, _, err := scanner.ReadRune()
-		if err != nil {
-			return nil, err
-		}
-
-		if !unicode.IsLower(c) {
-			_ = scanner.UnreadRune()
-
-			return nil, lexing.Done
-		}
-
-		return []rune{c}, lexing.Done
-	}
-
-	frag_digits = func(scanner io.RuneScanner) ([]rune, error) {
-		// [0-9]*
-
-		var digits []rune
-
-		for {
-			c, _, err := scanner.ReadRune()
-			if err != nil {
-				return digits, err
-			}
-
-			if !unicode.IsDigit(c) {
-				_ = scanner.UnreadRune()
-
-				break
-			}
-		}
-
-		return digits, lexing.Done
-	}
+	cat_digits = lexing.MakeCategoryLexer(unicode.IsDigit, lexing.LexMany)
+	cat_uppercases = lexing.MakeCategoryLexer(unicode.IsUpper, lexing.MustLexMany)
+	cat_lowercases = lexing.MakeCategoryLexer(unicode.IsLower, lexing.LexMany)
+	cat_must_lowercases = lexing.MakeCategoryLexer(unicode.IsLower, lexing.MustLexMany)
 
 	lex_lowercase = func(scanner io.RuneScanner) ([]rune, error) {
-		// [a-z]+
-
-		c, _, err := scanner.ReadRune()
-		if err != nil {
-			return nil, err
-		}
-
-		if !unicode.IsLower(c) {
-			_ = scanner.UnreadRune()
-
-			return nil, lexing.Done
-		}
-
-		return []rune{c}, nil
-	}
-
-	frag_uppercases = func(scanner io.RuneScanner) ([]rune, error) {
-		// [A-Z]+
-
-		var chars []rune
-
-		for {
-			c, _, err := scanner.ReadRune()
-			if err != nil {
-				return chars, err
-			}
-
-			if !unicode.IsUpper(c) {
-				_ = scanner.UnreadRune()
-
-				break
-			}
-
-			chars = append(chars, c)
-		}
-
-		return chars, lexing.Done
-	}
-
-	lex_uppercase = func(scanner io.RuneScanner) ([]rune, error) {
-		// uppercase ([_] uppercase)*
-
-		var chars []rune
-
-		for {
-			tmp, err := lexing.RightLex(scanner, frag_uppercases)
-			if err != nil {
-				return chars, err
-			} else if len(tmp) == 0 {
-				break
-			}
-
-			chars = append(chars, tmp...)
-
-			c, _, err := scanner.ReadRune()
-			if err != nil {
-				return chars, err
-			}
-
-			if c != '_' {
-				_ = scanner.UnreadRune()
-
-				break
-			}
-
-			chars = append(chars, c)
-		}
-
-		return chars, lexing.Done
-	}
-
-	frag_lowercases = func(scanner io.RuneScanner) ([]rune, error) {
-		// lowercase
 		// [a-z]+([A-Z][a-z]*)*
 
-		// (lowercase | lowercase [_])+
-
-		chars, err := lexing.RightLex(scanner, lex_lowercase)
-		if err != nil {
-			return nil, err
-		}
-
-		c, _, err := scanner.ReadRune()
+		chars, err := lexing.RightLex(scanner, cat_must_lowercases)
 		if err != nil {
 			return chars, err
 		}
 
-		if c != '_' {
-			_ = scanner.UnreadRune()
+		for {
+			c, _, err := scanner.ReadRune()
+			if err != nil {
+				if err != io.EOF {
+					return chars, err
+				}
 
-			return chars, lexing.Done
+				break
+			}
+
+			if !unicode.IsUpper(c) {
+				err := scanner.UnreadRune()
+				dbg.AssertErr(err, "scanner.UnreadRune()")
+
+				break
+			}
+
+			chars = append(chars, c)
+
+			tmp, err := lexing.RightLex(scanner, cat_lowercases)
+			chars = append(chars, tmp...)
+
+			if err != nil {
+				return chars, err
+			}
 		}
 
-		chars = append(chars, c)
+		return chars, nil
+	}
+
+	lex_uppercase = func(scanner io.RuneScanner) ([]rune, error) {
+		// uppercases ([_] uppercases)*
+
+		var chars []rune
+
+		for {
+			tmp, err := lexing.RightLex(scanner, cat_uppercases)
+			chars = append(chars, tmp...)
+
+			if err != nil {
+				return chars, lexing.NoMatch
+			}
+
+			c, _, err := scanner.ReadRune()
+			if err != nil {
+				if err != io.EOF {
+					return chars, err
+				}
+
+				break
+			}
+
+			if c != '_' {
+				err := scanner.UnreadRune()
+				dbg.AssertErr(err, "scanner.UnreadRune()")
+
+				break
+			}
+
+			chars = append(chars, c)
+		}
+
+		if len(chars) == 0 {
+			return chars, lexing.NoMatch
+		}
 
 		return chars, nil
 	}
@@ -293,7 +141,7 @@ func init() {
 			return nil, nil
 		} */
 
-		chars, err := lexing.RightLex(l, frag_uppercases)
+		chars, err := lexing.RightLex(l, lex_uppercase)
 		if err != nil {
 			return nil, err
 		}
@@ -301,7 +149,7 @@ func init() {
 		if len(chars) != 0 {
 			// do digits
 
-			digits, err := lexing.RightLex(l, frag_digits)
+			digits, err := lexing.RightLex(l, cat_digits)
 			if err != nil {
 				return nil, err
 			}
@@ -311,7 +159,7 @@ func init() {
 			return grammar.NewToken(ttk_UppercaseId, string(chars), at, nil), nil
 		}
 
-		chars, err = lexing.RightLex(l, frag_lowercases)
+		chars, err = lexing.RightLex(l, lex_lowercase)
 		if err != nil {
 			return nil, err
 		}
@@ -319,7 +167,7 @@ func init() {
 		if len(chars) != 0 {
 			// do digits
 
-			digits, err := lexing.RightLex(l, frag_digits)
+			digits, err := lexing.RightLex(l, cat_digits)
 			if err != nil {
 				return nil, err
 			}
@@ -332,5 +180,16 @@ func init() {
 		return nil, errors.New("no match found")
 	}
 
-	internal_lexer = *lexing.NewLexer(lex_one, matcher)
+	internal_lexer.WithLexFunc(lex_one)
+
+	// Add here your custom matcher rules.
+
+	_ = internal_lexer.AddToMatch(ttk_Semicolon, ";")
+	_ = internal_lexer.AddToMatch(ttk_OpParen, "(")
+	_ = internal_lexer.AddToMatch(ttk_ClParen, ")")
+	_ = internal_lexer.AddToMatch(ttk_Pipe, "|")
+	_ = internal_lexer.AddToMatch(ttk_Equal, "=")
+	_ = internal_lexer.AddToMatch(ttk_UppercaseId, "EOF")
+	_ = internal_lexer.AddToSkipRule(" ", "\t")
+	_ = internal_lexer.AddToSkipRule("\r\n", "\n")
 }
