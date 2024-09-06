@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/PlayerR9/SLParser/ebnf"
+	"github.com/PlayerR9/SlParser/ebnf"
 	"github.com/PlayerR9/grammar"
 )
 

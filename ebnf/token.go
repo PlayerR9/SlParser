@@ -77,3 +77,7 @@ func (t token_type) GoString() string {
 		"ntk_Source1",
 	}[t]
 }
+
+func (t token_type) IsTerminal() bool {
+	return t < ntk_Identifier
+}

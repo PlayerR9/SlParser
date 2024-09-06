@@ -6,73 +6,44 @@ import (
 	gr "github.com/PlayerR9/grammar/grammar"
 )
 
-// NodeType represents the type of a node in the AST tree.
-type NodeType int
-
-const (
-	SourceNode NodeType = iota
-
-	// Add here your custom node names...
-	IdentifierNode
-	OrExprNode
-	RuleNode
-
-	// Add here your custom node types.
-)
-
-// String implements the NodeTyper interface.
-func (t NodeType) String() string {
-	return [...]string{
-		"Source",
-		// Add here your custom node names.
-
-		"Identifier",
-		"OR expression",
-		"Rule",
-	}[t]
-}
-
 var (
 	// ast_builder is the AST builder of the parser.
-	ast_builder ast.Make[*Node, token_type]
+	ast_builder *ast.AstBuilder[token_type, *Node]
 )
 
 func init() {
+	ast_builder = ast.NewAstBuilder[token_type, *Node]()
+
 	// Add here your custom AST builder rules...
 
 	// ntk_Rhs : ntk_Identifier .
 	// ntk_Rhs : ttk_OpParen ntk_OrExpr ttk_ClParen .
 
-	ast_builder.AddEntry(ntk_Rhs, func(a *ast.Result[*Node], root *gr.Token[token_type]) error {
-		children, err := ast.ExtractChildren(root)
-		if err != nil {
-			return err
-		}
+	ast_builder.Register(ntk_Rhs, func(tk *gr.Token[token_type]) (*Node, error) {
+		children := tk.Children()
 
 		switch len(children) {
 		case 1:
 			// ntk_Rhs : ntk_Identifier .
 
-			tmp, err := ast_builder.Apply(children[0])
+			tmp, err := ast_builder.Build(children[0])
 			if err != nil {
-				return err
+				return nil, err
 			}
 
-			a.AppendNodes(tmp)
+			return tmp, nil
 		case 3:
 			// ntk_Rhs : ttk_OpParen ntk_OrExpr ttk_ClParen .
 
-			tmp, err := ast_builder.Apply(children[0])
+			tmp, err := ast_builder.Build(children[1])
 			if err != nil {
-				return err
+				return nil, err
 			}
 
-			a.AppendNodes(tmp)
+			return tmp, nil
 		default:
-			return NewErrInvalidNumberOfChildren([]int{1, 3}, len(children))
+			return nil, NewErrInvalidNumberOfChildren([]int{1, 3}, len(children))
 		}
-
-		return nil
 	})
 
 	// ntk_OrExpr1 : ttk_Pipe ntk_Identifier .
@@ -101,7 +72,7 @@ func init() {
 
 	// ntk_Source : ntk_Source1 etk_EOF .
 
-	ast_builder.AddEntry(ntk_Source, func(a *ast.Result[*Node], root *gr.Token[token_type]) error {
+	ast_builder.Register(ntk_Source, func(tk *gr.Token[token_type]) (*Node, error) {
 		children, err := ast.ExtractChildren(root)
 		if err != nil {
 			return err
@@ -156,7 +127,7 @@ func init() {
 
 	// ntk_OrExpr : ntk_Identifier ntk_OrExpr1 .
 
-	ast_builder.AddEntry(ntk_OrExpr, func(a *ast.Result[*Node], root *gr.Token[token_type]) error {
+	ast_builder.Register(ntk_OrExpr, func(tk *gr.Token[token_type]) (*Node, error) {
 		children, err := ast.ExtractChildren(root)
 		if err != nil {
 			return err
@@ -198,7 +169,7 @@ func init() {
 	// ntk_Identifier : ttk_UppercaseId .
 	// ntk_Identifier : ttk_LowercaseId .
 
-	ast_builder.AddEntry(ntk_Identifier, func(a *ast.Result[*Node], root *gr.Token[token_type]) error {
+	ast_builder.Register(ntk_Identifier, func(tk *gr.Token[token_type]) (*Node, error) {
 		children, err := ast.ExtractChildren(root)
 		if err != nil {
 			return err
@@ -222,7 +193,7 @@ func init() {
 	// ntk_Rule : ttk_LowercaseId ttk_Colon ntk_Rhs1 ttk_Semicolon .
 	// ntk_Rule : ttk_LowercaseId ttk_Colon ntk_Rhs1 ttk_Rule1 .
 
-	ast_builder.AddEntry(ntk_Rule, func(a *ast.Result[*Node], root *gr.Token[token_type]) error {
+	ast_builder.Register(ntk_Rule, func(tk *gr.Token[token_type]) (*Node, error) {
 		children, err := ast.ExtractChildren(root)
 		if err != nil {
 			return err

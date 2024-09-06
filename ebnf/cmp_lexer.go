@@ -7,36 +7,36 @@ import (
 
 	dbg "github.com/PlayerR9/go-debug/assert"
 	"github.com/PlayerR9/grammar/grammar"
-	"github.com/PlayerR9/grammar/lexing"
+	"github.com/PlayerR9/grammar/lexer"
 )
 
 var (
 	// [0-9]+
-	cat_digits lexing.LexFunc
+	cat_digits lexer.LexFunc
 
 	// [A-Z]+
-	cat_uppercases lexing.LexFunc
+	cat_uppercases lexer.LexFunc
 
 	// [a-z]+
-	cat_must_lowercases lexing.LexFunc
+	cat_must_lowercases lexer.LexFunc
 
 	// [a-z]+
-	cat_lowercases lexing.LexFunc
+	cat_lowercases lexer.LexFunc
 
-	lex_uppercase lexing.LexFunc
-	lex_lowercase lexing.LexFunc
+	lex_uppercase lexer.LexFunc
+	lex_lowercase lexer.LexFunc
 )
 
 func init() {
-	cat_digits = lexing.MakeCategoryLexer(unicode.IsDigit, lexing.MustLexMany)
-	cat_uppercases = lexing.MakeCategoryLexer(unicode.IsUpper, lexing.MustLexMany)
-	cat_lowercases = lexing.MakeCategoryLexer(unicode.IsLower, lexing.MustLexMany)
-	cat_must_lowercases = lexing.MakeCategoryLexer(unicode.IsLower, lexing.MustLexMany)
+	cat_digits = lexer.MakeCategoryLexer(unicode.IsDigit, lexer.MustLexMany)
+	cat_uppercases = lexer.MakeCategoryLexer(unicode.IsUpper, lexer.MustLexMany)
+	cat_lowercases = lexer.MakeCategoryLexer(unicode.IsLower, lexer.MustLexMany)
+	cat_must_lowercases = lexer.MakeCategoryLexer(unicode.IsLower, lexer.MustLexMany)
 
 	lex_lowercase = func(scanner io.RuneScanner) ([]rune, error) {
 		// [a-z]+([A-Z][a-z]*)*
 
-		chars, err := lexing.RightLex(scanner, cat_must_lowercases)
+		chars, err := lexer.RightLex(scanner, cat_must_lowercases)
 		if err != nil {
 			return chars, err
 		}
@@ -60,7 +60,7 @@ func init() {
 
 			chars = append(chars, c)
 
-			tmp, err := lexing.RightLex(scanner, cat_lowercases)
+			tmp, err := lexer.RightLex(scanner, cat_lowercases)
 			chars = append(chars, tmp...)
 
 			if err != nil {
@@ -77,11 +77,11 @@ func init() {
 		var chars []rune
 
 		for {
-			tmp, err := lexing.RightLex(scanner, cat_uppercases)
+			tmp, err := lexer.RightLex(scanner, cat_uppercases)
 			chars = append(chars, tmp...)
 
 			if err != nil {
-				return chars, lexing.NoMatch
+				return chars, lexer.NoMatch
 			}
 
 			c, _, err := scanner.ReadRune()
@@ -104,7 +104,7 @@ func init() {
 		}
 
 		if len(chars) == 0 {
-			return chars, lexing.NoMatch
+			return chars, lexer.NoMatch
 		}
 
 		return chars, nil
@@ -113,11 +113,11 @@ func init() {
 
 var (
 	// internal_lexer is the lexer of the grammar.
-	internal_lexer lexing.Lexer[token_type]
+	internal_lexer lexer.Lexer[token_type]
 )
 
 func init() {
-	lex_one := func(l *lexing.Lexer[token_type]) (*grammar.Token[token_type], error) {
+	lex_one := func(l *lexer.Lexer[token_type]) (*grammar.Token[token_type], error) {
 		// Lex here anything that matcher doesn't handle...
 
 		at := l.Pos()
@@ -140,35 +140,35 @@ func init() {
 			return nil, nil
 		} */
 
-		chars, err := lexing.RightLex(l, lex_uppercase)
+		chars, err := lexer.RightLex(l, lex_uppercase)
 		if err == nil {
-			digits, err := lexing.RightLex(l, cat_digits)
-			if err != nil && err != lexing.NoMatch {
+			digits, err := lexer.RightLex(l, cat_digits)
+			if err != nil && err != lexer.NoMatch {
 				return nil, err
 			}
 
 			chars = append(chars, digits...)
 
 			return grammar.NewToken(ttk_UppercaseId, string(chars), at, nil), nil
-		} else if err != lexing.NoMatch {
+		} else if err != lexer.NoMatch {
 			return nil, err
 		}
 
-		chars, err = lexing.RightLex(l, lex_lowercase)
+		chars, err = lexer.RightLex(l, lex_lowercase)
 		if err == nil {
-			digits, err := lexing.RightLex(l, cat_digits)
-			if err != nil && err != lexing.NoMatch {
+			digits, err := lexer.RightLex(l, cat_digits)
+			if err != nil && err != lexer.NoMatch {
 				return nil, err
 			}
 
 			chars = append(chars, digits...)
 
 			return grammar.NewToken(ttk_LowercaseId, string(chars), at, nil), nil
-		} else if err != lexing.NoMatch {
+		} else if err != lexer.NoMatch {
 			return nil, err
 		}
 
-		return nil, lexing.NoMatch
+		return nil, lexer.NoMatch
 	}
 
 	internal_lexer.WithLexFunc(lex_one)

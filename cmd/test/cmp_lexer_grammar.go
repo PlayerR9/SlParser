@@ -3,18 +3,18 @@ package test
 
 import (
 	"github.com/PlayerR9/grammar/grammar"
-	"github.com/PlayerR9/grammar/lexing"
+	"github.com/PlayerR9/grammar/lexer"
 )
 
 var (
 	// internal_lexer is the lexer of the grammar.
-	internal_lexer lexing.Lexer[token_type]
+	internal_lexer lexer.Lexer[token_type]
 )
 
 func init() {
-	lex_one := func(l *lexing.Lexer[token_type]) (*grammar.Token[token_type], error) {
+	lex_one := func(l *lexer.Lexer[token_type]) (*grammar.Token[token_type], error) {
 		// Lex here anything that matcher doesn't handle...
-	
+
 		panic("Implement me!")
 	}
 

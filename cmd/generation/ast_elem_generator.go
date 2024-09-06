@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/PlayerR9/SLParser/cmd/pkg"
+	"github.com/PlayerR9/SlParser/cmd/pkg"
 	upi "github.com/PlayerR9/go-commons/CustomData/page_interval"
 )
 

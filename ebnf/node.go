@@ -9,6 +9,22 @@ import (
 	"github.com/PlayerR9/grammar/ast"
 )
 
+//go:generate stringer -type=NodeType -linecomment
+
+// NodeType represents the type of a node in the AST tree.
+type NodeType int
+
+const (
+	SourceNode NodeType = iota // Source
+
+	// Add here your custom node names...
+	IdentifierNode // Identifier
+	OrExprNode     // Or Expression
+	RuleNode       // Rule
+
+	// Add here your custom node types.
+)
+
 // Node is a node in a ast.
 type Node struct {
 	Parent, FirstChild, NextSibling, LastChild, PrevSibling *Node
@@ -109,8 +125,8 @@ func (tn *Node) AddChildren(children []ast.Noder) {
 	}
 }
 
-// String implements the ast.Noder interface.
-func (tn Node) String() string {
+// GoString implements the ast.Noder interface.
+func (tn Node) GoString() string {
 	var builder strings.Builder
 
 	builder.WriteString(strconv.Itoa(tn.Pos))
@@ -145,12 +161,16 @@ func NewNode(n_type NodeType, data string, pos int) Node {
 	}
 }
 
-// DirectChild returns an iterator that iterates over the direct children of the node
+func (n Node) IsTerminal() bool {
+	return n.FirstChild == nil
+}
+
+// Child returns an iterator that iterates over the direct children of the node
 // from the first to the last.
 //
 // Returns:
 //   - iter.Seq[*Node]: The iterator. Never returns nil.
-func (n Node) DirectChild() iter.Seq[*Node] {
+func (n Node) Child() iter.Seq[*Node] {
 	return func(yield func(child *Node) bool) {
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if !yield(c) {

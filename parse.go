@@ -1,7 +1,7 @@
-package SLParser
+package SlParser
 
 import (
-	ebnf "github.com/PlayerR9/SLParser/ebnf"
+	ebnf "github.com/PlayerR9/SlParser/ebnf"
 	gr "github.com/PlayerR9/grammar"
 )
 

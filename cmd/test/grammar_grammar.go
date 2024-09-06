@@ -7,7 +7,7 @@ import (
 
 var (
 	// Parser is the complete parser of the grammar.
-	Parser grammar.Parser[*Node, token_type]
+	Parser grammar.ParsingFunc[token_type]
 )
 
 func init() {

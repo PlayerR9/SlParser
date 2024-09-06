@@ -6,9 +6,9 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	gen "github.com/PlayerR9/SLParser/cmd/generation"
-	pkg "github.com/PlayerR9/SLParser/cmd/pkg"
-	ebnf "github.com/PlayerR9/SLParser/ebnf"
+	gen "github.com/PlayerR9/SlParser/cmd/generation"
+	pkg "github.com/PlayerR9/SlParser/cmd/pkg"
+	ebnf "github.com/PlayerR9/SlParser/ebnf"
 	"github.com/PlayerR9/grammar"
 	ast "github.com/PlayerR9/grammar/ast"
 	grd "github.com/PlayerR9/grammar/displayer"
