@@ -16,6 +16,9 @@ type Item[T gr.TokenTyper] struct {
 
 	// act is the action of the item.
 	act actioner
+
+	// pos is the position of the rhs in the rule.
+	pos int
 }
 
 // NewItem creates a new item.
@@ -55,7 +58,42 @@ func NewItem[T gr.TokenTyper](rule *Rule[T], pos int) (*Item[T], error) {
 	return &Item[T]{
 		rule: rule,
 		act:  act,
+		pos:  pos,
 	}, nil
+}
+
+// Same as NewItem, but panics instead of returning an error.
+//
+// Never returns nil.
+func MustNewItem[T gr.TokenTyper](rule *Rule[T], pos int) *Item[T] {
+	if rule == nil {
+		panic(gcers.NewErrNilParameter("rule"))
+	}
+
+	size := rule.size()
+	if pos < 0 || pos > size {
+		panic(gcers.NewErrInvalidParameter("pos", gcers.NewErrOutOfBounds(pos, 0, size).WithUpperBound(true)))
+	}
+
+	var act actioner
+
+	if pos < size {
+		act = &shift_action{}
+	} else {
+		rhs, ok := rule.rhs_at(pos - 1)
+		dba.AssertOk(ok, "rhs_at(%d)", pos-1)
+
+		if rhs == T(0) {
+			act = &accept_action{}
+		} else {
+			act = &reduce_action{}
+		}
+	}
+
+	return &Item[T]{
+		rule: rule,
+		act:  act,
+	}
 }
 
 // backward_rhs returns the backward rhs of the item.
@@ -72,4 +110,21 @@ func (i Item[T]) backward_rhs() iter.Seq[T] {
 //   - T: the left hand side of the item.
 func (i Item[T]) lhs() T {
 	return i.rule.get_lhs()
+}
+
+// RhsAt returns the rhs at the given index.
+//
+// Returns:
+//   - T: the rhs at the given index.
+//   - bool: true if the index is valid, false otherwise.
+func (i Item[T]) RhsAt(idx int) (T, bool) {
+	return i.rule.rhs_at(idx)
+}
+
+// Pos returns the position of the item in the rule.
+//
+// Returns:
+//   - int: the position of the item in the rule.
+func (i Item[T]) Pos() int {
+	return i.pos
 }

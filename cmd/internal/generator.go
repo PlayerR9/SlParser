@@ -7,12 +7,10 @@ type GenData struct {
 }
 
 // SetPackageName implements generator.PackageNameSetter interface.
-func (gd *GenData) SetPackageName(name string) bool {
+func (gd *GenData) SetPackageName(name string) {
 	if gd == nil {
-		return false
+		return
 	}
 
 	gd.PackageName = name
-
-	return true
 }

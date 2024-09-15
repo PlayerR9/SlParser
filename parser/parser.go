@@ -80,9 +80,9 @@ func (p Parser[T]) reduce(it *Item[T]) error {
 	for rhs := range it.backward_rhs() {
 		top, ok := p.stack.Pop()
 		if !ok {
-			return NewErrUnexpectedToken(rhs, prev, nil)
+			return NewErrUnexpectedToken([]T{rhs}, prev, nil)
 		} else if top.Type != rhs {
-			return NewErrUnexpectedToken(rhs, prev, &top.Type)
+			return NewErrUnexpectedToken([]T{rhs}, prev, &top.Type)
 		}
 
 		prev = &top.Type
