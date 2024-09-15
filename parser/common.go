@@ -6,6 +6,7 @@ import (
 	gr "github.com/PlayerR9/SlParser/grammar"
 	gcers "github.com/PlayerR9/go-commons/errors"
 	gcslc "github.com/PlayerR9/go-commons/slices"
+	dba "github.com/PlayerR9/go-debug/assert"
 )
 
 // CheckTop is a function that checks if the top of the stack is in the allowed list.
@@ -136,20 +137,31 @@ func UnambiguousRule[T gr.TokenTyper](items ...*Item[T]) ParseFn[T] {
 			return items, nil
 		}
 	default:
-		max := len(items) // Ensure no infinite loop occurs
+		max := -1 // Ensure no infinite loop occurs
+
+		for _, item := range items {
+			if max == -1 || item.pos > max {
+				max = item.pos
+			}
+		}
+
+		dba.Assert(max >= 0, "max >= 0")
 
 		return func(parser *Parser[T], top1, lookahead *gr.Token[T]) ([]*Item[T], error) {
 			prev := top1
 
-			for offset := 0; offset < max && len(items) > 1; offset++ {
-				all_rhs := get_rhs_with_offset(items, offset)
+			var offset int
+			var all_rhs []T
+
+			for offset < max && len(items) > 1 {
+				all_rhs = get_rhs_with_offset(items, offset)
 				if len(all_rhs) == 0 {
 					break
 				}
 
 				top, ok := parser.Pop()
 				if !ok {
-					return nil, NewErrUnexpectedToken(all_rhs, &prev.Type, nil)
+					break
 				}
 
 				items := filter_items_without_rhs(items, offset, top.Type)
@@ -158,6 +170,17 @@ func UnambiguousRule[T gr.TokenTyper](items ...*Item[T]) ParseFn[T] {
 				}
 
 				prev = top
+				offset++
+			}
+
+			fn := func(item *Item[T]) bool {
+				return item.pos-offset < 0
+			}
+
+			items = gcslc.SliceFilter(items, fn)
+
+			if len(items) == 0 {
+				return nil, NewErrUnexpectedToken(all_rhs, &prev.Type, nil)
 			}
 
 			return items, nil
