@@ -3,6 +3,8 @@ package lexer
 import (
 	"strconv"
 	"strings"
+
+	gcstr "github.com/PlayerR9/go-commons/strings"
 )
 
 // ErrUnexpectedChar is an error that occurs when an unexpected character is encountered.
@@ -38,10 +40,10 @@ func (e ErrUnexpectedChar) Error() string {
 	if len(e.Expecteds) == 0 {
 		builder.WriteString("nothing")
 	} else {
-		elems := SliceOfRunes(e.Expecteds)
-		QuoteStrings(elems)
+		elems := gcstr.SliceOfRunes(e.Expecteds)
+		gcstr.QuoteStrings(elems)
 
-		builder.WriteString(EitherOrString(elems))
+		builder.WriteString(gcstr.EitherOrString(elems))
 	}
 
 	builder.WriteString(" after ")
