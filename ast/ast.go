@@ -9,7 +9,7 @@ import (
 )
 
 type AstMaker[N interface {
-	SetChildren(children []N)
+	AddChildren(children []N)
 }, T gr.TokenTyper] struct {
 	table          map[T]ToAstFunc[N, T]
 	make_fake_node func(root *gr.Token[T]) N
@@ -44,7 +44,7 @@ func (am AstMaker[N, T]) Convert(root *gr.Token[T]) (N, error) {
 }
 
 func LhsToAst[N interface {
-	SetChildren(children []N)
+	AddChildren(children []N)
 }, T gr.TokenTyper](root *gr.Token[T], lhs T, do func(children []*gr.Token[T]) (N, error)) ([]N, error) {
 	if do == nil {
 		return nil, gcers.NewErrNilParameter("do")
@@ -57,7 +57,7 @@ func LhsToAst[N interface {
 	var nodes []N
 
 	for root != nil {
-		children := root.Children
+		children := root.GetChildren()
 
 		if len(children) == 0 {
 			return nil, errors.New("expected at least one child")
@@ -101,7 +101,7 @@ func LhsToAst[N interface {
 // This function transforms a node into a fake AST node. It does this by creating a new node with the correct type and data,
 // and then setting the children of the new node to be the transformed children of the fake node.
 func TransformFakeNode[N interface {
-	SetChildren(children []N)
+	AddChildren(children []N)
 }, T gr.TokenTyper](tk *gr.Token[T], fn func(tk *gr.Token[T]) N) N {
 	if tk == nil {
 		return *new(N)
@@ -118,7 +118,7 @@ func TransformFakeNode[N interface {
 		subnodes = append(subnodes, n)
 	}
 
-	node.SetChildren(subnodes)
+	node.AddChildren(subnodes)
 
 	return node
 }

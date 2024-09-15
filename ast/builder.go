@@ -5,14 +5,14 @@ import (
 )
 
 type Builder[N interface {
-	SetChildren(children []N)
+	AddChildren(children []N)
 }, T gr.TokenTyper] struct {
 	table          map[T]ToAstFunc[N, T]
 	make_fake_node func(root *gr.Token[T]) N
 }
 
 func NewBuilder[N interface {
-	SetChildren(children []N)
+	AddChildren(children []N)
 }, T gr.TokenTyper]() Builder[N, T] {
 	return Builder[N, T]{
 		table:          make(map[T]ToAstFunc[N, T]),
@@ -55,7 +55,7 @@ func (am Builder[N]) Convert(root *gr.Token[T]) (N, error) {
 } */
 
 type ToAstFunc[N interface {
-	SetChildren(children []N)
+	AddChildren(children []N)
 }, T gr.TokenTyper] func(tk *gr.Token[T]) (N, error)
 
 /* func (am *Builder) Forward(type_ gr.TokenType) {
