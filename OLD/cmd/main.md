@@ -1,17 +1,16 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 
-	gen "github.com/PlayerR9/SlParser/cmd/generation"
-	pkg "github.com/PlayerR9/SlParser/cmd/pkg"
-	ebnf "github.com/PlayerR9/SlParser/ebnf"
+	gen "github.com/PlayerR9/SlParser/OLD/cmd/generation"
+	pkg "github.com/PlayerR9/SlParser/OLD/cmd/pkg"
+	ebnf "github.com/PlayerR9/SlParser/OLD/ebnf"
 	"github.com/PlayerR9/grammar"
 	ast "github.com/PlayerR9/grammar/ast"
-	grd "github.com/PlayerR9/grammar/displayer"
+	// grd "github.com/PlayerR9/grammar/displayer"
 )
 
 func main() {
@@ -30,7 +29,7 @@ func main() {
 
 	root, err := ebnf.Parser.Parse(data)
 	if err != nil {
-		fmt.Println(grd.DisplayError(data, err))
+		// fmt.Println(grd.DisplayError(data, err))
 
 		return
 	}

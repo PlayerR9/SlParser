@@ -1,7 +1,7 @@
 package generation
 
 import (
-	"github.com/PlayerR9/SlParser/cmd/pkg"
+	"github.com/PlayerR9/SlParser/OLD/cmd/pkg"
 	uslc "github.com/PlayerR9/go-commons/cmp"
 	ggen "github.com/PlayerR9/go-generator/generator"
 )

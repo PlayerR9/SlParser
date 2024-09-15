@@ -5,7 +5,7 @@ import (
 
 	ggen "github.com/PlayerR9/go-generator/generator"
 
-	pkg "github.com/PlayerR9/SlParser/cmd/pkg"
+	pkg "github.com/PlayerR9/SlParser/OLD/cmd/pkg"
 )
 
 type ParserGen struct {

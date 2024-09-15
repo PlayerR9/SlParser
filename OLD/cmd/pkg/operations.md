@@ -6,7 +6,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	ebnf "github.com/PlayerR9/SlParser/ebnf"
+	ebnf "github.com/PlayerR9/SlParser/OLD/ebnf"
 	gcch "github.com/PlayerR9/go-commons/runes"
 	gcslc "github.com/PlayerR9/go-commons/slices"
 	dbg "github.com/PlayerR9/go-debug/assert"
