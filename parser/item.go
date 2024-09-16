@@ -19,6 +19,9 @@ type Item[T gr.TokenTyper] struct {
 
 	// pos is the position of the rhs in the rule.
 	pos int
+
+	// lookaheads is the list of lookaheads.
+	lookaheads []T
 }
 
 // NewItem creates a new item.
@@ -35,7 +38,7 @@ func NewItem[T gr.TokenTyper](rule *Rule[T], pos int) (*Item[T], error) {
 		return nil, gcers.NewErrNilParameter("rule")
 	}
 
-	size := rule.size()
+	size := rule.Size()
 	if pos < 0 || pos > size {
 		return nil, gcers.NewErrInvalidParameter("pos", errors.New("value is out of range"))
 	}
@@ -45,7 +48,7 @@ func NewItem[T gr.TokenTyper](rule *Rule[T], pos int) (*Item[T], error) {
 	if pos < size {
 		act = &shift_action{}
 	} else {
-		rhs, ok := rule.rhs_at(pos - 1)
+		rhs, ok := rule.RhsAt(pos - 1)
 		dba.AssertOk(ok, "rhs_at(%d)", pos-1)
 
 		if rhs == T(0) {
@@ -70,7 +73,7 @@ func MustNewItem[T gr.TokenTyper](rule *Rule[T], pos int) *Item[T] {
 		panic(gcers.NewErrNilParameter("rule"))
 	}
 
-	size := rule.size()
+	size := rule.Size()
 	if pos < 0 || pos > size {
 		panic(gcers.NewErrInvalidParameter("pos", gcers.NewErrOutOfBounds(pos, 0, size).WithUpperBound(true)))
 	}
@@ -80,7 +83,7 @@ func MustNewItem[T gr.TokenTyper](rule *Rule[T], pos int) *Item[T] {
 	if pos < size {
 		act = &shift_action{}
 	} else {
-		rhs, ok := rule.rhs_at(pos - 1)
+		rhs, ok := rule.RhsAt(pos - 1)
 		dba.AssertOk(ok, "rhs_at(%d)", pos-1)
 
 		if rhs == T(0) {
@@ -101,7 +104,7 @@ func MustNewItem[T gr.TokenTyper](rule *Rule[T], pos int) *Item[T] {
 // Returns:
 //   - iter.Seq[T]: the backward rhs of the item.
 func (i Item[T]) backward_rhs() iter.Seq[T] {
-	return i.rule.backward_rhs()
+	return i.rule.BackwardRhs()
 }
 
 // lhs returns the left hand side of the item.
@@ -109,7 +112,7 @@ func (i Item[T]) backward_rhs() iter.Seq[T] {
 // Returns:
 //   - T: the left hand side of the item.
 func (i Item[T]) lhs() T {
-	return i.rule.get_lhs()
+	return i.rule.Lhs()
 }
 
 // RhsAt returns the rhs at the given index.
@@ -118,7 +121,7 @@ func (i Item[T]) lhs() T {
 //   - T: the rhs at the given index.
 //   - bool: true if the index is valid, false otherwise.
 func (i Item[T]) RhsAt(idx int) (T, bool) {
-	return i.rule.rhs_at(idx)
+	return i.rule.RhsAt(idx)
 }
 
 // Pos returns the position of the item in the rule.
@@ -128,3 +131,24 @@ func (i Item[T]) RhsAt(idx int) (T, bool) {
 func (i Item[T]) Pos() int {
 	return i.pos
 }
+
+// set_lookaheads is a helper function for the lookaheads of the item.
+//
+// Parameters:
+//   - lookaheads: the list of lookaheads.
+func (item *Item[T]) set_lookaheads(lookaheads []T) {
+	item.lookaheads = lookaheads
+}
+
+/*
+func LookaheadsOf[T gr.TokenTyper](items ...*Item[T]) {
+	item := items[0]
+
+	rhs, ok := item.RhsAt(item.pos + 1)
+	if !ok {
+
+	} else {
+
+	}
+}
+*/

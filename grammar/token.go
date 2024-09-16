@@ -18,6 +18,12 @@ type TokenTyper interface {
 	// Returns:
 	//   - string: the string representation of the token type.
 	String() string
+
+	// IsTerminal checks whether the token type is terminal.
+	//
+	// Returns:
+	//   - bool: true if the token type is terminal, false otherwise.
+	IsTerminal() bool
 }
 
 // Token is a node in a tree.
