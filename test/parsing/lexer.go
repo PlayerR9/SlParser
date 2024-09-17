@@ -65,16 +65,16 @@ func init() {
 			return EttInvalid, "", err
 		}
 
-		if char == '\n' {
+		if char != '\n' {
 			return EttInvalid, "", lxr.NewErrUnexpectedChar('\r', []rune{'\n'}, nil)
 		}
 
-		_, err = newline_fn(lexer)
+		str, err := newline_fn(lexer)
 		if err != nil && err != lxr.NotFound {
 			return EttInvalid, "", err
 		}
 
-		return TttNewline, "\r\n", nil
+		return TttNewline, str, nil
 	})
 
 	builder.Register('\n', func(lexer lxr.RuneStreamer, char rune) (TokenType, string, error) {

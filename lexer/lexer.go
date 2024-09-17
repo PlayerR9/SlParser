@@ -78,7 +78,6 @@ func (l *Lexer[T]) NextRune() (rune, error) {
 
 	c, size, err := l.input_stream.ReadRune()
 	if err != nil {
-		l.state.UpdateLastCharRead(nil)
 		l.state.UpdateLastErr(err)
 
 		return 0, err
@@ -87,7 +86,6 @@ func (l *Lexer[T]) NextRune() (rune, error) {
 	l.next_pos += size
 	l.last_read_size = size
 
-	l.state.UpdateLastCharRead(&c)
 	l.state.UpdateLastErr(nil)
 
 	return c, nil
@@ -147,10 +145,16 @@ func (l *Lexer[T]) Lex() error {
 
 	if len(l.table) == 0 {
 		if l.def_fn == nil {
-			_, err := l.NextRune()
+			char, err := l.NextRune()
 			if err == io.EOF {
 				return nil
+			} else if err != nil {
+				l.state.UpdateLastCharRead(nil)
+
+				return l.make_error()
 			}
+
+			l.state.UpdateLastCharRead(&char)
 
 			return l.make_error()
 		}
@@ -160,8 +164,12 @@ func (l *Lexer[T]) Lex() error {
 			if err == io.EOF {
 				break
 			} else if err != nil {
+				l.state.UpdateLastCharRead(nil)
+
 				return l.make_error()
 			}
+
+			l.state.UpdateLastCharRead(&char)
 
 			type_, data, err := l.def_fn(l, char)
 			if err == nil {
@@ -188,8 +196,12 @@ func (l *Lexer[T]) Lex() error {
 			if err == io.EOF {
 				break
 			} else if err != nil {
+				l.state.UpdateLastCharRead(nil)
+
 				return l.make_error()
 			}
+
+			l.state.UpdateLastCharRead(&char)
 
 			var type_ T
 			var data string
@@ -211,6 +223,8 @@ func (l *Lexer[T]) Lex() error {
 				_ = l.input_stream.UnreadRune()
 
 				l.state.UpdateLastErr(err)
+
+				return l.make_error()
 			} else {
 				l.add_token(nil)
 			}
@@ -222,8 +236,12 @@ func (l *Lexer[T]) Lex() error {
 		if err == io.EOF {
 			break
 		} else if err != nil {
+			l.state.UpdateLastCharRead(nil)
+
 			return l.make_error()
 		}
+
+		l.state.UpdateLastCharRead(&char)
 
 		var type_ T
 		var data string
@@ -245,6 +263,8 @@ func (l *Lexer[T]) Lex() error {
 			_ = l.input_stream.UnreadRune()
 
 			l.state.UpdateLastErr(err)
+
+			return l.make_error()
 		} else {
 			l.add_token(nil)
 		}

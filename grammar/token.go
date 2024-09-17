@@ -52,9 +52,9 @@ func (tn *Token[T]) IsSingleton() bool {
 // String implements tree.TreeNoder interface.
 func (t Token[T]) String() string {
 	if t.Data == "" {
-		return fmt.Sprintf("Token[T][%s: - %d]", t.Type.String(), t.Pos)
+		return fmt.Sprintf("Token[T][%d:%s]", t.Pos, t.Type.String())
 	} else {
-		return fmt.Sprintf("Token[T][%s (%q) - %d]", t.Type.String(), t.Data, t.Pos)
+		return fmt.Sprintf("Token[T][%d:%s (%q)]", t.Pos, t.Type.String(), t.Data)
 	}
 }
 

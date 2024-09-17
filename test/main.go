@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	dspl "github.com/PlayerR9/SlParser/display"
 	lxr "github.com/PlayerR9/SlParser/lexer"
 	pkg "github.com/PlayerR9/SlParser/test/parsing"
 )
@@ -34,7 +35,11 @@ func main() {
 
 		lex_err, ok := err.(*lxr.Err)
 		if ok {
-			str := lxr.Display(data, lex_err.Pos)
+			x, y := dspl.GetCoords(data, lex_err.Pos)
+
+			fmt.Printf("Error at (%d column, %d line)\n", x, y)
+
+			str := dspl.Display(data, lex_err.Pos)
 			fmt.Println(string(str))
 
 			fmt.Println("Hints:")
