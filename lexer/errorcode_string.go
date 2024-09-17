@@ -10,11 +10,12 @@ func _() {
 	var x [1]struct{}
 	_ = x[UnrecognizedChar-0]
 	_ = x[InvalidInputStream-1]
+	_ = x[BadWord-2]
 }
 
-const _ErrorCode_name = "UnrecognizedCharInvalidInputStream"
+const _ErrorCode_name = "UnrecognizedCharInvalidInputStreamBadWord"
 
-var _ErrorCode_index = [...]uint8{0, 16, 34}
+var _ErrorCode_index = [...]uint8{0, 16, 34, 41}
 
 func (i ErrorCode) String() string {
 	if i < 0 || i >= ErrorCode(len(_ErrorCode_index)-1) {

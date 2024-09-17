@@ -18,19 +18,32 @@ func main() {
 	is := lxr.NewStream().FromBytes(data)
 
 	pkg.Lexer.SetInputStream(is)
-	pkg.Lexer.Lex()
-	tokens := pkg.Lexer.Tokens()
-	fmt.Println(tokens)
 
-	if err := pkg.Lexer.Error(); err != nil {
+	err = pkg.Lexer.Lex()
+
+	tokens := pkg.Lexer.Tokens()
+
+	fmt.Println("Here's the list of tokens:")
+	for _, tk := range tokens {
+		fmt.Println("\t", tk.String())
+	}
+	fmt.Println()
+
+	if err != nil {
 		fmt.Println(err.Error())
 
-		fmt.Println("Hints:")
-		for _, s := range err.Suggestions {
-			fmt.Println("\t", s)
-		}
+		lex_err, ok := err.(*lxr.Err)
+		if ok {
+			str := lxr.Display(data, lex_err.Pos)
+			fmt.Println(string(str))
 
-		os.Exit(2 + int(err.Code))
+			fmt.Println("Hints:")
+			for _, s := range lex_err.Suggestions {
+				fmt.Println("\t", s)
+			}
+
+			os.Exit(2 + int(lex_err.Code))
+		}
 	}
 
 	// [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]

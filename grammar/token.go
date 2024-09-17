@@ -36,6 +36,7 @@ type Token[T TokenTyper] struct {
 	Data                                                    string
 	Lookahead                                               *Token[T]
 	Type                                                    T
+	Pos                                                     int
 }
 
 // IsLeaf implements the tree.Noder interface.
@@ -51,9 +52,9 @@ func (tn *Token[T]) IsSingleton() bool {
 // String implements tree.TreeNoder interface.
 func (t Token[T]) String() string {
 	if t.Data == "" {
-		return fmt.Sprintf("Token[T][%s]", t.Type.String())
+		return fmt.Sprintf("Token[T][%s: - %d]", t.Type.String(), t.Pos)
 	} else {
-		return fmt.Sprintf("Token[T][%s (%q)]", t.Type.String(), t.Data)
+		return fmt.Sprintf("Token[T][%s (%q) - %d]", t.Type.String(), t.Data, t.Pos)
 	}
 }
 
@@ -62,13 +63,15 @@ func (t Token[T]) String() string {
 // Parameters:
 //   - type_: the type of the token.
 //   - data: the data of the token.
+//   - pos: the position of the token.
 //
 // Returns:
 //   - *Token[T]: the new terminal token. Never returns nil.
-func NewTerminalToken[T TokenTyper](type_ T, data string) *Token[T] {
+func NewTerminalToken[T TokenTyper](type_ T, data string, pos int) *Token[T] {
 	return &Token[T]{
 		Type: type_,
 		Data: data,
+		Pos:  pos,
 	}
 }
 
@@ -87,10 +90,12 @@ func NewNonTerminalToken[T TokenTyper](type_ T, children []*Token[T]) (*Token[T]
 	}
 
 	last_tk := children[len(children)-1]
+	first_tk := children[0]
 
 	tk := &Token[T]{
 		Type:      type_,
 		Lookahead: last_tk.Lookahead,
+		Pos:       first_tk.Pos,
 	}
 
 	tk.AddChildren(children)
@@ -195,11 +200,12 @@ func (tn *Token[T]) Cleanup() []*Token[T] {
 // Copy creates a shally copy of the node.
 //
 // Although this function never returns nil, it does not copy any pointers.
-func (tn *Token[T]) Copy() *Token[T] {
+func (tn Token[T]) Copy() *Token[T] {
 	return &Token[T]{
 		Data:      tn.Data,
 		Lookahead: tn.Lookahead,
 		Type:      tn.Type,
+		Pos:       tn.Pos,
 	}
 }
 

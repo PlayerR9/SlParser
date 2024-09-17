@@ -1,6 +1,8 @@
 package lexer
 
-import gr "github.com/PlayerR9/SlParser/grammar"
+import (
+	gr "github.com/PlayerR9/SlParser/grammar"
+)
 
 // LexFunc is a function that lexes a token.
 //

@@ -1,9 +1,7 @@
 package lexer
 
 import (
-	"fmt"
-
-	util "github.com/PlayerR9/SlParser/util"
+	"strings"
 )
 
 //go:generate stringer -type=ErrorCode
@@ -23,39 +21,99 @@ const (
 	// Example:
 	// 	let is = input stream of non-utf8 characters.
 	InvalidInputStream
+
+	// BadWord occurs when a word is invalid.
+	//
+	// Example:
+	// 	let L = lexer with integers as its lexing table.
+	// 	Lex(L, "01")
+	BadWord
 )
 
-// NewErrUnrecognizedChar creates a new error for an unrecognized character.
-//
-// Parameters:
-//   - char: the unrecognized character.
-//
-// Returns:
-//   - *util.Err[ErrorCode]: the error. Never returns nil.
-func NewErrUnrecognizedChar(char rune) *util.Err[ErrorCode] {
-	err := util.NewErr(UnrecognizedChar, fmt.Errorf("character (%q) is not a recognized character", char))
-	err.AddSuggestion(
-		"1. Input provided cannot be lexed by the current lexer.",
-		"You may want to check for typos in the input.",
-	)
-	err.AddSuggestion(
-		"2. (Less likely) The lexer table is not configured correctly.",
-		"Contact the developer and provide this error code.",
-	)
+// Err is a generic yet advanced error type.
+type Err struct {
+	// Code is the error code.
+	Code ErrorCode
 
-	return err
+	// Reason is the error message.
+	Reason error
+
+	// Suggestions is a list of suggestions.
+	Suggestions []string
+
+	// Pos is the position of the error.
+	Pos int
 }
 
-// NewErrInvalidInputStream creates a new error for an invalid input stream.
+// Error implements the error interface.
 //
-// Parameters:
-//   - reason: the underlying error.
+// Message:
+//
+//	"{code}: {reason}".
+func (e Err) Error() string {
+	var builder strings.Builder
+
+	builder.WriteString(e.Code.String())
+	builder.WriteString(": ")
+
+	if e.Reason == nil {
+		builder.WriteString("something went wrong")
+	} else {
+		builder.WriteString(e.Reason.Error())
+	}
+
+	return builder.String()
+}
+
+// Unwrap unwraps the error.
 //
 // Returns:
-//   - *util.Err[ErrorCode]: the error. Never returns nil.
-func NewErrInvalidInputStream(reason error) *util.Err[ErrorCode] {
-	err := util.NewErr(InvalidInputStream, reason)
-	err.AddSuggestion("Input is most likely not a valid input for the current lexer.")
+//   - error: the reason for the error.
+func (e Err) Unwrap() error {
+	return e.Reason
+}
 
-	return err
+// ChangeReason changes the reason for the error.
+//
+// Parameters:
+//   - new_reason: the new reason for the error.
+func (e *Err) ChangeReason(new_reason error) {
+	if e == nil {
+		return
+	}
+
+	e.Reason = new_reason
+}
+
+// NewErr creates a new Err error.
+//
+// Parameters:
+//   - code: the error code.
+//   - pos: the position of the error.
+//   - reason: the reason for the error.
+//
+// Returns:
+//   - *Err: the error. Never returns nil.
+func NewErr(code ErrorCode, pos int, reason error) *Err {
+	return &Err{
+		Pos:    pos,
+		Code:   code,
+		Reason: reason,
+	}
+}
+
+// AddSuggestion adds a suggestion to the error.
+//
+// Parameters:
+//   - sentences: the sentences of the suggestion.
+//
+// Sentences are joined with spaces.
+func (e *Err) AddSuggestion(sentences ...string) {
+	if e == nil {
+		return
+	}
+
+	paragraph := strings.Join(sentences, " ")
+
+	e.Suggestions = append(e.Suggestions, paragraph)
 }

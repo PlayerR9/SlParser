@@ -55,7 +55,7 @@ func FragNewline(opts ...LexOption) LexFragment {
 		if char == '\r' {
 			next, err := lexer.NextRune()
 			if err == nil && next == '\n' {
-				return "\n", nil
+				return "\r\n", nil
 			}
 
 			if err == io.EOF {

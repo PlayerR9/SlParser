@@ -74,16 +74,16 @@ func init() {
 			return EttInvalid, "", err
 		}
 
-		return TttNewline, "\n", nil
+		return TttNewline, "\r\n", nil
 	})
 
 	builder.Register('\n', func(lexer lxr.RuneStreamer, char rune) (TokenType, string, error) {
-		_, err := newline_fn(lexer)
+		str, err := newline_fn(lexer)
 		if err != nil && err != lxr.NotFound {
 			return EttInvalid, "", err
 		}
 
-		return TttNewline, "\n", nil
+		return TttNewline, str, nil
 	})
 
 	// LIST_COMPREHENSION : 'sq = [x * x for x in range(10)]' ;

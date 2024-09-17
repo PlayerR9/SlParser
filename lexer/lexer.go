@@ -2,10 +2,10 @@ package lexer
 
 import (
 	"errors"
+	"fmt"
 	"io"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
-	util "github.com/PlayerR9/SlParser/util"
 	dba "github.com/PlayerR9/go-debug/assert"
 )
 
@@ -55,8 +55,19 @@ type Lexer[T gr.TokenTyper] struct {
 	// def_fn is the default lexer function.
 	def_fn LexFunc[T]
 
-	// err is the last error.
-	err *util.Err[ErrorCode]
+	// pos is the current position in the input stream.
+	// This is in bytes.
+	pos int
+
+	// next_pos is the next position in the input stream.
+	// This is in bytes.
+	next_pos int
+
+	// last_read_size is the size of the last read rune.
+	last_read_size int
+
+	// state is the lexer state.
+	state LexerState
 }
 
 // NextRune implements RuneStreamer interface.
@@ -65,10 +76,19 @@ func (l *Lexer[T]) NextRune() (rune, error) {
 		return 0, io.EOF
 	}
 
-	c, _, err := l.input_stream.ReadRune()
+	c, size, err := l.input_stream.ReadRune()
 	if err != nil {
+		l.state.UpdateLastCharRead(nil)
+		l.state.UpdateLastErr(err)
+
 		return 0, err
 	}
+
+	l.next_pos += size
+	l.last_read_size = size
+
+	l.state.UpdateLastCharRead(&c)
+	l.state.UpdateLastErr(nil)
 
 	return c, nil
 }
@@ -80,7 +100,14 @@ func (l *Lexer[T]) UnreadRune() error {
 	}
 
 	err := l.input_stream.UnreadRune()
-	return err
+	if err != nil {
+		return err
+	}
+
+	l.next_pos -= l.last_read_size
+	l.last_read_size = 0
+
+	return nil
 }
 
 // SetInputStream sets the input stream.
@@ -97,89 +124,105 @@ func (l *Lexer[T]) SetInputStream(input_stream io.RuneScanner) {
 	l.input_stream = input_stream
 }
 
+// add_token is a helper function that adds a token to the list of tokens
+// iff the token is not nil; updating the lexer state.
+//
+// Parameters:
+//   - tk: the token to add.
+func (l *Lexer[T]) add_token(tk *gr.Token[T]) {
+	if tk != nil {
+		l.tokens = append(l.tokens, tk)
+	}
+
+	l.last_read_size = 0
+	l.pos = l.next_pos
+}
+
 // Lex lexes the input stream.
-func (l *Lexer[T]) Lex() {
+//
+// Returns:
+//   - error: an error of type *Err if the input stream could not be lexed.
+func (l *Lexer[T]) Lex() error {
 	dba.AssertNotNil(l, "l")
 
 	if len(l.table) == 0 {
 		if l.def_fn == nil {
-			c, _, err := l.input_stream.ReadRune()
-			if err == nil {
-				err = l.input_stream.UnreadRune()
-				dba.AssertErr(err, "l.input_stream.UnreadRune()")
-
-				l.err = NewErrUnrecognizedChar(c)
-			} else if err != io.EOF {
-				l.err = NewErrInvalidInputStream(err)
+			_, err := l.NextRune()
+			if err == io.EOF {
+				return nil
 			}
 
-			return
+			return l.make_error()
 		}
 
-		for l.err == nil {
-			c, _, err := l.input_stream.ReadRune()
+		for {
+			char, err := l.NextRune()
 			if err == io.EOF {
 				break
 			} else if err != nil {
-				l.err = NewErrInvalidInputStream(err)
-				break
+				return l.make_error()
 			}
 
-			type_, data, err := l.def_fn(l, c)
+			type_, data, err := l.def_fn(l, char)
 			if err == nil {
-				tk := gr.NewTerminalToken(type_, data)
-				l.tokens = append(l.tokens, tk)
-			} else if err != SkipToken {
+				tk := gr.NewTerminalToken(type_, data, l.pos)
+
+				l.add_token(tk)
+			} else if err == SkipToken {
+				l.add_token(nil)
+			} else {
 				_ = l.input_stream.UnreadRune()
 
-				l.err = NewErrInvalidInputStream(err)
+				l.state.UpdateLastErr(err)
+
+				return l.make_error()
 			}
 		}
 
-		return
+		return nil
 	}
 
 	if l.def_fn == nil {
-		for l.err == nil {
-			c, _, err := l.input_stream.ReadRune()
+		for {
+			char, err := l.NextRune()
 			if err == io.EOF {
 				break
 			} else if err != nil {
-				l.err = NewErrInvalidInputStream(err)
-				break
+				return l.make_error()
 			}
 
-			fn, ok := l.table[c]
+			var type_ T
+			var data string
+
+			var tk *gr.Token[T]
+
+			fn, ok := l.table[char]
 			if !ok {
-				err := l.input_stream.UnreadRune()
-				dba.AssertErr(err, "l.input_stream.UnreadRune()")
-
-				l.err = NewErrUnrecognizedChar(c)
-				break
+				return l.make_error()
 			}
 
-			type_, data, err := fn(l, c)
+			type_, data, err = fn(l, char)
+
 			if err == nil {
-				tk := gr.NewTerminalToken(type_, data)
-				l.tokens = append(l.tokens, tk)
+				tk = gr.NewTerminalToken(type_, data, l.pos)
+
+				l.add_token(tk)
 			} else if err != SkipToken {
 				_ = l.input_stream.UnreadRune()
 
-				l.err = NewErrInvalidInputStream(err)
+				l.state.UpdateLastErr(err)
+			} else {
+				l.add_token(nil)
 			}
 		}
-
-		return
 	}
 
-	for l.err == nil {
-		c, _, err := l.input_stream.ReadRune()
+	for {
+		char, err := l.NextRune()
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			l.err = NewErrInvalidInputStream(err)
-
-			break
+			return l.make_error()
 		}
 
 		var type_ T
@@ -187,22 +230,27 @@ func (l *Lexer[T]) Lex() {
 
 		var tk *gr.Token[T]
 
-		fn, ok := l.table[c]
+		fn, ok := l.table[char]
 		if ok {
-			type_, data, err = fn(l, c)
+			type_, data, err = fn(l, char)
 		} else {
-			type_, data, err = l.def_fn(l, c)
+			type_, data, err = l.def_fn(l, char)
 		}
 
 		if err == nil {
-			tk = gr.NewTerminalToken(type_, data)
-			l.tokens = append(l.tokens, tk)
+			tk = gr.NewTerminalToken(type_, data, l.pos)
+
+			l.add_token(tk)
 		} else if err != SkipToken {
 			_ = l.input_stream.UnreadRune()
 
-			l.err = NewErrInvalidInputStream(err)
+			l.state.UpdateLastErr(err)
+		} else {
+			l.add_token(nil)
 		}
 	}
+
+	return nil
 }
 
 // Tokens returns the list of tokens.
@@ -210,7 +258,7 @@ func (l *Lexer[T]) Lex() {
 // Returns:
 //   - []*gr.Token[T]: the list of tokens.
 func (l Lexer[T]) Tokens() []*gr.Token[T] {
-	eof := gr.NewTerminalToken(T(0), "")
+	eof := gr.NewTerminalToken(T(0), "", -1)
 
 	tokens := make([]*gr.Token[T], len(l.tokens), len(l.tokens)+1)
 	copy(tokens, l.tokens)
@@ -240,17 +288,61 @@ func (l *Lexer[T]) Reset() {
 		l.tokens = l.tokens[:0]
 	}
 
-	l.err = nil
+	l.state.Reset()
+
+	l.pos = 0
+	l.next_pos = 0
+	l.last_read_size = 0
 }
 
-// Error returns the last error.
+// make_error creates a new error.
 //
 // Returns:
-//   - *util.Err[ErrorCode]: the last error. Nil if no error occurred.
-func (l Lexer[T]) Error() *util.Err[ErrorCode] {
-	if l.err == nil {
-		return nil
+//   - *Err: the last error. Never returns nil.
+func (l Lexer[T]) make_error() *Err {
+	pos := l.next_pos
+
+	if l.state.last_char_read == nil {
+		err := &Err{
+			Code:   InvalidInputStream,
+			Pos:    pos,
+			Reason: l.state.last_err,
+		}
+
+		err.AddSuggestion("Input is most likely not a valid input for the current lexer.")
+
+		return err
 	}
 
-	return l.err
+	last_read := *l.state.last_char_read
+
+	_, ok := l.table[last_read]
+	if !ok && l.def_fn == nil {
+		err := &Err{
+			Code:   UnrecognizedChar,
+			Pos:    pos,
+			Reason: fmt.Errorf("character (%q) is not a recognized character", last_read),
+		}
+
+		err.AddSuggestion(
+			"1. Input provided cannot be lexed by the current lexer.",
+			"You may want to check for typos in the input.",
+		)
+		err.AddSuggestion(
+			"2. (Less likely) The lexer table is not configured correctly.",
+			"Contact the developer and provide this error code.",
+		)
+
+		return err
+	}
+
+	err := &Err{
+		Code:   BadWord,
+		Pos:    pos,
+		Reason: l.state.last_err,
+	}
+
+	err.AddSuggestion("You may want to check for typos in the input.")
+
+	return err
 }
