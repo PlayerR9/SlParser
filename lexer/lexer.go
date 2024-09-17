@@ -1,12 +1,18 @@
 package lexer
 
 import (
+	"errors"
 	"fmt"
 	"io"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
 	dba "github.com/PlayerR9/go-debug/assert"
 )
+
+type RuneStream interface {
+	PeekRune() (rune, error)
+	NextRune() (rune, error)
+}
 
 // Lexer is a lexer.
 type Lexer[T gr.TokenTyper] struct {
@@ -21,27 +27,6 @@ type Lexer[T gr.TokenTyper] struct {
 
 	// def_fn is the default lexer function.
 	def_fn LexFunc[T]
-}
-
-// PeekRune returns the current character without consuming it.
-//
-// Returns:
-//   - rune: the current character.
-//   - error: if an error occurred.
-func (l *Lexer[T]) PeekRune() (rune, error) {
-	if l == nil || l.input_stream == nil {
-		return 0, io.EOF
-	}
-
-	c, _, err := l.input_stream.ReadRune()
-	if err != nil {
-		return 0, err
-	}
-
-	err = l.input_stream.UnreadRune()
-	dba.AssertErr(err, "l.input_stream.UnreadRune()")
-
-	return c, nil
 }
 
 // NextRune consumes the current character.
@@ -62,18 +47,18 @@ func (l *Lexer[T]) NextRune() (rune, error) {
 	return c, nil
 }
 
-/* // UnreadRune unreads the current character.
+// UnreadRune unreads the current character.
 //
 // Returns:
 //   - error: if an error occurred.
-func (l *Lexer) UnreadRune() error {
+func (l *Lexer[T]) UnreadRune() error {
 	if l == nil || l.input_stream == nil {
 		return errors.New("no rune to unread")
 	}
 
 	err := l.input_stream.UnreadRune()
 	return err
-} */
+}
 
 // SetInputStream sets the input stream.
 //
@@ -108,7 +93,7 @@ func (l *Lexer[T]) Lex() error {
 			err = l.input_stream.UnreadRune()
 			dba.AssertErr(err, "l.input_stream.UnreadRune()")
 
-			return fmt.Errorf("unexpected character %q", c)
+			return fmt.Errorf("not a recognized character %q", c)
 		}
 
 		for {
@@ -147,7 +132,7 @@ func (l *Lexer[T]) Lex() error {
 				err := l.input_stream.UnreadRune()
 				dba.AssertErr(err, "l.input_stream.UnreadRune()")
 
-				return fmt.Errorf("unexpected character %q", c)
+				return fmt.Errorf("not a recognized character %q", c)
 			}
 
 			tk, err := fn(l, c)

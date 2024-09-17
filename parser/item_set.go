@@ -182,12 +182,3 @@ func (is *ItemSet[T]) init() {
 	is.make_items()
 	is.make_lookahead()
 }
-
-func (is ItemSet[T]) NextItem(item *Item[T]) {
-	rhs, ok := item.rule.RhsAt(item.pos + 1)
-	if !ok {
-		// TODO: Handle this case.
-	} else {
-
-	}
-}

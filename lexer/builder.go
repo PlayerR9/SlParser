@@ -31,6 +31,26 @@ func NewBuilder[T gr.TokenTyper]() Builder[T] {
 	}
 }
 
+// RegisterSkip registers a lexer function that skips a token.
+//
+// Parameters:
+//   - char: the character to register the function for.
+//   - fn: the function to register.
+//
+// Behaviors:
+//   - If the receiver or 'fn' are nil, then nothing is registered.
+//   - If a 'char' is already registered, then the previous function is overwritten.
+func (b *Builder[T]) RegisterSkip(char rune, fn LexFragment[T]) {
+	if b == nil || fn == nil {
+		return
+	}
+
+	b.table[char] = func(lexer *Lexer[T], char rune) (*gr.Token[T], error) {
+		_, err := fn(lexer)
+		return nil, err
+	}
+}
+
 // Register registers a new lexer function.
 //
 // Parameters:
