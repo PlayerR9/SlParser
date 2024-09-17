@@ -18,6 +18,10 @@ const (
 	TttListComprehension
 	TttPrintStmt
 	TttNewline
+
+	NttSource
+	NttSource1
+	NttStatement
 )
 
 func (t TokenType) IsTerminal() bool {

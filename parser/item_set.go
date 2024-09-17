@@ -3,6 +3,7 @@ package parser
 import (
 	"errors"
 	"slices"
+	"strings"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
 	"github.com/PlayerR9/SlParser/parser/internal"
@@ -25,11 +26,25 @@ type ItemSet[T gr.TokenTyper] struct {
 // NewItemSet creates a new item set.
 //
 // Returns:
-//   - *ItemSet: the new item set. Never returns nil.
-func NewItemSet[T gr.TokenTyper]() *ItemSet[T] {
-	return &ItemSet[T]{
+//   - ItemSet: the new item set.
+func NewItemSet[T gr.TokenTyper]() ItemSet[T] {
+	return ItemSet[T]{
 		item_table: make(map[T][]*Item[T]),
 	}
+}
+
+func (is ItemSet[T]) PrintTable() string {
+	var builder strings.Builder
+
+	for _, items := range is.item_table {
+		for _, item := range items {
+			builder.WriteString(item.String())
+			builder.WriteRune('\n')
+		}
+		builder.WriteRune('\n')
+	}
+
+	return builder.String()
 }
 
 // AddRule adds a new rule to the item set.

@@ -85,32 +85,50 @@ func register_unambiguous[T gr.TokenTyper](items []*Item[T]) ParseFn[T] {
 		var sols internal.SolWithLevel[*Item[T]]
 		var prev, type_ *T
 
-		for offset < max {
-			top, ok := parser.Pop()
-			if !ok {
-				break
-			}
-
-			type_ = &top.Type
-
+		if offset == max {
 			fn := func(item *Item[T]) bool {
-				rhs, ok := item.RhsAt(item.pos - offset)
+				_, ok := item.RhsAt(item.pos - offset)
 				if !ok {
 					sols.AddSolution(offset-1, item)
 				}
 
-				return ok && rhs == *type_
+				return ok
 			}
 
-			new_items := PureSliceFilter(items, fn)
-			if len(new_items) == 0 {
-				break
+			items = PureSliceFilter(items, fn)
+
+			for _, it := range items {
+				sols.AddSolution(offset-1, it)
 			}
 
-			items = new_items
-			prev = &top1.Type
-			offset++
-			type_ = nil
+		} else {
+			for offset < max {
+				top, ok := parser.Pop()
+				if !ok {
+					break
+				}
+
+				type_ = &top.Type
+
+				fn := func(item *Item[T]) bool {
+					rhs, ok := item.RhsAt(item.pos - offset)
+					if !ok {
+						sols.AddSolution(offset-1, item)
+					}
+
+					return ok && rhs == *type_
+				}
+
+				new_items := PureSliceFilter(items, fn)
+				if len(new_items) == 0 {
+					break
+				}
+
+				items = new_items
+				prev = &top1.Type
+				offset++
+				type_ = nil
+			}
 		}
 
 		solutions := sols.Solutions()
@@ -152,6 +170,8 @@ func NewBuilder[T gr.TokenTyper](is *ItemSet[T]) Builder[T] {
 	}
 
 	is.init()
+
+	fmt.Println(is.PrintTable())
 
 	for lhs, items := range is.item_table {
 		var fn ParseFn[T]

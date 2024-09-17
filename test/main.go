@@ -5,8 +5,10 @@ import (
 	"os"
 
 	dspl "github.com/PlayerR9/SlParser/display"
+	gr "github.com/PlayerR9/SlParser/grammar"
 	lxr "github.com/PlayerR9/SlParser/lexer"
 	pkg "github.com/PlayerR9/SlParser/test/parsing"
+	tr "github.com/PlayerR9/tree/tree"
 )
 
 func main() {
@@ -16,11 +18,19 @@ func main() {
 		os.Exit(1)
 	}
 
+	tokens := FullLex(data)
+
+	FullParse(tokens)
+
+	// [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
+}
+
+func FullLex(data []byte) []*gr.Token[pkg.TokenType] {
 	is := lxr.NewStream().FromBytes(data)
 
 	pkg.Lexer.SetInputStream(is)
 
-	err = pkg.Lexer.Lex()
+	err := pkg.Lexer.Lex()
 
 	tokens := pkg.Lexer.Tokens()
 
@@ -51,5 +61,27 @@ func main() {
 		}
 	}
 
-	// [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
+	return tokens
+}
+
+func FullParse(tokens []*gr.Token[pkg.TokenType]) {
+	pkg.Parser.SetTokens(tokens)
+
+	err := pkg.Parser.Parse()
+
+	forest := pkg.Parser.Forest()
+
+	fmt.Println("Here's the list of forest:")
+
+	for _, f := range forest {
+		tree := tr.NewTree(f)
+
+		fmt.Println(tree.String())
+		fmt.Println()
+	}
+
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(3)
+	}
 }

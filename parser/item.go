@@ -1,8 +1,8 @@
 package parser
 
 import (
-	"errors"
 	"iter"
+	"strings"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
 	gcers "github.com/PlayerR9/go-commons/errors"
@@ -24,6 +24,29 @@ type Item[T gr.TokenTyper] struct {
 	lookaheads []T
 }
 
+func (i Item[T]) String() string {
+	var builder strings.Builder
+
+	lhs := i.rule.Lhs()
+
+	builder.WriteString(lhs.String())
+	builder.WriteString(" ->")
+
+	var j int
+	for rhs := range i.rule.ForwardRhs() {
+		builder.WriteRune(' ')
+		builder.WriteString(rhs.String())
+
+		if j == i.pos {
+			builder.WriteString(" #")
+		}
+
+		j++
+	}
+
+	return builder.String()
+}
+
 // NewItem creates a new item.
 //
 // Parameters:
@@ -39,17 +62,17 @@ func NewItem[T gr.TokenTyper](rule *Rule[T], pos int) (*Item[T], error) {
 	}
 
 	size := rule.Size()
-	if pos < 0 || pos > size {
-		return nil, gcers.NewErrInvalidParameter("pos", errors.New("value is out of range"))
+	if pos < 0 || pos >= size {
+		return nil, gcers.NewErrInvalidParameter("pos", gcers.NewErrOutOfBounds(pos, 0, size))
 	}
 
 	var act actioner
 
-	if pos < size {
+	if pos < size-1 {
 		act = &shift_action{}
 	} else {
-		rhs, ok := rule.RhsAt(pos - 1)
-		dba.AssertOk(ok, "rhs_at(%d)", pos-1)
+		rhs, ok := rule.RhsAt(pos)
+		dba.AssertOk(ok, "rhs_at(%d)", pos)
 
 		if rhs == T(0) {
 			act = &accept_action{}
@@ -74,17 +97,17 @@ func MustNewItem[T gr.TokenTyper](rule *Rule[T], pos int) *Item[T] {
 	}
 
 	size := rule.Size()
-	if pos < 0 || pos > size {
-		panic(gcers.NewErrInvalidParameter("pos", gcers.NewErrOutOfBounds(pos, 0, size).WithUpperBound(true)))
+	if pos < 0 || pos >= size {
+		panic(gcers.NewErrInvalidParameter("pos", gcers.NewErrOutOfBounds(pos, 0, size)))
 	}
 
 	var act actioner
 
-	if pos < size {
+	if pos < size-1 {
 		act = &shift_action{}
 	} else {
-		rhs, ok := rule.RhsAt(pos - 1)
-		dba.AssertOk(ok, "rhs_at(%d)", pos-1)
+		rhs, ok := rule.RhsAt(pos)
+		dba.AssertOk(ok, "rhs_at(%d)", pos)
 
 		if rhs == T(0) {
 			act = &accept_action{}

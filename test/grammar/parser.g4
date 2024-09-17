@@ -4,7 +4,7 @@ options {
    tokenVocab = Lexer;
 };
 
-source : statement (NEWLINE statement)* EOF ;
+source : NEWLINE statement (NEWLINE statement)* EOF ;
 
 statement
    : LIST_COMPREHENSION

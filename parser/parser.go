@@ -157,6 +157,10 @@ func (p *Parser[T]) Parse() error {
 
 		switch act := it.act.(type) {
 		case *shift_action:
+			if len(p.tokens) == 0 {
+				return fmt.Errorf("unexpected end of input")
+			}
+
 			tk := p.tokens[0]
 			p.tokens = p.tokens[1:]
 
