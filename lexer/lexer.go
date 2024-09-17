@@ -2,16 +2,43 @@ package lexer
 
 import (
 	"errors"
-	"fmt"
 	"io"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
+	util "github.com/PlayerR9/SlParser/util"
 	dba "github.com/PlayerR9/go-debug/assert"
 )
 
-type RuneStream interface {
-	PeekRune() (rune, error)
+// RuneStreamer is a rune streamer.
+type RuneStreamer interface {
+	// NextRune consumes the current character.
+	//
+	// Returns:
+	//   - rune: the current character.
+	//   - error: if an error occurred.
+	//
+	// Errors:
+	//   - io.EOF: if the end of the stream is reached.
+	//   - any other error if the stream could not be read.
 	NextRune() (rune, error)
+
+	// UnreadRune unreads the current character.
+	//
+	// Returns:
+	//   - error: if an error occurred.
+	UnreadRune() error
+}
+
+var (
+	// SkipToken is an error that is returned when a token is skipped.
+	//
+	// Readers must return this error as is and not wrap it as callers check for this error using
+	// ==.
+	SkipToken error
+)
+
+func init() {
+	SkipToken = errors.New("skip token")
 }
 
 // Lexer is a lexer.
@@ -27,13 +54,12 @@ type Lexer[T gr.TokenTyper] struct {
 
 	// def_fn is the default lexer function.
 	def_fn LexFunc[T]
+
+	// err is the last error.
+	err *util.Err[ErrorCode]
 }
 
-// NextRune consumes the current character.
-//
-// Returns:
-//   - rune: the current character.
-//   - error: if an error occurred.
+// NextRune implements RuneStreamer interface.
 func (l *Lexer[T]) NextRune() (rune, error) {
 	if l == nil || l.input_stream == nil {
 		return 0, io.EOF
@@ -47,10 +73,7 @@ func (l *Lexer[T]) NextRune() (rune, error) {
 	return c, nil
 }
 
-// UnreadRune unreads the current character.
-//
-// Returns:
-//   - error: if an error occurred.
+// UnreadRune implements RuneStreamer interface.
 func (l *Lexer[T]) UnreadRune() error {
 	if l == nil || l.input_stream == nil {
 		return errors.New("no rune to unread")
@@ -75,56 +98,55 @@ func (l *Lexer[T]) SetInputStream(input_stream io.RuneScanner) {
 }
 
 // Lex lexes the input stream.
-//
-// Returns:
-//   - error: if an error occurred.
-func (l *Lexer[T]) Lex() error {
+func (l *Lexer[T]) Lex() {
 	dba.AssertNotNil(l, "l")
 
 	if len(l.table) == 0 {
 		if l.def_fn == nil {
 			c, _, err := l.input_stream.ReadRune()
-			if err == io.EOF {
-				return nil
-			} else if err != nil {
-				return err
+			if err == nil {
+				err = l.input_stream.UnreadRune()
+				dba.AssertErr(err, "l.input_stream.UnreadRune()")
+
+				l.err = NewErrUnrecognizedChar(c)
+			} else if err != io.EOF {
+				l.err = NewErrInvalidInputStream(err)
 			}
 
-			err = l.input_stream.UnreadRune()
-			dba.AssertErr(err, "l.input_stream.UnreadRune()")
-
-			return fmt.Errorf("not a recognized character %q", c)
+			return
 		}
 
-		for {
+		for l.err == nil {
 			c, _, err := l.input_stream.ReadRune()
 			if err == io.EOF {
 				break
 			} else if err != nil {
-				return err
+				l.err = NewErrInvalidInputStream(err)
+				break
 			}
 
-			tk, err := l.def_fn(l, c)
-			if err != nil {
-				_ = l.input_stream.UnreadRune()
-				return err
-			}
-
-			if tk != nil {
+			type_, data, err := l.def_fn(l, c)
+			if err == nil {
+				tk := gr.NewTerminalToken(type_, data)
 				l.tokens = append(l.tokens, tk)
+			} else if err != SkipToken {
+				_ = l.input_stream.UnreadRune()
+
+				l.err = NewErrInvalidInputStream(err)
 			}
 		}
 
-		return nil
+		return
 	}
 
 	if l.def_fn == nil {
-		for {
+		for l.err == nil {
 			c, _, err := l.input_stream.ReadRune()
 			if err == io.EOF {
 				break
 			} else if err != nil {
-				return err
+				l.err = NewErrInvalidInputStream(err)
+				break
 			}
 
 			fn, ok := l.table[c]
@@ -132,51 +154,55 @@ func (l *Lexer[T]) Lex() error {
 				err := l.input_stream.UnreadRune()
 				dba.AssertErr(err, "l.input_stream.UnreadRune()")
 
-				return fmt.Errorf("not a recognized character %q", c)
+				l.err = NewErrUnrecognizedChar(c)
+				break
 			}
 
-			tk, err := fn(l, c)
-			if err != nil {
-				_ = l.input_stream.UnreadRune()
-				return err
-			}
-
-			if tk != nil {
+			type_, data, err := fn(l, c)
+			if err == nil {
+				tk := gr.NewTerminalToken(type_, data)
 				l.tokens = append(l.tokens, tk)
+			} else if err != SkipToken {
+				_ = l.input_stream.UnreadRune()
+
+				l.err = NewErrInvalidInputStream(err)
 			}
 		}
 
-		return nil
+		return
 	}
 
-	for {
+	for l.err == nil {
 		c, _, err := l.input_stream.ReadRune()
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			return err
+			l.err = NewErrInvalidInputStream(err)
+
+			break
 		}
+
+		var type_ T
+		var data string
 
 		var tk *gr.Token[T]
 
 		fn, ok := l.table[c]
 		if ok {
-			tk, err = fn(l, c)
+			type_, data, err = fn(l, c)
 		} else {
-			tk, err = l.def_fn(l, c)
+			type_, data, err = l.def_fn(l, c)
 		}
 
-		if err != nil {
-			_ = l.input_stream.UnreadRune()
-			return err
-		}
-
-		if tk != nil {
+		if err == nil {
+			tk = gr.NewTerminalToken(type_, data)
 			l.tokens = append(l.tokens, tk)
+		} else if err != SkipToken {
+			_ = l.input_stream.UnreadRune()
+
+			l.err = NewErrInvalidInputStream(err)
 		}
 	}
-
-	return nil
 }
 
 // Tokens returns the list of tokens.
@@ -213,4 +239,18 @@ func (l *Lexer[T]) Reset() {
 
 		l.tokens = l.tokens[:0]
 	}
+
+	l.err = nil
+}
+
+// Error returns the last error.
+//
+// Returns:
+//   - *util.Err[ErrorCode]: the last error. Nil if no error occurred.
+func (l Lexer[T]) Error() *util.Err[ErrorCode] {
+	if l.err == nil {
+		return nil
+	}
+
+	return l.err
 }

@@ -3,8 +3,6 @@ package lexer
 import (
 	"errors"
 	"strings"
-
-	gr "github.com/PlayerR9/SlParser/grammar"
 )
 
 // LexOption is a lexer option.
@@ -60,9 +58,9 @@ type LexOptions struct {
 // By default, the lexer does allow optional fragments and only lexes once.
 //
 // If 'frag_fn' is nil, then a function that returns an error is returned.
-func FragWithOptions[T gr.TokenTyper](frag_fn LexFragment[T], options ...LexOption) LexFragment[T] {
+func FragWithOptions(frag_fn LexFragment, options ...LexOption) LexFragment {
 	if frag_fn == nil {
-		return func(lexer *Lexer[T]) (string, error) {
+		return func(lexer RuneStreamer) (string, error) {
 			return "", errors.New("no fragment function provided")
 		}
 	}
@@ -76,11 +74,11 @@ func FragWithOptions[T gr.TokenTyper](frag_fn LexFragment[T], options ...LexOpti
 		opt(&settings)
 	}
 
-	var fn LexFragment[T]
+	var fn LexFragment
 
 	if settings.lex_many {
 		if settings.allow_optional {
-			fn = func(lexer *Lexer[T]) (string, error) {
+			fn = func(lexer RuneStreamer) (string, error) {
 				str, err := frag_fn(lexer)
 				if err != nil {
 					return "", err
@@ -104,7 +102,7 @@ func FragWithOptions[T gr.TokenTyper](frag_fn LexFragment[T], options ...LexOpti
 				return builder.String(), nil
 			}
 		} else {
-			fn = func(lexer *Lexer[T]) (string, error) {
+			fn = func(lexer RuneStreamer) (string, error) {
 				var builder strings.Builder
 
 				for {
@@ -123,7 +121,7 @@ func FragWithOptions[T gr.TokenTyper](frag_fn LexFragment[T], options ...LexOpti
 		}
 	} else {
 		if settings.allow_optional {
-			fn = func(lexer *Lexer[T]) (string, error) {
+			fn = func(lexer RuneStreamer) (string, error) {
 				str, err := frag_fn(lexer)
 				if err == NotFound {
 					return "", nil
@@ -134,7 +132,7 @@ func FragWithOptions[T gr.TokenTyper](frag_fn LexFragment[T], options ...LexOpti
 				return str, nil
 			}
 		} else {
-			fn = func(lexer *Lexer[T]) (string, error) {
+			fn = func(lexer RuneStreamer) (string, error) {
 				str, err := frag_fn(lexer)
 				if err != nil {
 					return "", err

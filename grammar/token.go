@@ -10,6 +10,10 @@ import (
 )
 
 // TokenTyper is the interface that must be implemented by token types.
+//
+// Notes:
+//   - 0 is reserved for the EOF token.
+//   - -1 is reserved for the error token.
 type TokenTyper interface {
 	~int
 

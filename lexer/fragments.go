@@ -6,7 +6,6 @@ import (
 	"io"
 	"strings"
 
-	gr "github.com/PlayerR9/SlParser/grammar"
 	dba "github.com/PlayerR9/go-debug/assert"
 )
 
@@ -31,7 +30,7 @@ func init() {
 // Returns:
 //   - string: the fragment. Empty string if nothing was lexed.
 //   - error: if an error occurred.
-type LexFragment[T gr.TokenTyper] func(lexer *Lexer[T]) (string, error)
+type LexFragment func(lexer RuneStreamer) (string, error)
 
 // FragNewline lexes a newline.
 //
@@ -40,8 +39,8 @@ type LexFragment[T gr.TokenTyper] func(lexer *Lexer[T]) (string, error)
 //
 // Returns:
 //   - LexFragment: a function that lexes a newline.
-func FragNewline[T gr.TokenTyper](opts ...LexOption) LexFragment[T] {
-	fn := func(lexer *Lexer[T]) (string, error) {
+func FragNewline(opts ...LexOption) LexFragment {
+	fn := func(lexer RuneStreamer) (string, error) {
 		char, err := lexer.NextRune()
 		if err == io.EOF {
 			return "", NotFound
@@ -68,6 +67,9 @@ func FragNewline[T gr.TokenTyper](opts ...LexOption) LexFragment[T] {
 			return "", NewErrUnexpectedChar('\r', []rune{'\n'}, &next)
 		}
 
+		err = lexer.UnreadRune()
+		dba.AssertErr(err, "lexer.UnreadRune()")
+
 		return "", NotFound
 	}
 
@@ -82,7 +84,7 @@ func FragNewline[T gr.TokenTyper](opts ...LexOption) LexFragment[T] {
 //
 // Returns:
 //   - LexFragment: a function that lexes a whitespace.
-func FragWs[T gr.TokenTyper](include_newline bool, opts ...LexOption) LexFragment[T] {
+func FragWs(include_newline bool, opts ...LexOption) LexFragment {
 	var is_fn GroupFn
 
 	if include_newline {
@@ -91,7 +93,7 @@ func FragWs[T gr.TokenTyper](include_newline bool, opts ...LexOption) LexFragmen
 		is_fn = GroupWs
 	}
 
-	return FragGroup[T](is_fn, opts...)
+	return FragGroup(is_fn, opts...)
 }
 
 // FragGroup lexes a group.
@@ -103,14 +105,14 @@ func FragWs[T gr.TokenTyper](include_newline bool, opts ...LexOption) LexFragmen
 //   - LexFragment: a function that lexes the group.
 //
 // If 'is_fn' is nil, a function that returns an error is returned.
-func FragGroup[T gr.TokenTyper](is_fn GroupFn, opts ...LexOption) LexFragment[T] {
+func FragGroup(is_fn GroupFn, opts ...LexOption) LexFragment {
 	if is_fn == nil {
-		return func(lexer *Lexer[T]) (string, error) {
+		return func(lexer RuneStreamer) (string, error) {
 			return "", errors.New("no group function provided")
 		}
 	}
 
-	fn := func(lexer *Lexer[T]) (string, error) {
+	fn := func(lexer RuneStreamer) (string, error) {
 		char, err := lexer.NextRune()
 		if err == io.EOF {
 			return "", NotFound
@@ -121,6 +123,9 @@ func FragGroup[T gr.TokenTyper](is_fn GroupFn, opts ...LexOption) LexFragment[T]
 		if is_fn(char) {
 			return string(char), nil
 		}
+
+		err = lexer.UnreadRune()
+		dba.AssertErr(err, "lexer.UnreadRune()")
 
 		return "", NotFound
 	}
@@ -141,15 +146,15 @@ func FragGroup[T gr.TokenTyper](is_fn GroupFn, opts ...LexOption) LexFragment[T]
 // If 'word' is an invalid UTF-8 string, a function that returns an error is returned.
 //
 // If the word is not found in the lexer's input, a ErrUnexpectedChar error is returned.
-func FragWord[T gr.TokenTyper](word string, opts ...LexOption) LexFragment[T] {
+func FragWord(word string, opts ...LexOption) LexFragment {
 	chars, err := StringToUtf8(word)
 	if err != nil {
-		return func(lexer *Lexer[T]) (string, error) {
+		return func(lexer RuneStreamer) (string, error) {
 			return "", fmt.Errorf("invalid word: %w", err)
 		}
 	}
 
-	fn := func(lexer *Lexer[T]) (string, error) {
+	fn := func(lexer RuneStreamer) (string, error) {
 		prev := chars[0]
 
 		for _, char := range chars[1:] {
@@ -163,9 +168,6 @@ func FragWord[T gr.TokenTyper](word string, opts ...LexOption) LexFragment[T] {
 			if c != char {
 				return "", NewErrUnexpectedChar(prev, []rune{char}, &c)
 			}
-
-			_, err = lexer.NextRune()
-			dba.AssertErr(err, "lexer.NextRune()")
 
 			prev = char
 		}
@@ -185,11 +187,11 @@ func FragWord[T gr.TokenTyper](word string, opts ...LexOption) LexFragment[T] {
 //
 // Returns:
 //   - LexFragment: a function that lexes until the character is found.
-func FragUntil[T gr.TokenTyper](prev, until rune, allow_eof bool) LexFragment[T] {
-	var fn LexFragment[T]
+func FragUntil(prev, until rune, allow_eof bool) LexFragment {
+	var fn LexFragment
 
 	if allow_eof {
-		fn = func(lexer *Lexer[T]) (string, error) {
+		fn = func(lexer RuneStreamer) (string, error) {
 			var builder strings.Builder
 
 			builder.WriteRune(prev)
@@ -212,7 +214,7 @@ func FragUntil[T gr.TokenTyper](prev, until rune, allow_eof bool) LexFragment[T]
 			return builder.String(), nil
 		}
 	} else {
-		fn = func(lexer *Lexer[T]) (string, error) {
+		fn = func(lexer RuneStreamer) (string, error) {
 			var builder strings.Builder
 
 			builder.WriteRune(prev)

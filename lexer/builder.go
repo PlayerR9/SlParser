@@ -9,11 +9,12 @@ import gr "github.com/PlayerR9/SlParser/grammar"
 //   - char: the first character of the token.
 //
 // Returns:
-//   - *grammar.Token[T]: the token.
+//   - T: the type of the token.
+//   - string: the data of the token.
 //   - error: if an error occurred.
 //
 // If the returned token is nil, then the token is marked to be skipped.
-type LexFunc[T gr.TokenTyper] func(lexer *Lexer[T], char rune) (*gr.Token[T], error)
+type LexFunc[T gr.TokenTyper] func(lexer RuneStreamer, char rune) (T, string, error)
 
 // Builder is a lexer builder.
 type Builder[T gr.TokenTyper] struct {
@@ -40,14 +41,18 @@ func NewBuilder[T gr.TokenTyper]() Builder[T] {
 // Behaviors:
 //   - If the receiver or 'fn' are nil, then nothing is registered.
 //   - If a 'char' is already registered, then the previous function is overwritten.
-func (b *Builder[T]) RegisterSkip(char rune, fn LexFragment[T]) {
+func (b *Builder[T]) RegisterSkip(char rune, fn LexFragment) {
 	if b == nil || fn == nil {
 		return
 	}
 
-	b.table[char] = func(lexer *Lexer[T], char rune) (*gr.Token[T], error) {
+	b.table[char] = func(lexer RuneStreamer, char rune) (T, string, error) {
 		_, err := fn(lexer)
-		return nil, err
+		if err == nil || err == NotFound {
+			err = SkipToken
+		}
+
+		return T(-1), "", err
 	}
 }
 

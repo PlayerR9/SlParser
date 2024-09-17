@@ -3,8 +3,8 @@ package parsing
 import (
 	"io"
 
-	gr "github.com/PlayerR9/SlParser/grammar"
 	lxr "github.com/PlayerR9/SlParser/lexer"
+	dba "github.com/PlayerR9/go-debug/assert"
 )
 
 //go:generate stringer -type=TokenType
@@ -12,7 +12,8 @@ import (
 type TokenType int
 
 const (
-	EttEOF TokenType = iota
+	EttInvalid TokenType = iota - 1
+	EttEOF
 
 	TttListComprehension
 	TttPrintStmt
@@ -31,10 +32,10 @@ func init() {
 	builder := lxr.NewBuilder[TokenType]()
 
 	// COMMENT : '#' .*? '\n' -> skip ;
-	comment_fn := lxr.FragUntil[TokenType]('#', '\n', true)
+	comment_fn := lxr.FragUntil('#', '\n', true)
 	builder.RegisterSkip('#', comment_fn)
 
-	builder.RegisterSkip('#', func(lexer *lxr.Lexer[TokenType]) (string, error) {
+	builder.RegisterSkip('#', func(lexer lxr.RuneStreamer) (string, error) {
 		for {
 			char, err := lexer.NextRune()
 			if err == io.EOF {
@@ -52,67 +53,75 @@ func init() {
 	})
 
 	// NEWLINE : ('\r'? '\n')+ ;
-	newline_fn := lxr.FragNewline[TokenType](
+	newline_fn := lxr.FragNewline(
 		lxr.WithLexMany(true),
 	)
 
-	builder.Register('\r', func(lexer *lxr.Lexer[TokenType], char rune) (*gr.Token[TokenType], error) {
-		_, err := newline_fn(lexer)
-		if err != nil && err != lxr.NotFound {
-			return nil, err
+	builder.Register('\r', func(lexer lxr.RuneStreamer, char rune) (TokenType, string, error) {
+		char, err := lexer.NextRune()
+		if err == io.EOF {
+			return EttInvalid, "", lxr.NewErrUnexpectedChar('\r', []rune{'\n'}, nil)
+		} else if err != nil {
+			return EttInvalid, "", err
 		}
 
-		tk := gr.NewTerminalToken(TttNewline, "\n")
-		return tk, nil
+		if char == '\n' {
+			return EttInvalid, "", lxr.NewErrUnexpectedChar('\r', []rune{'\n'}, nil)
+		}
+
+		_, err = newline_fn(lexer)
+		if err != nil && err != lxr.NotFound {
+			return EttInvalid, "", err
+		}
+
+		return TttNewline, "\n", nil
 	})
 
-	builder.Register('\n', func(lexer *lxr.Lexer[TokenType], char rune) (*gr.Token[TokenType], error) {
+	builder.Register('\n', func(lexer lxr.RuneStreamer, char rune) (TokenType, string, error) {
 		_, err := newline_fn(lexer)
 		if err != nil && err != lxr.NotFound {
-			return nil, err
+			return EttInvalid, "", err
 		}
 
-		tk := gr.NewTerminalToken(TttNewline, "\n")
-		return tk, nil
+		return TttNewline, "\n", nil
 	})
 
 	// LIST_COMPREHENSION : 'sq = [x * x for x in range(10)]' ;
 	// PRINT_STMT : 'sq' ;
-	builder.Register('s', func(lexer *lxr.Lexer[TokenType], char rune) (*gr.Token[TokenType], error) {
+	builder.Register('s', func(lexer lxr.RuneStreamer, char rune) (TokenType, string, error) {
 		char, err := lexer.NextRune()
 		if err == io.EOF {
-			return nil, lxr.NewErrUnexpectedChar('s', []rune{'q'}, nil)
+			return EttInvalid, "", lxr.NewErrUnexpectedChar('s', []rune{'q'}, nil)
 		} else if err != nil {
-			return nil, err
+			return EttInvalid, "", err
 		}
 
 		if char != 'q' {
-			return nil, lxr.NewErrUnexpectedChar('s', []rune{'q'}, &char)
+			return EttInvalid, "", lxr.NewErrUnexpectedChar('s', []rune{'q'}, &char)
 		}
 
 		next, err := lexer.NextRune()
 		if err == io.EOF {
-			tk := gr.NewTerminalToken(TttPrintStmt, "sq")
-			return tk, nil
+			return TttPrintStmt, "sq", nil
 		} else if err != nil {
-			return nil, err
+			return EttInvalid, "", err
 		}
 
 		if next != ' ' {
-			tk := gr.NewTerminalToken(TttPrintStmt, "sq")
-			return tk, nil
+			err := lexer.UnreadRune()
+			dba.AssertErr(err, "lexer.UnreadRune()")
+
+			return TttPrintStmt, "sq", nil
 		}
 
-		word_fn := lxr.FragWord[TokenType](" = [x * x for x in range(10)]")
+		word_fn := lxr.FragWord(" = [x * x for x in range(10)]")
 
 		word, err := word_fn(lexer)
 		if err != nil {
-			return nil, err
+			return EttInvalid, "", err
 		}
 
-		tk := gr.NewTerminalToken(TttListComprehension, "sq"+word)
-
-		return tk, nil
+		return TttListComprehension, "sq" + word, nil
 	})
 
 	Lexer = builder.Build()
