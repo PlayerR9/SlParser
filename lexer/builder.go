@@ -95,8 +95,8 @@ func (b *Builder[T]) Default(fn LexFunc[T]) {
 // Build builds the lexer.
 //
 // Returns:
-//   - Lexer: the lexer.
-func (b Builder[T]) Build() Lexer[T] {
+//   - Lexer: the lexer. Never returns nil.
+func (b Builder[T]) Build() *Lexer[T] {
 	var table map[rune]LexFunc[T]
 
 	if len(b.table) > 0 {
@@ -108,7 +108,7 @@ func (b Builder[T]) Build() Lexer[T] {
 
 	fn := b.def_fn
 
-	return Lexer[T]{
+	return &Lexer[T]{
 		table:  table,
 		def_fn: fn,
 	}

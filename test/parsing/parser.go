@@ -41,7 +41,7 @@ func init() {
 }
 
 var (
-	Parser prx.Parser[TokenType]
+	Parser *prx.Parser[TokenType]
 )
 
 func init() {

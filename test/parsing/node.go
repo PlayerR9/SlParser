@@ -2,7 +2,6 @@
 package parsing
 
 import (
-	"fmt"
 	"iter"
 	"slices"
 	"strings"

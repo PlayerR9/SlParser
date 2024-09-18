@@ -201,8 +201,8 @@ func (b *Builder[T]) Register(rhs T, fn ParseFn[T]) {
 // Build builds the parser.
 //
 // Returns:
-//   - Parser: the parser.
-func (b Builder[T]) Build() Parser[T] {
+//   - Parser: the parser. Never returns nil.
+func (b Builder[T]) Build() *Parser[T] {
 	var table map[T]ParseFn[T]
 
 	if len(b.table) > 0 {
@@ -214,7 +214,7 @@ func (b Builder[T]) Build() Parser[T] {
 
 	var stack internal.Stack[T]
 
-	return Parser[T]{
+	return &Parser[T]{
 		table: table,
 		stack: &stack,
 	}

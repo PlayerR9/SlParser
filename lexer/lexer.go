@@ -6,7 +6,6 @@ import (
 	"io"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
-	dba "github.com/PlayerR9/go-debug/assert"
 )
 
 // RuneStreamer is a rune streamer.
@@ -141,7 +140,9 @@ func (l *Lexer[T]) add_token(tk *gr.Token[T]) {
 // Returns:
 //   - error: an error of type *Err if the input stream could not be lexed.
 func (l *Lexer[T]) Lex() error {
-	dba.AssertNotNil(l, "l")
+	if l == nil {
+		return nil
+	}
 
 	if len(l.table) == 0 {
 		if l.def_fn == nil {
@@ -273,12 +274,16 @@ func (l *Lexer[T]) Lex() error {
 	return nil
 }
 
-// Tokens returns the list of tokens.
+// Tokens returns the list of tokens. The last token is always EOF.
 //
 // Returns:
 //   - []*gr.Token[T]: the list of tokens.
-func (l Lexer[T]) Tokens() []*gr.Token[T] {
+func (l *Lexer[T]) Tokens() []*gr.Token[T] {
 	eof := gr.NewTerminalToken(T(0), "", -1)
+
+	if l == nil {
+		return []*gr.Token[T]{eof}
+	}
 
 	tokens := make([]*gr.Token[T], len(l.tokens), len(l.tokens)+1)
 	copy(tokens, l.tokens)

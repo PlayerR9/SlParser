@@ -8,13 +8,25 @@ import (
 	gcers "github.com/PlayerR9/go-commons/errors"
 )
 
+// AstMaker is an ast maker.
 type AstMaker[N interface {
 	AddChildren(children []N)
 }, T gr.TokenTyper] struct {
-	table          map[T]ToAstFunc[N, T]
+	// table is the ast table.
+	table map[T]ToAstFunc[N, T]
+
+	// make_fake_node is the function that makes the fake node.
 	make_fake_node func(root *gr.Token[T]) N
 }
 
+// Convert is a function that converts a token to an ast node.
+//
+// Parameters:
+//   - root: The root token. Assumed to be non-nil.
+//
+// Returns:
+//   - N: The ast node.
+//   - error: if an error occurred.
 func (am AstMaker[N, T]) Convert(root *gr.Token[T]) (N, error) {
 	if root == nil {
 		return *new(N), gcers.NewErrNilParameter("root")
@@ -43,6 +55,12 @@ func (am AstMaker[N, T]) Convert(root *gr.Token[T]) (N, error) {
 	return node, nil
 }
 
+// LhsToAst is a function that converts a token to an ast node.
+//
+// Parameters:
+//   - root: The root token. Assumed to be non-nil.
+//   - lhs: The lhs token.
+//   - do: The function that does the conversion.
 func LhsToAst[N interface {
 	AddChildren(children []N)
 }, T gr.TokenTyper](root *gr.Token[T], lhs T, do func(children []*gr.Token[T]) (N, error)) ([]N, error) {

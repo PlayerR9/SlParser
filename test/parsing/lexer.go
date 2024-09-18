@@ -29,7 +29,7 @@ func (t TokenType) IsTerminal() bool {
 }
 
 var (
-	Lexer lxr.Lexer[TokenType]
+	Lexer *lxr.Lexer[TokenType]
 )
 
 func init() {

@@ -8,13 +8,27 @@ import (
 	"strings"
 )
 
+// ErrValue represents an error when a value is not expected.
 type ErrValue struct {
-	Kind        string
-	Expected    any
-	Got         any
+	// Kind is the name of the thing that was expected.
+	Kind string
+
+	// Expected is the value that was expected.
+	Expected any
+
+	// Got is the value that was received.
+	Got any
+
+	// ShouldQuote is true if the expected and got values should be quoted,
+	// false otherwise.
 	ShouldQuote bool
 }
 
+// Error implements the error interface.
+//
+// Message:
+//
+//	"expected <kind> to be <expected>, got <got> instead"
 func (e ErrValue) Error() string {
 	var builder strings.Builder
 
@@ -48,6 +62,17 @@ func (e ErrValue) Error() string {
 	return builder.String()
 }
 
+// NewErrValue creates a new ErrValue error.
+//
+// Parameters:
+//   - kind: The name of the thing that was expected.
+//   - expected: The value that was expected.
+//   - got: The value that was received.
+//   - should_quote: True if the expected and got values should be quoted,
+//     false otherwise.
+//
+// Returns:
+//   - *ErrValue: A pointer to the newly created ErrValue. Never returns nil.
 func NewErrValue(kind string, expected, got any, should_quote bool) *ErrValue {
 	return &ErrValue{
 		Kind:        kind,
@@ -57,13 +82,27 @@ func NewErrValue(kind string, expected, got any, should_quote bool) *ErrValue {
 	}
 }
 
+// ErrValues represents an error when multiple value are not expected.
 type ErrValues[T any] struct {
-	Kind        string
-	Expecteds   []T
-	Got         any
+	// Kind is the name of the thing that was expected.
+	Kind string
+
+	// Expecteds is the values that were expected.
+	Expecteds []T
+
+	// Got is the value that was received.
+	Got any
+
+	// ShouldQuote is true if the expected and got values should be quoted,
+	// false otherwise.
 	ShouldQuote bool
 }
 
+// Error implements the error interface.
+//
+// Message:
+//
+//	"expected <kind> to be <expected>, got <got> instead"
 func (e ErrValues[T]) Error() string {
 	var builder strings.Builder
 
@@ -117,6 +156,17 @@ func (e ErrValues[T]) Error() string {
 	return builder.String()
 }
 
+// NewErrValues creates a new ErrValues error.
+//
+// Parameters:
+//   - kind: The name of the thing that was expected.
+//   - expected: The values that were expected.
+//   - got: The value that was received.
+//   - should_quote: True if the expected and got values should be quoted,
+//     false otherwise.
+//
+// Returns:
+//   - *ErrValue: A pointer to the newly created ErrValue. Never returns nil.
 func NewErrValues[T any](kind string, expected []T, got any, should_quote bool) *ErrValue {
 	return &ErrValue{
 		Kind:        kind,

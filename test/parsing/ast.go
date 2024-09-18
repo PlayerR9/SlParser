@@ -1,20 +1,34 @@
 package parsing
 
 import (
-	"fmt"
-
 	ast "github.com/PlayerR9/SlParser/ast"
 	gr "github.com/PlayerR9/SlParser/grammar"
+	"github.com/PlayerR9/SlParser/util"
 )
 
 //go:generate stringer -type=NodeType -linecomment
 
-//go:generate go run github.com/PlayerR9/SlParser/cmd -o=node.go
+// go:generate go run github.com/PlayerR9/SlParser/cmd -o=node.go
 
 type NodeType int
 
 const (
-	SouceNode NodeType = iota
+	/*SourceNode represents the root node.
+	Node[SourceNode]
+	 ├── // ...
+	 └── any statement
+	*/
+	SourceNode NodeType = iota
+
+	/*ListComprehensionNode represents a list comprehension.
+	Node[ListComprehensionNode ("sq = [x * x for x in range(10)]")]
+	*/
+	ListComprehensionNode
+
+	/*PrintStmtNode represents a print statement.
+	Node[PrintStmtNode ("sq")]
+	*/
+	PrintStmtNode
 )
 
 var (
@@ -27,58 +41,117 @@ func init() {
 	builder.Register(NttSource, func(tk *gr.Token[TokenType]) (*Node, error) {
 		// Token[T][79:NttSource]
 		//  ├── Token[T][79:TttNewline]
-		//  └── Token[T][80:NttSource1]
-		//  │   └── Token[T][80:NttStatement]
-		//  │   │   └── Token[T][80:TttListComprehension ("sq = [x * x for x in range(10)]")]
-		//  │   ├── Token[T][111:TttNewline]
-		//  │   └── Token[T][112:NttSource1]
-		//  │       └── Token[T][112:NttStatement]
-		//  │           └── Token[T][112:TttPrintStmt ("sq")]
+		//  ├── Token[T][80:NttSource1]
 		//  └── Token[T][-1:EttEOF]
 
 		children := tk.GetChildren()
 		if len(children) != 3 {
-			return nil, fmt.Errorf("expected 3 children, got %d instead", len(children))
+			return nil, util.NewErrValue("children", 3, len(children), true)
 		}
 
-		if children[0].Type != TttNewline {
-			return nil, fmt.Errorf("first child expected to be %q, got %q instead", children[0].Type.String())
+		err := ast.CheckType(children, 0, TttNewline)
+		if err != nil {
+			return nil, err
 		}
 
-		ast.LhsToAst(children[1], NttSource1, func(children []*gr.Token[TokenType]) (*Node, error) {
+		err = ast.CheckType(children, 2, EttEOF)
+		if err != nil {
+			return nil, err
+		}
+
+		fn := func(children []*gr.Token[TokenType]) (*Node, error) {
+			var node *Node
+
 			switch len(children) {
+			case 1:
+				// Token[T][112:NttStatement]
+				// └── Token[T][112:TttPrintStmt ("sq")]
+
+				tmp, err := AstMaker.Convert(children[0])
+				if err != nil {
+					return nil, err
+				}
+
+				node = tmp
 			case 2:
 				// Token[T][80:NttStatement]
 				// ├──Token[T][80:TttListComprehension ("sq = [x * x for x in range(10)]")]
 				// └── Token[T][111:TttNewline]
 
-				children[0]
+				err := ast.CheckType(children, 1, TttNewline)
+				if err != nil {
+					return nil, err
+				}
 
-				children[1]
-			case 1:
-				// Token[T][112:NttSource1]
-				// └── Token[T][112:NttStatement]
-				//     └── Token[T][112:TttPrintStmt ("sq")]
+				tmp, err := AstMaker.Convert(children[0])
+				if err != nil {
+					return nil, err
+				}
+
+				node = tmp
 			default:
-				return nil, fmt.Errorf("expected either 1 or 2 children, got %d instead", len(children))
+				return nil, util.NewErrValues("children", []int{1, 2}, len(children), false)
 			}
-		})
 
-		if children[2].Type != EttEOF {
-			return nil, fmt.Errorf("third child expected to be %q, got %q instead", children[2].Type.String())
+			return node, nil
 		}
+
+		subnodes, err := ast.LhsToAst(children[1], NttSource1, fn)
+		if err != nil {
+			return nil, err
+		}
+
+		node := NewNode(tk.Pos, SourceNode, "")
+		node.AddChildren(subnodes)
+
+		return node, nil
 	})
 
-	// Token[T][79:NttSource]
-	//  ├── Token[T][79:TttNewline]
-	//  └── Token[T][80:NttSource1]
-	//  │   └── Token[T][80:NttStatement]
-	//  │   │   └── Token[T][80:TttListComprehension ("sq = [x * x for x in range(10)]")]
-	//  │   ├── Token[T][111:TttNewline]
-	//  │   └── Token[T][112:NttSource1]
-	//  │       └── Token[T][112:NttStatement]
-	//  │           └── Token[T][112:TttPrintStmt ("sq")]
-	//  └── Token[T][-1:EttEOF]
+	builder.Register(NttStatement, func(tk *gr.Token[TokenType]) (*Node, error) {
+		// Token[T][80:NttStatement]
+		//  └── Token[T][80:TttListComprehension ("sq = [x * x for x in range(10)]")]
+
+		// Token[T][112:NttStatement]
+		//  └── Token[T][112:TttPrintStmt ("sq")]
+
+		children := tk.GetChildren()
+		if len(children) != 1 {
+			return nil, util.NewErrValue("children", 1, len(children), true)
+		}
+
+		node, err := AstMaker.Convert(children[0])
+		if err != nil {
+			return nil, err
+		}
+
+		return node, nil
+	})
+
+	builder.Register(TttListComprehension, func(tk *gr.Token[TokenType]) (*Node, error) {
+		// Token[T][80:TttListComprehension ("sq = [x * x for x in range(10)]")]
+
+		children := tk.GetChildren()
+		if len(children) != 0 {
+			return nil, util.NewErrValue("children", 0, len(children), true)
+		}
+
+		node := NewNode(tk.Pos, ListComprehensionNode, tk.Data)
+
+		return node, nil
+	})
+
+	builder.Register(TttPrintStmt, func(tk *gr.Token[TokenType]) (*Node, error) {
+		// Token[T][112:TttPrintStmt ("sq")]
+
+		children := tk.GetChildren()
+		if len(children) != 0 {
+			return nil, util.NewErrValue("children", 0, len(children), true)
+		}
+
+		node := NewNode(tk.Pos, PrintStmtNode, tk.Data)
+
+		return node, nil
+	})
 
 	AstMaker = builder.Build()
 }
