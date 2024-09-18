@@ -1,12 +1,15 @@
 package ast
 
 import (
-	"errors"
 	"fmt"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
 	gcers "github.com/PlayerR9/go-commons/errors"
 )
+
+type ToAstFunc[N interface {
+	AddChildren(children []N)
+}, T gr.TokenTyper] func(tk *gr.ParseTree[T]) (N, error)
 
 // AstMaker is an ast maker.
 type AstMaker[N interface {
@@ -16,7 +19,7 @@ type AstMaker[N interface {
 	table map[T]ToAstFunc[N, T]
 
 	// make_fake_node is the function that makes the fake node.
-	make_fake_node func(root *gr.Token[T]) N
+	// make_fake_node func(root *gr.ParseTree[T]) N
 }
 
 // Convert is a function that converts a token to an ast node.
@@ -27,12 +30,12 @@ type AstMaker[N interface {
 // Returns:
 //   - N: The ast node.
 //   - error: if an error occurred.
-func (am AstMaker[N, T]) Convert(root *gr.Token[T]) (N, error) {
+func (am AstMaker[N, T]) Convert(root *gr.ParseTree[T]) (N, error) {
 	if root == nil {
 		return *new(N), gcers.NewErrNilParameter("root")
 	}
 
-	type_ := root.Type
+	type_ := root.Type()
 
 	var node N
 	var err error
@@ -45,98 +48,16 @@ func (am AstMaker[N, T]) Convert(root *gr.Token[T]) (N, error) {
 	}
 
 	if err != nil {
-		if am.make_fake_node != nil {
-			node = TransformFakeNode[N](root, am.make_fake_node)
-		}
+		// if am.make_fake_node != nil {
+		// 	node = TransformFakeNode[N](root, am.make_fake_node)
+		// }
 
 		err = NewErrIn(type_, err)
 	}
 
-	return node, nil
-}
-
-// LhsToAst is a function that converts a token to an ast node.
-//
-// Parameters:
-//   - root: The root token. Assumed to be non-nil.
-//   - lhs: The lhs token.
-//   - do: The function that does the conversion.
-func LhsToAst[N interface {
-	AddChildren(children []N)
-}, T gr.TokenTyper](root *gr.Token[T], lhs T, do func(children []*gr.Token[T]) (N, error)) ([]N, error) {
-	if do == nil {
-		return nil, gcers.NewErrNilParameter("do")
-	} else if root == nil {
-		return nil, gcers.NewErrNilParameter("root")
-	} else if root.Type != lhs {
-		return nil, fmt.Errorf("expected %q, got %s instead", lhs.String(), root.Type.String())
-	}
-
-	var nodes []N
-
-	for root != nil {
-		children := root.GetChildren()
-
-		if len(children) == 0 {
-			return nil, errors.New("expected at least one child")
-		}
-
-		last_child := children[len(children)-1]
-
-		var node N
-		var err error
-
-		if last_child.Type == lhs {
-			node, err = do(children[:len(children)-1])
-			root = last_child
-		} else {
-			node, err = do(children)
-			root = nil
-		}
-
-		if err != nil {
-			return nodes, err
-		}
-
-		nodes = append(nodes, node)
-	}
-
-	return nodes, nil
+	return node, err
 }
 
 /* func MakeAst(am AstMaker, tk *gr.Token[T]) (*Node, error) {
 
 } */
-
-// TransformFakeNode transforms a node into a fake AST node.
-//
-// Parameters:
-//   - tk: the token to transform.
-//
-// Returns:
-//   - *Node: the transformed node.
-//
-// This function transforms a node into a fake AST node. It does this by creating a new node with the correct type and data,
-// and then setting the children of the new node to be the transformed children of the fake node.
-func TransformFakeNode[N interface {
-	AddChildren(children []N)
-}, T gr.TokenTyper](tk *gr.Token[T], fn func(tk *gr.Token[T]) N) N {
-	if tk == nil {
-		return *new(N)
-	}
-
-	node := fn(tk)
-
-	// node := NewNode(FakeNode, tk.Type.String()+" : "+tk.Data)
-
-	var subnodes []N
-
-	for child := range tk.Child() {
-		n := TransformFakeNode[N](child, fn)
-		subnodes = append(subnodes, n)
-	}
-
-	node.AddChildren(subnodes)
-
-	return node
-}

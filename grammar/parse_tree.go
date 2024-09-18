@@ -3,7 +3,9 @@ package grammar
 import (
 	"iter"
 
+	gcers "github.com/PlayerR9/go-commons/errors"
 	gcslc "github.com/PlayerR9/go-commons/slices"
+	dba "github.com/PlayerR9/go-debug/assert"
 )
 
 // ParseTree is a generic data structure that represents a tree.
@@ -18,16 +20,36 @@ type ParseTree[T TokenTyper] struct {
 	size int
 }
 
-func (t *ParseTree[T]) Type() T {
+func (t ParseTree[T]) Pos() int {
+	dba.AssertNotNil(t.root, "t.root")
+
+	return t.root.Pos
+}
+
+func (t ParseTree[T]) Type() T {
+	dba.AssertNotNil(t.root, "t.root")
+
 	return t.root.Type
 }
 
-func (t *ParseTree[T]) Lookahead() *Token[T] {
+func (t ParseTree[T]) Lookahead() *Token[T] {
+	dba.AssertNotNil(t.root, "t.root")
+
 	return t.root.Lookahead
+}
+
+func (t ParseTree[T]) Data() string {
+	dba.AssertNotNil(t.root, "t.root")
+
+	return t.root.Data
 }
 
 // Cleanup is a method that cleans up the tree.
 func (t *ParseTree[T]) Cleanup() {
+	if t == nil {
+		return
+	}
+
 	Cleanup(t.root)
 
 	t.size = 1
@@ -38,7 +60,7 @@ func (t *ParseTree[T]) Cleanup() {
 //
 // Returns:
 //   - *Tree: A copy of the tree. Never returns nil.
-func (t *ParseTree[T]) DeepCopy() *ParseTree[T] {
+func (t ParseTree[T]) DeepCopy() *ParseTree[T] {
 	var tree *ParseTree[T]
 
 	root_copy := DeepCopy(t.root)
@@ -82,8 +104,13 @@ func (t ParseTree[T]) String() string {
 //   - root: The root of the tree.
 //
 // Returns:
-//   - *Tree[T]: A pointer to the newly created tree. Never nil.
-func NewTree[T TokenTyper](root *Token[T]) *ParseTree[T] {
+//   - *ParseTree[T]: A pointer to the newly created tree.
+//   - error: An error of type *errors.ErrInvalidParameter if the root is nil.
+func NewTree[T TokenTyper](root *Token[T]) (*ParseTree[T], error) {
+	if root == nil {
+		return nil, gcers.NewErrNilParameter("root")
+	}
+
 	stack := []*Token[T]{root}
 	size := 1
 
@@ -108,22 +135,26 @@ func NewTree[T TokenTyper](root *Token[T]) *ParseTree[T] {
 		root:   root,
 		leaves: leaves,
 		size:   size,
-	}
+	}, nil
 }
 
 // Root returns the root of the tree.
 //
 // Returns:
-//   - *Token[T]: The root of the tree.
-func (t *ParseTree[T]) Root() *Token[T] {
+//   - *Token[T]: The root of the tree. Never returns nil.
+func (t ParseTree[T]) Root() *Token[T] {
+	dba.AssertNotNil(t.root, "t.root")
+
 	return t.root
 }
 
 // Leaves returns the leaves of the tree.
 //
 // Returns:
-//   - []*Token[T]: The leaves of the tree.
-func (t *ParseTree[T]) Leaves() []*Token[T] {
+//   - []*Token[T]: The leaves of the tree. Never returns nil.
+func (t ParseTree[T]) Leaves() []*Token[T] {
+	dba.AssertNotNil(t.root, "t.root")
+
 	return t.leaves
 }
 
@@ -131,7 +162,7 @@ func (t *ParseTree[T]) Leaves() []*Token[T] {
 //
 // Returns:
 //   - int: The number of nodes in the tree.
-func (t *ParseTree[T]) Size() int {
+func (t ParseTree[T]) Size() int {
 	return t.size
 }
 
@@ -143,6 +174,10 @@ func (t *ParseTree[T]) Size() int {
 // Returns:
 //   - error: An error of type *ErrMissingRoot if the tree does not have a root.
 func (t *ParseTree[T]) SetChildren(children []*ParseTree[T]) error {
+	if t == nil {
+		return nil
+	}
+
 	children = gcslc.FilterNilValues(children)
 	if len(children) == 0 {
 		return nil
@@ -169,17 +204,20 @@ func (t *ParseTree[T]) SetChildren(children []*ParseTree[T]) error {
 	return nil
 }
 
-// GetDirectChildren returns the direct children of the root of the tree.
+// GetChildren returns the direct children of the root of the tree.
 //
 // Children are never nil.
 //
 // Returns:
-//   - []*Token[T]: A slice of the direct children of the root. Nil if the tree does not have a root.
-func (t *ParseTree[T]) GetDirectChildren() []*Token[T] {
-	var children []*Token[T]
+//   - []*ParseTree[T]: A slice of the direct children of the root. Nil if the tree does not have a root.
+func (t ParseTree[T]) GetChildren() []*ParseTree[T] {
+	var children []*ParseTree[T]
 
 	for child := range t.root.Child() {
-		children = append(children, child)
+		tree, err := NewTree(child)
+		dba.AssertErr(err, "NewTree(child)")
+
+		children = append(children, tree)
 	}
 
 	return children
@@ -189,11 +227,7 @@ func (t *ParseTree[T]) GetDirectChildren() []*Token[T] {
 //
 // Returns:
 //   - iter.Seq[*Token[T]]: The traversal sequence.
-func (t *ParseTree[T]) DFS() iter.Seq[*Token[T]] {
-	if t == nil {
-		return func(yield func(*Token[T]) bool) {}
-	}
-
+func (t ParseTree[T]) DFS() iter.Seq[*Token[T]] {
 	fn := func(yield func(*Token[T]) bool) {
 		stack := []*Token[T]{t.root}
 
@@ -218,11 +252,7 @@ func (t *ParseTree[T]) DFS() iter.Seq[*Token[T]] {
 //
 // Returns:
 //   - iter.Seq[*Token[T]]: The traversal sequence.
-func (t *ParseTree[T]) BFS() iter.Seq[*Token[T]] {
-	if t == nil {
-		return func(yield func(*Token[T]) bool) {}
-	}
-
+func (t ParseTree[T]) BFS() iter.Seq[*Token[T]] {
 	fn := func(yield func(*Token[T]) bool) {
 		queue := []*Token[T]{t.root}
 
@@ -320,8 +350,8 @@ func (tree *ParseTree[T]) UpdateLeaves() {
 //   - bool: True if the tree has the child, false otherwise.
 //
 // If either tree or filter is nil, false is returned.
-func (tree *ParseTree[T]) HasChild(filter func(node *Token[T]) bool) bool {
-	if tree == nil || filter == nil {
+func (tree ParseTree[T]) HasChild(filter func(node *Token[T]) bool) bool {
+	if filter == nil {
 		return false
 	}
 
@@ -345,8 +375,8 @@ func (tree *ParseTree[T]) HasChild(filter func(node *Token[T]) bool) bool {
 //   - []*Token[T]: A slice of the children that satisfy the filter.
 //
 // If either tree or filter is nil, an empty slice and false are returned.
-func (tree *ParseTree[T]) FilterChildren(filter func(node *Token[T]) bool) []*Token[T] {
-	if tree == nil || filter == nil {
+func (tree ParseTree[T]) FilterChildren(filter func(node *Token[T]) bool) []*Token[T] {
+	if filter == nil {
 		return nil
 	}
 
@@ -373,8 +403,8 @@ func (tree *ParseTree[T]) FilterChildren(filter func(node *Token[T]) bool) []*To
 //   - bool: True if the node was found, false otherwise.
 //
 // Nodes that are not of type T will be ignored. If either tree or filter is nil, false is returned.
-func (tree *ParseTree[T]) SearchNodes(filter func(node *Token[T]) bool) (*Token[T], bool) {
-	if tree == nil || filter == nil {
+func (tree ParseTree[T]) SearchNodes(filter func(node *Token[T]) bool) (*Token[T], bool) {
+	if filter == nil {
 		return nil, false
 	}
 
@@ -425,11 +455,7 @@ func rec_snake_traversal[T TokenTyper](n *Token[T]) [][]*Token[T] {
 //
 // Behaviors:
 //   - The paths are returned in the order of a BFS traversal.
-func (tree *ParseTree[T]) SnakeTraversal() [][]*Token[T] {
-	if tree == nil {
-		return nil
-	}
-
+func (tree ParseTree[T]) SnakeTraversal() [][]*Token[T] {
 	sol := rec_snake_traversal(tree.root)
 	return sol
 }
@@ -482,7 +508,7 @@ func (tree *ParseTree[T]) replaceLeafWithTree(at int, values []*Token[T]) {
 //   - If the function returns an error, the process stops and the error is returned.
 //   - The leaves are replaced with the children returned by the function.
 func (tree *ParseTree[T]) ProcessLeaves(f func(node *Token[T]) ([]*Token[T], error)) error {
-	if f == nil {
+	if tree == nil || f == nil {
 		return nil
 	}
 

@@ -50,7 +50,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	node, err := pkg.AstMaker.Convert(forest[0].Root())
+	node, err := pkg.AstMaker.Convert(forest[0])
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(2)

@@ -1,4 +1,4 @@
 # list comprehension: the square of every integer number in the range: [0, 10)
 
 sq = [x * x for x in range(10)]
-s
+sq

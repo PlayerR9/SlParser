@@ -62,7 +62,8 @@ func (p *Parser[T]) shift() error {
 	tk := p.tokens[0]
 	p.tokens = p.tokens[1:]
 
-	tree := gr.NewTree(tk)
+	tree, err := gr.NewTree(tk)
+	dba.AssertErr(err, "grammar.NewTree(tk)")
 
 	p.stack.Push(tree)
 

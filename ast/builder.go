@@ -7,26 +7,26 @@ import (
 type Builder[N interface {
 	AddChildren(children []N)
 }, T gr.TokenTyper] struct {
-	table          map[T]ToAstFunc[N, T]
-	make_fake_node func(root *gr.Token[T]) N
+	table map[T]ToAstFunc[N, T]
+	// make_fake_node func(root *gr.ParseTree[T]) N
 }
 
 func NewBuilder[N interface {
 	AddChildren(children []N)
 }, T gr.TokenTyper]() Builder[N, T] {
 	return Builder[N, T]{
-		table:          make(map[T]ToAstFunc[N, T]),
-		make_fake_node: nil,
+		table: make(map[T]ToAstFunc[N, T]),
+		// make_fake_node: nil,
 	}
 }
 
-func (b *Builder[N, T]) SetMakeFakeNode(make_fake_node func(root *gr.Token[T]) N) {
-	if b == nil {
-		return
-	}
+// func (b *Builder[N, T]) SetMakeFakeNode(make_fake_node func(root *gr.ParseTree[T]) N) {
+// 	if b == nil {
+// 		return
+// 	}
 
-	b.make_fake_node = make_fake_node
-}
+// 	b.make_fake_node = make_fake_node
+// }
 
 /*
 func (am Builder[N]) Convert(root *gr.Token[T]) (N, error) {
@@ -53,10 +53,6 @@ func (am Builder[N]) Convert(root *gr.Token[T]) (N, error) {
 
 	return node, nil
 } */
-
-type ToAstFunc[N interface {
-	AddChildren(children []N)
-}, T gr.TokenTyper] func(tk *gr.Token[T]) (N, error)
 
 /* func (am *Builder) Forward(type_ gr.TokenType) {
 	if am == nil {
@@ -102,11 +98,11 @@ func (am Builder[N, T]) Build() AstMaker[N, T] {
 		}
 	}
 
-	fn := am.make_fake_node
+	// fn := am.make_fake_node
 
 	return AstMaker[N, T]{
-		table:          am.table,
-		make_fake_node: fn,
+		table: am.table,
+		// make_fake_node: fn,
 	}
 }
 
@@ -124,5 +120,5 @@ func (am *Builder[N, T]) Reset() {
 		am.table = make(map[T]ToAstFunc[N, T])
 	}
 
-	am.make_fake_node = nil
+	// am.make_fake_node = nil
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	gcslc "github.com/PlayerR9/go-commons/slices"
+	dba "github.com/PlayerR9/go-debug/assert"
 )
 
 // Combine creates a new ParseTree by combining the subtrees.
@@ -34,7 +35,8 @@ func Combine[T TokenTyper](type_ T, subtrees []*ParseTree[T]) (*ParseTree[T], er
 		Pos:       first_tk.Pos,
 	}
 
-	tree := NewTree(root_tk)
+	tree, err := NewTree(root_tk)
+	dba.AssertErr(err, "NewTree(root_tk)")
 	tree.SetChildren(subtrees)
 
 	return tree, nil

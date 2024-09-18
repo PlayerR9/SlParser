@@ -38,7 +38,7 @@ var (
 func init() {
 	builder := ast.NewBuilder[*Node, TokenType]()
 
-	builder.Register(NttSource, func(tk *gr.Token[TokenType]) (*Node, error) {
+	builder.Register(NttSource, func(tk *gr.ParseTree[TokenType]) (*Node, error) {
 		// Token[T][79:NttSource]
 		//  ├── Token[T][79:TttNewline]
 		//  ├── Token[T][80:NttSource1]
@@ -59,7 +59,7 @@ func init() {
 			return nil, err
 		}
 
-		fn := func(children []*gr.Token[TokenType]) (*Node, error) {
+		fn := func(children []*gr.ParseTree[TokenType]) (*Node, error) {
 			var node *Node
 
 			switch len(children) {
@@ -75,7 +75,7 @@ func init() {
 				node = tmp
 			case 2:
 				// Token[T][80:NttStatement]
-				// ├──Token[T][80:TttListComprehension ("sq = [x * x for x in range(10)]")]
+				// ├── Token[T][80:TttListComprehension ("sq = [x * x for x in range(10)]")]
 				// └── Token[T][111:TttNewline]
 
 				err := ast.CheckType(children, 1, TttNewline)
@@ -101,13 +101,13 @@ func init() {
 			return nil, err
 		}
 
-		node := NewNode(tk.Pos, SourceNode, "")
+		node := NewNode(tk.Pos(), SourceNode, "")
 		node.AddChildren(subnodes)
 
 		return node, nil
 	})
 
-	builder.Register(NttStatement, func(tk *gr.Token[TokenType]) (*Node, error) {
+	builder.Register(NttStatement, func(tk *gr.ParseTree[TokenType]) (*Node, error) {
 		// Token[T][80:NttStatement]
 		//  └── Token[T][80:TttListComprehension ("sq = [x * x for x in range(10)]")]
 
@@ -127,7 +127,7 @@ func init() {
 		return node, nil
 	})
 
-	builder.Register(TttListComprehension, func(tk *gr.Token[TokenType]) (*Node, error) {
+	builder.Register(TttListComprehension, func(tk *gr.ParseTree[TokenType]) (*Node, error) {
 		// Token[T][80:TttListComprehension ("sq = [x * x for x in range(10)]")]
 
 		children := tk.GetChildren()
@@ -135,12 +135,12 @@ func init() {
 			return nil, util.NewErrValue("children", 0, len(children), true)
 		}
 
-		node := NewNode(tk.Pos, ListComprehensionNode, tk.Data)
+		node := NewNode(tk.Pos(), ListComprehensionNode, tk.Data())
 
 		return node, nil
 	})
 
-	builder.Register(TttPrintStmt, func(tk *gr.Token[TokenType]) (*Node, error) {
+	builder.Register(TttPrintStmt, func(tk *gr.ParseTree[TokenType]) (*Node, error) {
 		// Token[T][112:TttPrintStmt ("sq")]
 
 		children := tk.GetChildren()
@@ -148,7 +148,7 @@ func init() {
 			return nil, util.NewErrValue("children", 0, len(children), true)
 		}
 
-		node := NewNode(tk.Pos, PrintStmtNode, tk.Data)
+		node := NewNode(tk.Pos(), PrintStmtNode, tk.Data())
 
 		return node, nil
 	})
