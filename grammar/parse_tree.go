@@ -18,6 +18,14 @@ type ParseTree[T TokenTyper] struct {
 	size int
 }
 
+func (t *ParseTree[T]) Type() T {
+	return t.root.Type
+}
+
+func (t *ParseTree[T]) Lookahead() *Token[T] {
+	return t.root.Lookahead
+}
+
 // Cleanup is a method that cleans up the tree.
 func (t *ParseTree[T]) Cleanup() {
 	Cleanup(t.root)

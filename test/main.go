@@ -37,9 +37,7 @@ func main() {
 	// DEBUG: Print the forest.
 	fmt.Println("[DEBUG]: Here is the forest:")
 
-	for _, f := range forest {
-		tree := tr.NewTree(f)
-
+	for _, tree := range forest {
 		fmt.Println(tree.String())
 		fmt.Println()
 	}
@@ -52,7 +50,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	node, err := pkg.AstMaker.Convert(forest[0])
+	node, err := pkg.AstMaker.Convert(forest[0].Root())
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(2)

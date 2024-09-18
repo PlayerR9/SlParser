@@ -72,9 +72,9 @@ func LexString[T gr.TokenTyper](lexer *lxr.Lexer[T], str string) ([]*gr.Token[T]
 //   - tokens: The tokens.
 //
 // Returns:
-//   - []*gr.Token[T]: The list of tokens.
+//   - []*gr.ParseTree[T]: The list of parse trees.
 //   - error: if an error occurred.
-func Parse[T gr.TokenTyper](parser *prx.Parser[T], tokens []*gr.Token[T]) ([]*gr.Token[T], error) {
+func Parse[T gr.TokenTyper](parser *prx.Parser[T], tokens []*gr.Token[T]) ([]*gr.ParseTree[T], error) {
 	if parser == nil {
 		return nil, gcers.NewErrNilParameter("parser")
 	}

@@ -1,12 +1,9 @@
 package grammar
 
 import (
-	"errors"
 	"fmt"
 	"iter"
 	"slices"
-
-	"github.com/PlayerR9/tree/tree"
 )
 
 // TokenTyper is the interface that must be implemented by token types.
@@ -40,12 +37,12 @@ type Token[T TokenTyper] struct {
 }
 
 // IsLeaf implements the tree.Noder interface.
-func (tn *Token[T]) IsLeaf() bool {
+func (tn Token[T]) IsLeaf() bool {
 	return tn.FirstChild == nil
 }
 
 // IsSingleton implements the tree.Noder interface.
-func (tn *Token[T]) IsSingleton() bool {
+func (tn Token[T]) IsSingleton() bool {
 	return tn.FirstChild != nil && tn.FirstChild == tn.LastChild
 }
 
@@ -58,7 +55,7 @@ func (t Token[T]) String() string {
 	}
 }
 
-// NewTerminalToken creates a new terminal token.
+// NewToken creates a new terminal token.
 //
 // Parameters:
 //   - type_: the type of the token.
@@ -67,40 +64,12 @@ func (t Token[T]) String() string {
 //
 // Returns:
 //   - *Token[T]: the new terminal token. Never returns nil.
-func NewTerminalToken[T TokenTyper](type_ T, data string, pos int) *Token[T] {
+func NewToken[T TokenTyper](type_ T, data string, pos int) *Token[T] {
 	return &Token[T]{
 		Type: type_,
 		Data: data,
 		Pos:  pos,
 	}
-}
-
-// NewNonTerminalToken creates a new non-terminal token.
-//
-// Parameters:
-//   - type_: the type of the token.
-//   - children: the children of the token.
-//
-// Returns:
-//   - *Token[T]: the new non-terminal token.
-//   - error: an error if the children are empty.
-func NewNonTerminalToken[T TokenTyper](type_ T, children []*Token[T]) (*Token[T], error) {
-	if len(children) == 0 {
-		return nil, errors.New("non-terminal token must have at least one child")
-	}
-
-	last_tk := children[len(children)-1]
-	first_tk := children[0]
-
-	tk := &Token[T]{
-		Type:      type_,
-		Lookahead: last_tk.Lookahead,
-		Pos:       first_tk.Pos,
-	}
-
-	tk.AddChildren(children)
-
-	return tk, nil
 }
 
 // AddChild adds the target child to the node. Because this function clears the parent and sibling
@@ -111,7 +80,7 @@ func NewNonTerminalToken[T TokenTyper](type_ T, children []*Token[T]) (*Token[T]
 //
 // If child is nil, it does nothing.
 func (tn *Token[T]) AddChild(target *Token[T]) {
-	if target == nil {
+	if tn == nil || target == nil {
 		return
 	}
 
@@ -136,7 +105,7 @@ func (tn *Token[T]) AddChild(target *Token[T]) {
 //
 // Returns:
 //   - iter.Seq[*Token[T]]: A sequence of the children of the node.
-func (tn *Token[T]) BackwardChild() iter.Seq[*Token[T]] {
+func (tn Token[T]) BackwardChild() iter.Seq[*Token[T]] {
 	return func(yield func(*Token[T]) bool) {
 		for c := tn.LastChild; c != nil; c = c.PrevSibling {
 			if !yield(c) {
@@ -151,7 +120,7 @@ func (tn *Token[T]) BackwardChild() iter.Seq[*Token[T]] {
 //
 // Returns:
 //   - iter.Seq[*Token[T]]: A sequence of the children of the node.
-func (tn *Token[T]) Child() iter.Seq[*Token[T]] {
+func (tn Token[T]) Child() iter.Seq[*Token[T]] {
 	return func(yield func(*Token[T]) bool) {
 		for c := tn.FirstChild; c != nil; c = c.NextSibling {
 			if !yield(c) {
@@ -170,6 +139,10 @@ func (tn *Token[T]) Child() iter.Seq[*Token[T]] {
 // Returns:
 //   - []*Token[T]: The children of the node.
 func (tn *Token[T]) Cleanup() []*Token[T] {
+	if tn == nil {
+		return nil
+	}
+
 	var children []*Token[T]
 
 	for c := tn.FirstChild; c != nil; c = c.NextSibling {
@@ -262,7 +235,7 @@ func (tn *Token[T]) delete_child(target *Token[T]) []*Token[T] {
 // Returns:
 //   - []*Token[T]: A slice of the children of the target node.
 func (tn *Token[T]) DeleteChild(target *Token[T]) []*Token[T] {
-	if target == nil {
+	if tn == nil || target == nil {
 		return nil
 	}
 
@@ -283,29 +256,15 @@ func (tn *Token[T]) DeleteChild(target *Token[T]) []*Token[T] {
 	return children
 }
 
-// GetFirstChild returns the first child of the node.
-//
-// Returns:
-//   - *Token[T]: The first child of the node.
-//   - bool: True if the node has a child, false otherwise.
-func (tn *Token[T]) GetFirstChild() (*Token[T], bool) {
-	return tn.FirstChild, tn.FirstChild == nil
-}
-
-// GetParent returns the parent of the node.
-//
-// Returns:
-//   - *Token[T]: The parent of the node.
-//   - bool: True if the node has a parent, false otherwise.
-func (tn *Token[T]) GetParent() (*Token[T], bool) {
-	return tn.Parent, tn.Parent == nil
-}
-
 // LinkChildren is a method that links the children of the node.
 //
 // Parameters:
 //   - children: The children to link.
 func (tn *Token[T]) LinkChildren(children []*Token[T]) {
+	if tn == nil {
+		return
+	}
+
 	var valid_children []*Token[T]
 
 	for _, child := range children {
@@ -364,6 +323,10 @@ func (tn *Token[T]) LinkChildren(children []*Token[T]) {
 //	├── 5
 //	└── 6
 func (tn *Token[T]) RemoveNode() []*Token[T] {
+	if tn == nil {
+		return nil
+	}
+
 	prev := tn.PrevSibling
 	next := tn.NextSibling
 	parent := tn.Parent
@@ -421,7 +384,7 @@ func (tn *Token[T]) RemoveNode() []*Token[T] {
 // Parameters:
 //   - children: The children to add.
 func (tn *Token[T]) AddChildren(children []*Token[T]) {
-	if len(children) == 0 {
+	if tn == nil || len(children) == 0 {
 		return
 	}
 
@@ -482,7 +445,7 @@ func (tn *Token[T]) AddChildren(children []*Token[T]) {
 //
 // Returns:
 //   - []*Token[T]: A slice of pointers to the children of the node.
-func (tn *Token[T]) GetChildren() []*Token[T] {
+func (tn Token[T]) GetChildren() []*Token[T] {
 	var children []*Token[T]
 
 	for c := tn.FirstChild; c != nil; c = c.NextSibling {
@@ -501,7 +464,7 @@ func (tn *Token[T]) GetChildren() []*Token[T] {
 //
 // Returns:
 //   - bool: True if the node has the child, false otherwise.
-func (tn *Token[T]) HasChild(target *Token[T]) bool {
+func (tn Token[T]) HasChild(target *Token[T]) bool {
 	if target == nil || tn.FirstChild == nil {
 		return false
 	}
@@ -523,14 +486,14 @@ func (tn *Token[T]) HasChild(target *Token[T]) bool {
 //
 // Returns:
 //   - bool: True if the node is a child of the parent, false otherwise.
-func (tn *Token[T]) IsChildOf(target *Token[T]) bool {
+func (tn Token[T]) IsChildOf(target *Token[T]) bool {
 	if target == nil {
 		return false
 	}
 
-	parents := tree.GetNodeAncestors(target)
+	parents := GetNodeAncestors(target)
 
-	for node := tn; node.Parent != nil; node = node.Parent {
+	for node := &tn; node.Parent != nil; node = node.Parent {
 		ok := slices.Contains(parents, node.Parent)
 		if ok {
 			return true
@@ -538,4 +501,203 @@ func (tn *Token[T]) IsChildOf(target *Token[T]) bool {
 	}
 
 	return false
+}
+
+// DeepCopy is a method that deep copies the node.
+//
+// Parameters:
+//   - node: The node to copy.
+//
+// Returns:
+//   - *Token[T]: The copied node.
+func DeepCopy[T TokenTyper](node *Token[T]) *Token[T] {
+	if node == nil {
+		return nil
+	}
+
+	n := node.Copy()
+
+	var children []*Token[T]
+
+	for child := range node.Child() {
+		child_copy := DeepCopy(child)
+		children = append(children, child_copy)
+	}
+
+	n.LinkChildren(children)
+
+	return n
+}
+
+// RootOf returns the root of the given node.
+//
+// Parameters:
+//   - node: The node to get the root of.
+//
+// Returns:
+//   - *Token[T]: The root of the given node.
+func RootOf[T TokenTyper](node *Token[T]) *Token[T] {
+	if node == nil {
+		return nil
+	}
+
+	for node.Parent != nil {
+		node = node.Parent
+	}
+
+	return node
+}
+
+// GetNodeLeaves returns the leaves of the given node.
+//
+// This is expensive as leaves are not stored and so, every time this function is called,
+// it has to do a DFS traversal to find the leaves. Thus, it is recommended to call
+// this function once and then store the leaves somewhere if needed.
+//
+// Despite the above, this function does not use recursion and is safe to use.
+//
+// Finally, no nil nodes are returned.
+func GetNodeLeaves[T TokenTyper](node *Token[T]) []*Token[T] {
+	if node == nil {
+		return nil
+	}
+
+	var leaves []*Token[T]
+
+	stack := []*Token[T]{node}
+
+	for len(stack) > 0 {
+		top := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		if top.IsLeaf() {
+			leaves = append(leaves, top)
+		} else {
+			for child := range top.Child() {
+				stack = append(stack, child)
+			}
+		}
+	}
+
+	return leaves
+}
+
+// Size implements the *TreeNode[T] interface.
+//
+// This is expensive as it has to traverse the whole tree to find the size of the tree.
+// Thus, it is recommended to call this function once and then store the size somewhere if needed.
+//
+// Despite the above, this function does not use recursion and is safe to use.
+//
+// Finally, the traversal is done in a depth-first manner.
+func GetNodeSize[T TokenTyper](node *Token[T]) int {
+	if node == nil {
+		return 0
+	}
+
+	var size int
+
+	stack := []*Token[T]{node}
+
+	for len(stack) > 0 {
+		top := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		size++
+
+		for child := range top.Child() {
+			stack = append(stack, child)
+		}
+	}
+
+	return size
+}
+
+// GetAncestors is used to get all the ancestors of the given node. This excludes
+// the node itself.
+//
+// Parameters:
+//   - node: The node to get the ancestors of.
+//
+// Returns:
+//   - []T: The ancestors of the node.
+//
+// This is expensive since ancestors are not stored and so, every time this
+// function is called, it has to traverse the tree to find the ancestors. Thus, it is
+// recommended to call this function once and then store the ancestors somewhere if needed.
+//
+// Despite the above, this function does not use recursion and is safe to use.
+//
+// Finally, no nil nodes are returned.
+func GetNodeAncestors[T TokenTyper](node *Token[T]) []*Token[T] {
+	if node == nil {
+		return nil
+	}
+
+	var ancestors []*Token[T]
+
+	for node.Parent != nil {
+		parent := node.Parent
+
+		ancestors = append(ancestors, parent)
+
+		node = parent
+	}
+
+	slices.Reverse(ancestors)
+
+	return ancestors
+}
+
+// FindCommonAncestor returns the first common ancestor of the two nodes.
+//
+// This function is expensive as it calls GetNodeAncestors two times.
+//
+// Parameters:
+//   - n1: The first node.
+//   - n2: The second node.
+//
+// Returns:
+//   - *Token[T]: The common ancestor.
+//   - bool: True if the nodes have a common ancestor, false otherwise.
+func FindCommonAncestor[T TokenTyper](n1, n2 *Token[T]) (*Token[T], bool) {
+	if n1 == nil || n2 == nil {
+		return nil, false
+	} else if n1 == n2 {
+		return n1, true
+	}
+
+	ancestors1 := GetNodeAncestors(n1)
+	ancestors2 := GetNodeAncestors(n2)
+
+	if len(ancestors1) > len(ancestors2) {
+		ancestors1, ancestors2 = ancestors2, ancestors1
+	}
+
+	for _, node := range ancestors1 {
+		if slices.Contains(ancestors2, node) {
+			return node, true
+		}
+	}
+
+	return nil, false
+}
+
+// Cleanup is used to delete all the children of the given node.
+//
+// Parameters:
+//   - node: The node to delete the children of.
+func Cleanup[T TokenTyper](node *Token[T]) {
+	if node == nil {
+		return
+	}
+
+	queue := node.Cleanup()
+
+	for len(queue) > 0 {
+		first := queue[0]
+		queue = queue[1:]
+
+		queue = append(queue, first.Cleanup()...)
+	}
 }

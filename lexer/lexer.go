@@ -174,7 +174,7 @@ func (l *Lexer[T]) Lex() error {
 
 			type_, data, err := l.def_fn(l, char)
 			if err == nil {
-				tk := gr.NewTerminalToken(type_, data, l.pos)
+				tk := gr.NewToken(type_, data, l.pos)
 
 				l.add_token(tk)
 			} else if err == SkipToken {
@@ -217,7 +217,7 @@ func (l *Lexer[T]) Lex() error {
 			type_, data, err = fn(l, char)
 
 			if err == nil {
-				tk = gr.NewTerminalToken(type_, data, l.pos)
+				tk = gr.NewToken(type_, data, l.pos)
 
 				l.add_token(tk)
 			} else if err != SkipToken {
@@ -257,7 +257,7 @@ func (l *Lexer[T]) Lex() error {
 		}
 
 		if err == nil {
-			tk = gr.NewTerminalToken(type_, data, l.pos)
+			tk = gr.NewToken(type_, data, l.pos)
 
 			l.add_token(tk)
 		} else if err != SkipToken {
@@ -279,7 +279,7 @@ func (l *Lexer[T]) Lex() error {
 // Returns:
 //   - []*gr.Token[T]: the list of tokens.
 func (l *Lexer[T]) Tokens() []*gr.Token[T] {
-	eof := gr.NewTerminalToken(T(0), "", -1)
+	eof := gr.NewToken(T(0), "", -1)
 
 	if l == nil {
 		return []*gr.Token[T]{eof}

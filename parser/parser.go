@@ -39,9 +39,9 @@ func (p *Parser[T]) SetTokens(tokens []*gr.Token[T]) {
 // Pop pops a token from the stack.
 //
 // Returns:
-//   - grammar.Token[T]: the popped token.
+//   - grammar.ParseTree[T]: the popped token.
 //   - bool: true if the token was found, false otherwise.
-func (p Parser[T]) Pop() (*gr.Token[T], bool) {
+func (p Parser[T]) Pop() (*gr.ParseTree[T], bool) {
 	tk, ok := p.stack.Pop()
 	return tk, ok
 }
@@ -62,7 +62,9 @@ func (p *Parser[T]) shift() error {
 	tk := p.tokens[0]
 	p.tokens = p.tokens[1:]
 
-	p.stack.Push(tk)
+	tree := gr.NewTree(tk)
+
+	p.stack.Push(tree)
 
 	return nil
 }
@@ -81,20 +83,23 @@ func (p Parser[T]) reduce(it *Item[T]) error {
 		top, ok := p.stack.Pop()
 		if !ok {
 			return NewErrUnexpectedToken([]T{rhs}, prev, nil)
-		} else if top.Type != rhs {
-			return NewErrUnexpectedToken([]T{rhs}, prev, &top.Type)
 		}
 
-		prev = &top.Type
+		type_ := top.Type()
+		if type_ != rhs {
+			return NewErrUnexpectedToken([]T{rhs}, prev, &type_)
+		}
+
+		prev = &type_
 	}
 
 	popped := p.stack.Popped()
 	p.stack.Accept()
 
-	tk, err := gr.NewNonTerminalToken(it.Lhs(), popped)
-	dba.AssertErr(err, "grammar.NewNonTerminalToken(%s, popped)", it.Lhs().String())
+	tree, err := gr.Combine(it.Lhs(), popped)
+	dba.AssertErr(err, "grammar.Combine(%s, popped)", it.Lhs().String())
 
-	p.stack.Push(tk)
+	p.stack.Push(tree)
 
 	return nil
 }
@@ -122,7 +127,7 @@ func (p *Parser[T]) Parse() error {
 
 		p.stack.Refuse()
 
-		return fmt.Errorf("no rule for %q", top1.Type.String())
+		return fmt.Errorf("no rule for %q", top1.Type().String())
 	}
 
 	for {
@@ -131,13 +136,13 @@ func (p *Parser[T]) Parse() error {
 			break
 		}
 
-		la := top1.Lookahead
+		la := top1.Lookahead()
 
-		fn, ok := p.table[top1.Type]
+		fn, ok := p.table[top1.Type()]
 		if !ok {
 			p.stack.Refuse()
 
-			return fmt.Errorf("no rule for %q", top1.Type.String())
+			return fmt.Errorf("no rule for %q", top1.Type().String())
 		}
 
 		items, err := fn(p, top1, la)
@@ -150,21 +155,17 @@ func (p *Parser[T]) Parse() error {
 		if len(items) > 1 {
 			fmt.Printf("WARNING: ambiguous grammar, found %d actions\n", len(items))
 		} else if len(items) == 0 {
-			return fmt.Errorf("no action for %q", top1.Type.String())
+			return fmt.Errorf("no action for %q", top1.Type().String())
 		}
 
 		it := items[0]
 
 		switch act := it.act.(type) {
 		case *shift_action:
-			if len(p.tokens) == 0 {
-				return fmt.Errorf("unexpected end of input")
+			err := p.shift()
+			if err != nil {
+				return err
 			}
-
-			tk := p.tokens[0]
-			p.tokens = p.tokens[1:]
-
-			p.stack.Push(tk)
 		case *reduce_action:
 			err := p.reduce(it)
 			if err != nil {
@@ -196,13 +197,13 @@ func (p *Parser[T]) Parse() error {
 // Forest returns the forest.
 //
 // Returns:
-//   - []*gr.Token[T]: the forest.
-func (p Parser[T]) Forest() []*gr.Token[T] {
+//   - []*gr.ParseTree[T]: the forest.
+func (p Parser[T]) Forest() []*gr.ParseTree[T] {
 	if p.stack.IsEmpty() {
 		return nil
 	}
 
-	var forest []*gr.Token[T]
+	var forest []*gr.ParseTree[T]
 
 	for {
 		top, ok := p.stack.Pop()

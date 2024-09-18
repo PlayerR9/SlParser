@@ -96,7 +96,7 @@ func PrintFn[T TokenTyper]() Traverser[T, *_TreeStackElem[T]] {
 		}
 	}
 
-	fn := func(node *Token[T], info *_TreeStackElem[T]) ([]Pair[*Token[T], *_TreeStackElem[T]], error) {
+	fn := func(node *Token[T], info *_TreeStackElem[T]) ([]Pair[T, *_TreeStackElem[T]], error) {
 		var builder strings.Builder
 
 		if info.indent != "" {
@@ -138,7 +138,7 @@ func PrintFn[T TokenTyper]() Traverser[T, *_TreeStackElem[T]] {
 			indent.WriteString("    ")
 		}
 
-		var elems []Pair[*Token[T], *_TreeStackElem[T]]
+		var elems []Pair[T, *_TreeStackElem[T]]
 
 		for c := range node.Child() {
 			se := &_TreeStackElem[T]{

@@ -17,7 +17,7 @@ import (
 // If the receiver is nil, then it returns nil and false.
 //
 // If no allowed tokens are provided, then it returns the top of the stack and false.
-func CheckTop[T gr.TokenTyper](parser *Parser[T], allowed ...T) (*gr.Token[T], bool) {
+func CheckTop[T gr.TokenTyper](parser *Parser[T], allowed ...T) (*gr.ParseTree[T], bool) {
 	if parser == nil {
 		return nil, false
 	}
@@ -27,8 +27,10 @@ func CheckTop[T gr.TokenTyper](parser *Parser[T], allowed ...T) (*gr.Token[T], b
 		return top, false
 	}
 
+	type_ := top.Type()
+
 	for _, a := range allowed {
-		if top.Type == a {
+		if type_ == a {
 			return top, true
 		}
 	}

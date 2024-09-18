@@ -8,11 +8,11 @@ import (
 )
 
 type Stack[T gr.TokenTyper] struct {
-	elems  []*gr.Token[T]
-	popped []*gr.Token[T]
+	elems  []*gr.ParseTree[T]
+	popped []*gr.ParseTree[T]
 }
 
-func (s *Stack[T]) Pop() (*gr.Token[T], bool) {
+func (s *Stack[T]) Pop() (*gr.ParseTree[T], bool) {
 	dba.AssertNotNil(s, "s")
 
 	if len(s.elems) == 0 {
@@ -27,15 +27,15 @@ func (s *Stack[T]) Pop() (*gr.Token[T], bool) {
 	return top, true
 }
 
-func (s *Stack[T]) Push(tk *gr.Token[T]) {
+func (s *Stack[T]) Push(tk *gr.ParseTree[T]) {
 	dba.AssertNotNil(s, "s")
 	dba.AssertNotNil(tk, "tk")
 
 	s.elems = append(s.elems, tk)
 }
 
-func (s Stack[T]) Popped() []*gr.Token[T] {
-	popped := make([]*gr.Token[T], len(s.popped))
+func (s Stack[T]) Popped() []*gr.ParseTree[T] {
+	popped := make([]*gr.ParseTree[T], len(s.popped))
 	copy(popped, s.popped)
 
 	slices.Reverse(popped)
