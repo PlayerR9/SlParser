@@ -77,7 +77,7 @@ func (p *Parser[T]) shift() error {
 func (p Parser[T]) reduce(it *Item[T]) error {
 	var prev *T
 
-	for rhs := range it.backward_rhs() {
+	for rhs := range it.BackwardRhs() {
 		top, ok := p.stack.Pop()
 		if !ok {
 			return NewErrUnexpectedToken([]T{rhs}, prev, nil)
@@ -91,8 +91,8 @@ func (p Parser[T]) reduce(it *Item[T]) error {
 	popped := p.stack.Popped()
 	p.stack.Accept()
 
-	tk, err := gr.NewNonTerminalToken(it.lhs(), popped)
-	dba.AssertErr(err, "grammar.NewNonTerminalToken(%s, popped)", it.lhs().String())
+	tk, err := gr.NewNonTerminalToken(it.Lhs(), popped)
+	dba.AssertErr(err, "grammar.NewNonTerminalToken(%s, popped)", it.Lhs().String())
 
 	p.stack.Push(tk)
 

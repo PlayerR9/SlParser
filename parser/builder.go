@@ -55,6 +55,22 @@ func get_rhs_with_offset[T gr.TokenTyper](items []*Item[T], offset int) []T {
 	return all_rhs
 }
 
+func apply_items_filter[T gr.TokenTyper](sols *internal.SolWithLevel[*Item[T]], type_ T, offset int, items []*Item[T]) []*Item[T] {
+	dba.AssertNotNil(sols, "sols")
+
+	fn := func(item *Item[T]) bool {
+		rhs, ok := item.RhsByOffset(offset)
+		if !ok {
+			sols.AddSolution(offset-1, item)
+		}
+
+		return ok && type_ == rhs
+	}
+
+	items = SliceFilter(items, fn)
+	return items
+}
+
 // register_unambiguous registers a new parser function.
 //
 // An unambiguous rule is one that has only one possible outcome or if it can be determined
@@ -68,67 +84,35 @@ func get_rhs_with_offset[T gr.TokenTyper](items []*Item[T], offset int) []T {
 func register_unambiguous[T gr.TokenTyper](items []*Item[T]) ParseFn[T] {
 	dba.Assert(len(items) > 1, "len(items) > 1")
 
-	// Ensure no infinite loop occurs
-	max := -1
-
-	for _, item := range items {
-		if max == -1 || item.pos > max {
-			max = item.pos
-		}
-	}
-
-	dba.Assert(max >= 0, "max >= 0")
-
 	fn := func(parser *Parser[T], top1, lookahead *gr.Token[T]) ([]*Item[T], error) {
-		offset := 1
+		items_left := make([]*Item[T], len(items))
+		copy(items_left, items)
 
 		var sols internal.SolWithLevel[*Item[T]]
-		var prev, type_ *T
+		offset := 1
 
-		if offset == max {
-			fn := func(item *Item[T]) bool {
-				_, ok := item.RhsAt(item.pos - offset)
-				if !ok {
-					sols.AddSolution(offset-1, item)
-				}
+		prev := top1.Type
+		var last_got *T
 
-				return ok
+		for {
+			top, ok := parser.Pop()
+			if !ok {
+				break
 			}
 
-			items = PureSliceFilter(items, fn)
+			last_got = &top.Type
 
-			for _, it := range items {
-				sols.AddSolution(offset-1, it)
+			items_left = apply_items_filter(&sols, top.Type, offset, items_left)
+			if len(items_left) == 0 {
+				break
 			}
 
-		} else {
-			for offset < max {
-				top, ok := parser.Pop()
-				if !ok {
-					break
-				}
+			offset++
+			prev = top.Type
+		}
 
-				type_ = &top.Type
-
-				fn := func(item *Item[T]) bool {
-					rhs, ok := item.RhsAt(item.pos - offset)
-					if !ok {
-						sols.AddSolution(offset-1, item)
-					}
-
-					return ok && rhs == *type_
-				}
-
-				new_items := PureSliceFilter(items, fn)
-				if len(new_items) == 0 {
-					break
-				}
-
-				items = new_items
-				prev = &top1.Type
-				offset++
-				type_ = nil
-			}
+		if len(items_left) > 0 {
+			_ = apply_items_filter(&sols, T(-1), offset, items_left)
 		}
 
 		solutions := sols.Solutions()
@@ -150,7 +134,7 @@ func register_unambiguous[T gr.TokenTyper](items []*Item[T]) ParseFn[T] {
 			}
 		}
 
-		return nil, NewErrUnexpectedToken(expecteds, prev, type_)
+		return nil, NewErrUnexpectedToken(expecteds, &prev, last_got)
 	}
 
 	return fn

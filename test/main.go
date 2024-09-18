@@ -64,7 +64,7 @@ func FullLex(data []byte) []*gr.Token[pkg.TokenType] {
 	return tokens
 }
 
-func FullParse(tokens []*gr.Token[pkg.TokenType]) {
+func FullParse(tokens []*gr.Token[pkg.TokenType]) *gr.Token[pkg.TokenType] {
 	pkg.Parser.SetTokens(tokens)
 
 	err := pkg.Parser.Parse()
@@ -84,4 +84,10 @@ func FullParse(tokens []*gr.Token[pkg.TokenType]) {
 		fmt.Println(err.Error())
 		os.Exit(3)
 	}
+
+	if len(forest) != 1 {
+		fmt.Println(fmt.Errorf("expected one forest, got %d instead", len(forest)))
+	}
+
+	return forest[0]
 }

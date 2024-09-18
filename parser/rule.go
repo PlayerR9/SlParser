@@ -23,6 +23,10 @@ func (r Rule[T]) Size() int {
 	return len(r.rhss)
 }
 
+func (r Rule[T]) HasRhsAt(pos int) bool {
+	return pos >= 0 && pos < len(r.rhss)
+}
+
 // RhsAt returns the right hand side at the given position.
 //
 // Parameters:

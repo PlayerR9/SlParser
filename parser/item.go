@@ -24,27 +24,30 @@ type Item[T gr.TokenTyper] struct {
 	lookaheads []T
 }
 
-func (i Item[T]) String() string {
-	var builder strings.Builder
-
-	lhs := i.rule.Lhs()
-
-	builder.WriteString(lhs.String())
-	builder.WriteString(" ->")
-
-	var j int
-	for rhs := range i.rule.ForwardRhs() {
-		builder.WriteRune(' ')
-		builder.WriteString(rhs.String())
-
-		if j == i.pos {
-			builder.WriteString(" #")
-		}
-
-		j++
+// String implements the fmt.Stringer interface.
+func (item Item[T]) String() string {
+	if item.rule == nil {
+		return ""
 	}
 
-	return builder.String()
+	var elems []string
+
+	lhs := item.rule.Lhs()
+
+	elems = append(elems, lhs.String(), "->")
+
+	var i int
+	for rhs := range item.rule.ForwardRhs() {
+		elems = append(elems, rhs.String())
+
+		if i == item.pos {
+			elems = append(elems, "#")
+		}
+
+		i++
+	}
+
+	return strings.Join(elems, " ")
 }
 
 // NewItem creates a new item.
@@ -122,20 +125,34 @@ func MustNewItem[T gr.TokenTyper](rule *Rule[T], pos int) *Item[T] {
 	}
 }
 
-// backward_rhs returns the backward rhs of the item.
+// ForwardRhs returns the forward rhs of the item.
+//
+// Returns:
+//   - iter.Seq[T]: The forward rhs of the item.
+func (item Item[T]) ForwardRhs() iter.Seq[T] {
+	dba.AssertNotNil(item.rule, "item.rule")
+
+	return item.rule.ForwardRhs()
+}
+
+// BackwardRhs returns the backward rhs of the item.
 //
 // Returns:
 //   - iter.Seq[T]: the backward rhs of the item.
-func (i Item[T]) backward_rhs() iter.Seq[T] {
-	return i.rule.BackwardRhs()
+func (item Item[T]) BackwardRhs() iter.Seq[T] {
+	dba.AssertNotNil(item.rule, "item.rule")
+
+	return item.rule.BackwardRhs()
 }
 
-// lhs returns the left hand side of the item.
+// Lhs returns the left hand side of the item.
 //
 // Returns:
 //   - T: the left hand side of the item.
-func (i Item[T]) lhs() T {
-	return i.rule.Lhs()
+func (item Item[T]) Lhs() T {
+	dba.AssertNotNil(item.rule, "item.rule")
+
+	return item.rule.Lhs()
 }
 
 // RhsAt returns the rhs at the given index.
@@ -143,16 +160,20 @@ func (i Item[T]) lhs() T {
 // Returns:
 //   - T: the rhs at the given index.
 //   - bool: true if the index is valid, false otherwise.
-func (i Item[T]) RhsAt(idx int) (T, bool) {
-	return i.rule.RhsAt(idx)
+func (item Item[T]) RhsAt(idx int) (T, bool) {
+	if item.rule == nil {
+		return T(-1), false
+	}
+
+	return item.rule.RhsAt(idx)
 }
 
 // Pos returns the position of the item in the rule.
 //
 // Returns:
 //   - int: the position of the item in the rule.
-func (i Item[T]) Pos() int {
-	return i.pos
+func (item Item[T]) Pos() int {
+	return item.pos
 }
 
 // set_lookaheads is a helper function for the lookaheads of the item.
@@ -160,7 +181,28 @@ func (i Item[T]) Pos() int {
 // Parameters:
 //   - lookaheads: the list of lookaheads.
 func (item *Item[T]) set_lookaheads(lookaheads []T) {
+	if item == nil {
+		return
+	}
+
 	item.lookaheads = lookaheads
+}
+
+func (item Item[T]) HasRhsByOffset(offset int) bool {
+	idx := item.pos - offset
+
+	return item.rule != nil && item.rule.HasRhsAt(idx)
+}
+
+func (item Item[T]) RhsByOffset(offset int) (T, bool) {
+	if item.rule == nil {
+		return T(-1), false
+	}
+
+	idx := item.pos - offset
+
+	rhs, ok := item.rule.RhsAt(idx)
+	return rhs, ok
 }
 
 /*

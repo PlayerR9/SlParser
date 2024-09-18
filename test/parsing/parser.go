@@ -19,7 +19,7 @@ var (
 func init() {
 	is = prx.NewItemSet[TokenType]()
 
-	// source : newline source1 EOF ;
+	// source : NEWLINE source1 EOF ;
 	_, err := is.AddRule(NttSource, TttNewline, NttSource1, EttEOF)
 	dba.AssertErr(err, "is.AddRule(NttSource, TttNewline, NttSource1, EttEOF)")
 
@@ -64,6 +64,12 @@ func init() {
 
 		return []*prx.Item[TokenType]{it1}, nil
 	})
+
+	/* builder.Register(NttSource1, func(parser *prx.Parser[TokenType], top1, lookahead *gr.Token[TokenType]) ([]*prx.Item[TokenType], error) {
+		// source : NEWLINE source1 # EOF ;
+
+		// source1 : statement NEWLINE source1 # ;
+	}) */
 
 	Parser = builder.Build()
 }

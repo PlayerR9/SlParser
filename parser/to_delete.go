@@ -132,6 +132,29 @@ func (sm SeenMap[T]) IsEmpty() bool {
 //   - bool: True if the element satisfies the filter function, otherwise false.
 type PredicateFilter[T any] func(T) bool
 
+// SliceFilter is the same as SliceFilter, but without any side-effects.
+func SliceFilter[T any](slice []T, filter PredicateFilter[T]) []T {
+	if len(slice) == 0 {
+		return nil
+	} else if filter == nil {
+		return slice
+	}
+
+	var top int
+
+	for i := 0; i < len(slice); i++ {
+		elem := slice[i]
+
+		ok := filter(elem)
+		if ok {
+			slice[top] = elem
+			top++
+		}
+	}
+
+	return slice[:top:top]
+}
+
 // PureSliceFilter is the same as SliceFilter, but without any side-effects.
 func PureSliceFilter[T any](slice []T, filter PredicateFilter[T]) []T {
 	if len(slice) == 0 {
