@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"iter"
 	"os"
 
 	sl "github.com/PlayerR9/SlParser"
@@ -10,6 +13,11 @@ import (
 )
 
 func main() {
+	err := pkg.PrintItemSet(os.Stdout)
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	data, err := os.ReadFile("input.txt")
 	if err != nil {
 		fmt.Println(err)
@@ -60,4 +68,33 @@ func main() {
 	fmt.Println(source_tree.String())
 
 	// [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
+}
+
+func DebugPrint(w io.Writer, title string, elems iter.Seq[string]) error {
+	var buff bytes.Buffer
+
+	if title != "" {
+		buff.WriteString("[DEBUG]: ")
+		buff.WriteString(title)
+	}
+
+	if elems != nil {
+		for elem := range elems {
+			buff.WriteString(elem)
+			buff.WriteRune('\n')
+		}
+	}
+
+	data := buff.Bytes()
+
+	if len(data) == 0 {
+		return nil
+	}
+
+	if w == nil {
+		return io.ErrShortWrite
+	}
+
+	err := sl.Write(w, data)
+	return err
 }

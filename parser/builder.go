@@ -157,8 +157,6 @@ func NewBuilder[T gr.TokenTyper](is *ItemSet[T]) Builder[T] {
 
 	is.init()
 
-	fmt.Println(is.PrintTable())
-
 	for lhs, items := range is.item_table {
 		var fn ParseFn[T]
 

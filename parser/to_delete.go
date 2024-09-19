@@ -1,5 +1,7 @@
 package parser
 
+import "io"
+
 // TODO: Remove this once go-commons is updated.
 
 // SeenMap is a map that keeps track of seen values.
@@ -173,4 +175,35 @@ func PureSliceFilter[T any](slice []T, filter PredicateFilter[T]) []T {
 	}
 
 	return slice_copy[:len(slice_copy):len(slice_copy)]
+}
+
+// Write writes the string to the writer.
+//
+// Parameters:
+//   - w: the writer.
+//   - str: the string.
+//
+// Returns:
+//   - error: if an error occurred.
+//
+// Errors:
+//   - io.ErrShortWrite if the string is not fully written or the writer is nil.
+//   - any other error returned by the writer.
+func Write(w io.Writer, str string) error {
+	if str == "" {
+		return nil
+	} else if w == nil {
+		return io.ErrShortWrite
+	}
+
+	data := []byte(str)
+
+	n, err := w.Write(data)
+	if err != nil {
+		return err
+	} else if n != len(data) {
+		return io.ErrShortWrite
+	}
+
+	return nil
 }

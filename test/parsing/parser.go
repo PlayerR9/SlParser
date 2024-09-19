@@ -1,6 +1,8 @@
 package parsing
 
 import (
+	"io"
+
 	gr "github.com/PlayerR9/SlParser/grammar"
 	prx "github.com/PlayerR9/SlParser/parser"
 	dba "github.com/PlayerR9/go-debug/assert"
@@ -72,4 +74,16 @@ func init() {
 	}) */
 
 	Parser = builder.Build()
+}
+
+// PrintItemSet prints the item set.
+//
+// Returns:
+//   - error: an error if the item set could not be written.
+//
+// Errors:
+//   - io.ErrShortWrite: if the entire item set could not be written.
+//   - any other error returned by the writer.
+func PrintItemSet(w io.Writer) error {
+	return is.PrintTable(w)
 }

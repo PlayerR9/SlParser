@@ -74,6 +74,15 @@ func Display(data []byte, pos int) []byte {
 	return builder.Bytes()
 }
 
+// GetCoords is a function that returns the coordinates of the given position.
+//
+// Parameters:
+//   - data: the data.
+//   - pos: the position.
+//
+// Returns:
+//   - int: the x coordinate.
+//   - int: the y coordinate.
 func GetCoords(data []byte, pos int) (int, int) {
 	var x, y int
 
@@ -87,25 +96,6 @@ func GetCoords(data []byte, pos int) (int, int) {
 	}
 
 	return x + 1, y + 1
-}
-
-// write is a helper function that writes the data to the writer.
-//
-// Parameters:
-//   - w: the writer.
-//   - data: the data.
-//
-// Returns:
-//   - error: if an error occurred.
-func write(w io.Writer, data []byte) error {
-	n, err := w.Write(data)
-	if err != nil {
-		return err
-	} else if n != len(data) {
-		return io.ErrShortWrite
-	}
-
-	return nil
 }
 
 // DisplayErr is a function that displays the error in the given writer
@@ -131,13 +121,13 @@ func DisplayErr(w io.Writer, data []byte, err error) (int, error) {
 
 	ok := errors.As(err, &lexing_err)
 	if !ok {
-		err := write(w, data_err)
+		err := Write(w, data_err)
 		return 0, err
 	}
 
 	display_data := Display(data, lexing_err.Pos)
 
-	err = write(w, display_data)
+	err = Write(w, display_data)
 	if err != nil {
 		return 0, err
 	}
@@ -160,7 +150,7 @@ func DisplayErr(w io.Writer, data []byte, err error) (int, error) {
 		builder.WriteRune('\n')
 	}
 
-	err = write(w, builder.Bytes())
+	err = Write(w, builder.Bytes())
 	if err != nil {
 		return 0, err
 	}

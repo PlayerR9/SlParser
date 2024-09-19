@@ -1,6 +1,9 @@
 package SlParser
 
-import "bytes"
+import (
+	"bytes"
+	"io"
+)
 
 // TODO: Remove this once go-commons is updated.
 
@@ -138,4 +141,33 @@ func ForwardSearch(data []byte, from int, sep []byte) int {
 
 		from = idx
 	}
+}
+
+// Write writes the data to the writer.
+//
+// Parameters:
+//   - w: the writer.
+//   - data: the data.
+//
+// Returns:
+//   - error: if an error occurred.
+//
+// Errors:
+//   - io.ErrShortWrite if the data is not fully written or the writer is nil.
+//   - any other error returned by the writer.
+func Write(w io.Writer, data []byte) error {
+	if len(data) == 0 {
+		return nil
+	} else if w == nil {
+		return io.ErrShortWrite
+	}
+
+	n, err := w.Write(data)
+	if err != nil {
+		return err
+	} else if n != len(data) {
+		return io.ErrShortWrite
+	}
+
+	return nil
 }
