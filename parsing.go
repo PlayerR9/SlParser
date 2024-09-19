@@ -1,6 +1,8 @@
 package SlParser
 
 import (
+	"bytes"
+
 	gr "github.com/PlayerR9/SlParser/grammar"
 	lxr "github.com/PlayerR9/SlParser/lexer"
 	prx "github.com/PlayerR9/SlParser/parser"
@@ -25,8 +27,10 @@ func Lex[T gr.TokenTyper](lexer *lxr.Lexer[T], data []byte) ([]*gr.Token[T], err
 	var err error
 
 	if lexer != nil {
-		input_stream := lxr.NewStream().FromBytes(data)
-		lexer.SetInputStream(input_stream)
+		var buff bytes.Buffer
+
+		_, _ = buff.Write(data)
+		lexer.SetInputStream(&buff)
 		err = lexer.Lex()
 	} else {
 		err = gcers.NewErrNilParameter("lexer")
@@ -54,8 +58,10 @@ func LexString[T gr.TokenTyper](lexer *lxr.Lexer[T], str string) ([]*gr.Token[T]
 	var err error
 
 	if lexer != nil {
-		input_stream := lxr.NewStream().FromString(str)
-		lexer.SetInputStream(input_stream)
+		var buff bytes.Buffer
+
+		_, _ = buff.WriteString(str)
+		lexer.SetInputStream(&buff)
 		err = lexer.Lex()
 	} else {
 		err = gcers.NewErrNilParameter("lexer")

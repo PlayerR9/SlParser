@@ -2,7 +2,6 @@ package parser
 
 import (
 	"errors"
-	"io"
 	"slices"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
@@ -33,7 +32,7 @@ func NewItemSet[T gr.TokenTyper]() ItemSet[T] {
 	}
 }
 
-// PrintTable prints the item table of the item set to the writer.
+// PrintTable prints the item table of the item set.
 //
 // Each item is printed on a new line, with the format:
 //
@@ -41,40 +40,20 @@ func NewItemSet[T gr.TokenTyper]() ItemSet[T] {
 //
 // The strings are separated by an empty line.
 //
-// Parameters:
-//   - w: The writer to write the item set to.
-//
 // Returns:
-//   - error: if an error occurred while writing to the writer.
-//
-// Errors:
-//   - io.ErrShortWrite: if the writer is nil
-//   - any other error returned by the writer.
-func (is ItemSet[T]) PrintTable(w io.Writer) error {
-	if w == nil {
-		return io.ErrShortWrite
-	}
+//   - []string: the lines of the item set.
+func (is ItemSet[T]) PrintTable() []string {
+	var lines []string
 
 	for _, items := range is.item_table {
 		for _, item := range items {
-			err := Write(w, item.String())
-			if err != nil {
-				return err
-			}
-
-			err = Write(w, "\n")
-			if err != nil {
-				return err
-			}
+			lines = append(lines, item.String())
 		}
 
-		err := Write(w, "\n")
-		if err != nil {
-			return err
-		}
+		lines = append(lines, "")
 	}
 
-	return nil
+	return lines
 }
 
 // AddRule adds a new rule to the item set.

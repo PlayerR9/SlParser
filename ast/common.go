@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
-	util "github.com/PlayerR9/SlParser/util"
+	util "github.com/PlayerR9/SlParser/util/go-commons/errors"
 	gcers "github.com/PlayerR9/go-commons/errors"
 )
 

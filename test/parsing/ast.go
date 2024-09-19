@@ -3,7 +3,7 @@ package parsing
 import (
 	ast "github.com/PlayerR9/SlParser/ast"
 	gr "github.com/PlayerR9/SlParser/grammar"
-	"github.com/PlayerR9/SlParser/util"
+	util "github.com/PlayerR9/SlParser/util/go-commons/errors"
 )
 
 //go:generate stringer -type=NodeType -linecomment

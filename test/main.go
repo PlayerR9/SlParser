@@ -1,21 +1,51 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"io"
-	"iter"
+	"log"
 	"os"
 
 	sl "github.com/PlayerR9/SlParser"
 	pkg "github.com/PlayerR9/SlParser/test/parsing"
+	dbp "github.com/PlayerR9/SlParser/util/go-debug/debug"
 	tr "github.com/PlayerR9/tree/tree"
 )
 
+var (
+	Debugger *log.Logger
+)
+
+func init() {
+	Debugger = log.New(os.Stdout, "[DEBUG]: ", log.LstdFlags)
+}
+
+type DebugMode int
+
+const (
+	ShowNone    DebugMode = 0
+	ShowItemSet DebugMode = 1
+	ShowTokens  DebugMode = 2
+	ShowForest  DebugMode = 4
+	ShowAST     DebugMode = 8
+	ShowAll     DebugMode = ShowItemSet | ShowTokens | ShowForest | ShowAST
+)
+
 func main() {
-	err := pkg.PrintItemSet(os.Stdout)
-	if err != nil {
-		fmt.Println(err)
+	var debugmode DebugMode = ShowAll
+
+	if debugmode&ShowItemSet != 0 {
+		err := dbp.LogPrint(Debugger, "Here's the item set:", func(yield func(string) bool) {
+			lines := pkg.PrintItemSet()
+
+			for _, line := range lines {
+				if !yield(line) {
+					break
+				}
+			}
+		})
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	data, err := os.ReadFile("input.txt")
@@ -27,11 +57,18 @@ func main() {
 	tokens, err := sl.Lex(pkg.Lexer, data)
 
 	// DEBUG: Print the list of tokens.
-	fmt.Println("[DEBUG]: Here's the list of tokens:")
-	for _, tk := range tokens {
-		fmt.Println("\t", tk.String())
+	if debugmode&ShowTokens != 0 {
+		err := dbp.LogPrint(Debugger, "Here's the list of tokens:", func(yield func(string) bool) {
+			for _, tk := range tokens {
+				if !yield(tk.String()) {
+					return
+				}
+			}
+		})
+		if err != nil {
+			panic(err)
+		}
 	}
-	fmt.Println()
 
 	exit_code, err := sl.DisplayErr(os.Stdout, data, err)
 	if err != nil {
@@ -43,11 +80,17 @@ func main() {
 	forest, err := sl.Parse(pkg.Parser, tokens)
 
 	// DEBUG: Print the forest.
-	fmt.Println("[DEBUG]: Here is the forest:")
-
-	for _, tree := range forest {
-		fmt.Println(tree.String())
-		fmt.Println()
+	if debugmode&ShowForest != 0 {
+		err := dbp.LogPrint(Debugger, "Here's the forest:", func(yield func(string) bool) {
+			for _, tree := range forest {
+				if !yield(tree.String()) {
+					return
+				}
+			}
+		})
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	if err != nil {
@@ -64,37 +107,18 @@ func main() {
 		os.Exit(2)
 	}
 
-	source_tree := tr.NewTree(node)
-	fmt.Println(source_tree.String())
+	if debugmode&ShowAST != 0 {
+		err := dbp.LogPrint(Debugger, "Here's the AST:", func(yield func(string) bool) {
+			_ = yield(tr.NewTree(node).String())
+		})
+		if err != nil {
+			panic(err)
+		}
+	}
 
 	// [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
 }
 
-func DebugPrint(w io.Writer, title string, elems iter.Seq[string]) error {
-	var buff bytes.Buffer
+func ParseCmd() {
 
-	if title != "" {
-		buff.WriteString("[DEBUG]: ")
-		buff.WriteString(title)
-	}
-
-	if elems != nil {
-		for elem := range elems {
-			buff.WriteString(elem)
-			buff.WriteRune('\n')
-		}
-	}
-
-	data := buff.Bytes()
-
-	if len(data) == 0 {
-		return nil
-	}
-
-	if w == nil {
-		return io.ErrShortWrite
-	}
-
-	err := sl.Write(w, data)
-	return err
 }
