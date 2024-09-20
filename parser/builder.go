@@ -20,7 +20,7 @@ import (
 // Returns:
 //   - []*Item: The list of items.
 //   - error: if an error occurred.
-type ParseFn[T gr.TokenTyper] func(parser *ActiveParser[T], top1 *gr.ParseTree[T], lookahead *gr.Token[T]) ([]*Item[T], error)
+type ParseFn[T gr.TokenTyper] func(parser *ActiveParser[T], top1 *gr.ParseTree[T], lookahead *gr.Token[T]) ([]*internal.Item[T], error)
 
 // get_rhs_with_offset is a helper function that returns the rhs with the given offset.
 //
@@ -28,7 +28,7 @@ type ParseFn[T gr.TokenTyper] func(parser *ActiveParser[T], top1 *gr.ParseTree[T
 //   - []T: the rhs with the given offset.
 //
 // The returned list is sorted and unique.
-func get_rhs_with_offset[T gr.TokenTyper](items []*Item[T], offset int) []T {
+func get_rhs_with_offset[T gr.TokenTyper](items []*internal.Item[T], offset int) []T {
 	var all_rhs []T
 
 	for _, item := range items {
@@ -36,7 +36,7 @@ func get_rhs_with_offset[T gr.TokenTyper](items []*Item[T], offset int) []T {
 			continue
 		}
 
-		rhs, ok := item.RhsAt(item.pos - offset)
+		rhs, ok := item.RhsAt(item.Pos - offset)
 		if !ok {
 			continue
 		}
@@ -50,10 +50,10 @@ func get_rhs_with_offset[T gr.TokenTyper](items []*Item[T], offset int) []T {
 	return all_rhs
 }
 
-func apply_items_filter[T gr.TokenTyper](sols *internal.SolWithLevel[*Item[T]], type_ T, offset int, items []*Item[T]) []*Item[T] {
+func apply_items_filter[T gr.TokenTyper](sols *internal.SolWithLevel[*internal.Item[T]], type_ T, offset int, items []*internal.Item[T]) []*internal.Item[T] {
 	dba.AssertNotNil(sols, "sols")
 
-	fn := func(item *Item[T]) bool {
+	fn := func(item *internal.Item[T]) bool {
 		rhs, ok := item.RhsByOffset(offset)
 		if !ok {
 			sols.AddSolution(offset-1, item)
@@ -76,14 +76,14 @@ func apply_items_filter[T gr.TokenTyper](sols *internal.SolWithLevel[*Item[T]], 
 //   - items: the list of items. (Tthis is assumed to be longer than 1.)
 //
 // If the receiver is nil or 'items' is empty or all items are nil, then nothing is registered.
-func register_unambiguous[T gr.TokenTyper](items []*Item[T]) ParseFn[T] {
+func register_unambiguous[T gr.TokenTyper](items []*internal.Item[T]) ParseFn[T] {
 	dba.Assert(len(items) > 1, "len(items) > 1")
 
-	fn := func(parser *ActiveParser[T], top1 *gr.ParseTree[T], lookahead *gr.Token[T]) ([]*Item[T], error) {
-		items_left := make([]*Item[T], len(items))
+	fn := func(parser *ActiveParser[T], top1 *gr.ParseTree[T], lookahead *gr.Token[T]) ([]*internal.Item[T], error) {
+		items_left := make([]*internal.Item[T], len(items))
 		copy(items_left, items)
 
-		var sols internal.SolWithLevel[*Item[T]]
+		var sols internal.SolWithLevel[*internal.Item[T]]
 		offset := 1
 
 		prev := top1.Type()
@@ -120,7 +120,7 @@ func register_unambiguous[T gr.TokenTyper](items []*Item[T]) ParseFn[T] {
 		var expecteds []T
 
 		for _, item := range items {
-			rhs, ok := item.RhsAt(item.pos - (offset - 1))
+			rhs, ok := item.RhsAt(item.Pos - (offset - 1))
 			if !ok {
 				continue
 			}
@@ -154,11 +154,11 @@ func Build[T gr.TokenTyper](is *ItemSet[T]) *Parser[T] {
 
 			switch len(items) {
 			case 0:
-				fn = func(_ *ActiveParser[T], top1 *gr.ParseTree[T], _ *gr.Token[T]) ([]*Item[T], error) {
+				fn = func(_ *ActiveParser[T], top1 *gr.ParseTree[T], _ *gr.Token[T]) ([]*internal.Item[T], error) {
 					return nil, fmt.Errorf("no rule for %q", top1.Type().String())
 				}
 			case 1:
-				fn = func(parser *ActiveParser[T], top1 *gr.ParseTree[T], lookahead *gr.Token[T]) ([]*Item[T], error) {
+				fn = func(parser *ActiveParser[T], top1 *gr.ParseTree[T], lookahead *gr.Token[T]) ([]*internal.Item[T], error) {
 					return items, nil
 				}
 			default:

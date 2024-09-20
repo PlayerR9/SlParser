@@ -7,35 +7,29 @@ import (
 
 var (
 	is prx.ItemSet[TokenType]
-
-	// source1 : statement ;
-	rule1 *prx.Rule[TokenType]
-
-	// source1 : statement NEWLINE source1 ;
-	rule2 *prx.Rule[TokenType]
 )
 
 func init() {
 	is = prx.NewItemSet[TokenType]()
 
 	// source : NEWLINE source1 EOF ;
-	_, err := is.AddRule(NttSource, TttNewline, NttSource1, EttEOF)
+	err := is.AddRule(NttSource, TttNewline, NttSource1, EttEOF)
 	dba.AssertErr(err, "is.AddRule(NttSource, TttNewline, NttSource1, EttEOF)")
 
 	// source1 : statement ;
-	rule1, err = is.AddRule(NttSource1, NttStatement)
+	err = is.AddRule(NttSource1, NttStatement)
 	dba.AssertErr(err, "is.AddRule(NttSource1, NttStatement)")
 
 	// source1 : statement NEWLINE source1 ;
-	rule2, err = is.AddRule(NttSource1, NttStatement, TttNewline, NttSource1)
+	err = is.AddRule(NttSource1, NttStatement, TttNewline, NttSource1)
 	dba.AssertErr(err, "is.AddRule(NttSource1, NttStatement, TttNewline, NttSource1)")
 
 	// statement : LIST_COMPREHENSION ;
-	_, err = is.AddRule(NttStatement, TttListComprehension)
+	err = is.AddRule(NttStatement, TttListComprehension)
 	dba.AssertErr(err, "is.AddRule(NttStatement, TttListComprehension)")
 
 	// statement : PRINT_STMT ;
-	_, err = is.AddRule(NttStatement, TttPrintStmt)
+	err = is.AddRule(NttStatement, TttPrintStmt)
 	dba.AssertErr(err, "is.AddRule(NttStatement, TttPrintStmt)")
 }
 

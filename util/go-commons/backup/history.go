@@ -1,10 +1,17 @@
 package backup
 
 import (
+	"errors"
 	"iter"
-
-	dba "github.com/PlayerR9/go-debug/assert"
 )
+
+var (
+	InvalidHistory error
+)
+
+func init() {
+	InvalidHistory = errors.New("subject is done before history")
+}
 
 // History is a history of items.
 type History[T any] struct {
@@ -78,6 +85,8 @@ func Align[T any, S interface {
 			break
 		}
 
-		dba.Assert(!done, "somehow the subject was done before the end of the history")
+		if done {
+			panic(InvalidHistory)
+		}
 	}
 }

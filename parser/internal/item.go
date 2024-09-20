@@ -1,11 +1,10 @@
-package parser
+package internal
 
 import (
 	"iter"
 	"strings"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
-	"github.com/PlayerR9/SlParser/parser/internal"
 	gcers "github.com/PlayerR9/go-commons/errors"
 	dba "github.com/PlayerR9/go-debug/assert"
 )
@@ -15,17 +14,17 @@ type Item[T gr.TokenTyper] struct {
 	// rule is the rule of the item.
 	rule *Rule[T]
 
-	// act is the action of the item.
-	act internal.ActionType
+	// Act is the action of the item.
+	Act ActionType
 
-	// pos is the position of the rhs in the rule.
-	pos int
+	// Pos is the position of the rhs in the rule.
+	Pos int
 
 	// lookaheads is the list of lookaheads.
 	lookaheads []T
 
 	// expected is the next element that is expected.
-	expected internal.Expecter
+	expected Expecter
 }
 
 // String implements the fmt.Stringer interface.
@@ -44,14 +43,14 @@ func (item Item[T]) String() string {
 	for rhs := range item.rule.ForwardRhs() {
 		elems = append(elems, rhs.String())
 
-		if i == item.pos {
+		if i == item.Pos {
 			elems = append(elems, "#")
 		}
 
 		i++
 	}
 
-	elems = append(elems, ".", "("+item.act.String()+")")
+	elems = append(elems, ".", "("+item.Act.String()+")")
 
 	if item.expected != nil {
 		elems = append(elems, "--", item.expected.String())
@@ -79,25 +78,25 @@ func NewItem[T gr.TokenTyper](rule *Rule[T], pos int) (*Item[T], error) {
 		return nil, gcers.NewErrInvalidParameter("pos", gcers.NewErrOutOfBounds(pos, 0, size))
 	}
 
-	var act internal.ActionType
+	var act ActionType
 
 	if pos < size-1 {
-		act = internal.ActShift
+		act = ActShift
 	} else {
 		rhs, ok := rule.RhsAt(pos)
 		dba.AssertOk(ok, "rhs_at(%d)", pos)
 
 		if rhs == T(0) {
-			act = internal.ActAccept
+			act = ActAccept
 		} else {
-			act = internal.ActReduce
+			act = ActReduce
 		}
 	}
 
 	return &Item[T]{
 		rule: rule,
-		act:  act,
-		pos:  pos,
+		Act:  act,
+		Pos:  pos,
 	}, nil
 }
 
@@ -114,24 +113,24 @@ func MustNewItem[T gr.TokenTyper](rule *Rule[T], pos int) *Item[T] {
 		panic(gcers.NewErrInvalidParameter("pos", gcers.NewErrOutOfBounds(pos, 0, size)))
 	}
 
-	var act internal.ActionType
+	var act ActionType
 
 	if pos < size-1 {
-		act = internal.ActShift
+		act = ActShift
 	} else {
 		rhs, ok := rule.RhsAt(pos)
 		dba.AssertOk(ok, "rhs_at(%d)", pos)
 
 		if rhs == T(0) {
-			act = internal.ActAccept
+			act = ActAccept
 		} else {
-			act = internal.ActReduce
+			act = ActReduce
 		}
 	}
 
 	return &Item[T]{
 		rule: rule,
-		act:  act,
+		Act:  act,
 	}
 }
 
@@ -178,19 +177,11 @@ func (item Item[T]) RhsAt(idx int) (T, bool) {
 	return item.rule.RhsAt(idx)
 }
 
-// Pos returns the position of the item in the rule.
-//
-// Returns:
-//   - int: the position of the item in the rule.
-func (item Item[T]) Pos() int {
-	return item.pos
-}
-
-// set_lookaheads is a helper function for the lookaheads of the item.
+// SetLookaheads is a helper function for the lookaheads of the item.
 //
 // Parameters:
 //   - lookaheads: the list of lookaheads.
-func (item *Item[T]) set_lookaheads(lookaheads []T) {
+func (item *Item[T]) SetLookaheads(lookaheads []T) {
 	if item == nil {
 		return
 	}
@@ -199,7 +190,7 @@ func (item *Item[T]) set_lookaheads(lookaheads []T) {
 }
 
 func (item Item[T]) HasRhsByOffset(offset int) bool {
-	idx := item.pos - offset
+	idx := item.Pos - offset
 
 	return item.rule != nil && item.rule.HasRhsAt(idx)
 }
@@ -209,7 +200,7 @@ func (item Item[T]) RhsByOffset(offset int) (T, bool) {
 		return T(-1), false
 	}
 
-	idx := item.pos - offset
+	idx := item.Pos - offset
 
 	rhs, ok := item.rule.RhsAt(idx)
 	return rhs, ok

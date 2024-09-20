@@ -2,16 +2,29 @@ package backup
 
 import (
 	"iter"
-
-	dba "github.com/PlayerR9/go-debug/assert"
+	"slices"
 )
+
+type pairing[T any, S any] struct {
+	History *History[T]
+	Subject S
+}
+
+func new_pairing[T any, S any](history *History[T], subject S) *pairing[T, S] {
+	if history == nil {
+		history = &History[T]{}
+	}
+
+	return &pairing[T, S]{
+		History: history,
+		Subject: subject,
+	}
+}
 
 func advance[T any, S interface {
 	ApplyEvent(event T) bool
 }](history *History[T], subject S) bool {
-	dba.AssertNotNil(history, "history")
-
-	if history.current >= len(history.timeline) {
+	if history == nil || history.current >= len(history.timeline) {
 		return true
 	}
 
@@ -122,21 +135,17 @@ func Subject[T any, S interface {
 
 	fn := func(yield func(S) bool) {
 		sbj := init_fn()
-		pair := NewPair[T](nil, sbj)
+		pair := new_pairing[T](nil, sbj)
 
 		var invalid_subjects []S
 
-		var stack Stack[T, S]
+		stack := []*pairing[T, S]{pair}
 
-		stack.Push(pair)
+		for len(stack) > 0 {
+			top := stack[len(stack)-1]
+			stack = stack[:len(stack)-1]
 
-		for {
-			top, ok := stack.Pop()
-			if !ok {
-				break
-			}
-
-			ok = top.Subject.Align(top.History)
+			ok := top.Subject.Align(top.History)
 			if !ok {
 				invalid_subjects = append(invalid_subjects, top.Subject)
 
@@ -146,12 +155,18 @@ func Subject[T any, S interface {
 			possible, ok := execute_one(top.History, top.Subject)
 
 			if len(possible) > 0 {
+				pairs := make([]*pairing[T, S], 0, len(possible))
+
 				for _, path := range possible {
 					sbj := init_fn()
 
-					pair := NewPair(path, sbj)
-					stack.Push(pair)
+					pair := new_pairing(path, sbj)
+					pairs = append(pairs, pair)
 				}
+
+				slices.Reverse(pairs)
+
+				stack = append(stack, pairs...)
 			}
 
 			if !ok {

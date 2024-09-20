@@ -17,10 +17,10 @@ type ItemSet[T gr.TokenTyper] struct {
 	symbols []T
 
 	// rules is the list of rules.
-	rules []*Rule[T]
+	rules []*internal.Rule[T]
 
 	// item_table is the item table.
-	item_table map[T][]*Item[T]
+	item_table map[T][]*internal.Item[T]
 }
 
 // NewItemSet creates a new item set.
@@ -29,7 +29,7 @@ type ItemSet[T gr.TokenTyper] struct {
 //   - ItemSet: the new item set.
 func NewItemSet[T gr.TokenTyper]() ItemSet[T] {
 	return ItemSet[T]{
-		item_table: make(map[T][]*Item[T]),
+		item_table: make(map[T][]*internal.Item[T]),
 	}
 }
 
@@ -64,17 +64,16 @@ func (is ItemSet[T]) PrintTable() []string {
 //   - rhss: the right hand sides of the rule.
 //
 // Returns:
-//   - *Rule: the new rule.
 //   - error: if the rule could not be added.
 //
 // Errors:
 //   - gcers.NilReceiver: if the receiver is nil.
 //   - gcers.ErrInvalidParameter: if the rule does not have at least one right hand side.
-func (is *ItemSet[T]) AddRule(lhs T, rhss ...T) (*Rule[T], error) {
+func (is *ItemSet[T]) AddRule(lhs T, rhss ...T) error {
 	if is == nil {
-		return nil, gcers.NilReceiver
+		return gcers.NilReceiver
 	} else if len(rhss) == 0 {
-		return nil, gcers.NewErrInvalidParameter("rhss", errors.New("at least one right hand side is required"))
+		return gcers.NewErrInvalidParameter("rhss", errors.New("at least one right hand side is required"))
 	}
 
 	pos, ok := slices.BinarySearch(is.symbols, lhs)
@@ -89,14 +88,10 @@ func (is *ItemSet[T]) AddRule(lhs T, rhss ...T) (*Rule[T], error) {
 		}
 	}
 
-	rule := &Rule[T]{
-		lhs:  lhs,
-		rhss: rhss,
-	}
-
+	rule, _ := internal.NewRule(lhs, rhss)
 	is.rules = append(is.rules, rule)
 
-	return rule, nil
+	return nil
 }
 
 func (is *ItemSet[T]) make_items() {
@@ -104,18 +99,18 @@ func (is *ItemSet[T]) make_items() {
 		return
 	}
 
-	var item_list internal.SliceBuilder[*Item[T]]
+	var item_list internal.SliceBuilder[*internal.Item[T]]
 
 	for _, rhs := range is.symbols {
 		for _, rule := range is.rules {
-			indices := rule.indices_of(rhs)
+			indices := rule.IndicesOf(rhs)
 			if len(indices) == 0 {
 				continue
 			}
 
 			for _, idx := range indices {
-				item, err := NewItem(rule, idx)
-				dba.AssertErr(err, "NewItem(rule, %d)", idx)
+				item, err := internal.NewItem(rule, idx)
+				dba.AssertErr(err, "internal.NewItem(rule, %d)", idx)
 
 				item_list.Append(item)
 			}
@@ -133,7 +128,7 @@ func (is *ItemSet[T]) make_items() {
 //
 // Returns:
 //   - []*Item[T]: The items with the given left-hand side. Nil if there are no items with the given left-hand side.
-func (is ItemSet[T]) ItemsWithLhsOf(lhs T) []*Item[T] {
+func (is ItemSet[T]) ItemsWithLhsOf(lhs T) []*internal.Item[T] {
 	items, ok := is.item_table[lhs]
 	if !ok || len(items) == 0 {
 		return nil
@@ -142,13 +137,13 @@ func (is ItemSet[T]) ItemsWithLhsOf(lhs T) []*Item[T] {
 	return items
 }
 
-func get_lookahead_of[T gr.TokenTyper](is *ItemSet[T], item *Item[T], seen *SeenMap[*Item[T]]) []T {
+func get_lookahead_of[T gr.TokenTyper](is *ItemSet[T], item *internal.Item[T], seen *SeenMap[*internal.Item[T]]) []T {
 	ok := seen.SetSeen(item)
 	if !ok {
 		panic("somehow the item was already seen")
 	}
 
-	stack := []*Item[T]{item}
+	stack := []*internal.Item[T]{item}
 
 	var lookaheads []T
 
@@ -156,7 +151,7 @@ func get_lookahead_of[T gr.TokenTyper](is *ItemSet[T], item *Item[T], seen *Seen
 		top := stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
 
-		rhs, ok := top.RhsAt(top.pos + 1)
+		rhs, ok := top.RhsAt(top.Pos + 1)
 		if !ok {
 			continue
 		}
@@ -183,7 +178,7 @@ func get_lookahead_of[T gr.TokenTyper](is *ItemSet[T], item *Item[T], seen *Seen
 }
 
 func (is ItemSet[T]) make_lookahead() {
-	seen := NewSeenMap[*Item[T]]()
+	seen := NewSeenMap[*internal.Item[T]]()
 
 	for _, items := range is.item_table {
 		if len(items) == 0 {
@@ -192,7 +187,7 @@ func (is ItemSet[T]) make_lookahead() {
 
 		for _, item := range items {
 			lookaheads := get_lookahead_of(&is, item, seen)
-			item.set_lookaheads(lookaheads)
+			item.SetLookaheads(lookaheads)
 
 			seen.Reset()
 		}

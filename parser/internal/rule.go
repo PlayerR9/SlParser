@@ -1,9 +1,10 @@
-package parser
+package internal
 
 import (
 	"iter"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
+	gcers "github.com/PlayerR9/go-commons/errors"
 )
 
 // A rule is a production of a grammar.
@@ -13,6 +14,17 @@ type Rule[T gr.TokenTyper] struct {
 
 	// rhss are the right hand sides of the rule.
 	rhss []T
+}
+
+func NewRule[T gr.TokenTyper](lhs T, rhss []T) (*Rule[T], error) {
+	if len(rhss) == 0 {
+		return nil, gcers.NewErrInvalidParameter("rhss", gcers.NewErrNilParameter("rhss"))
+	}
+
+	return &Rule[T]{
+		lhs:  lhs,
+		rhss: rhss,
+	}, nil
 }
 
 // Size returns the number of right hand sides of the rule.
@@ -79,14 +91,14 @@ func (r Rule[T]) Lhs() T {
 	return r.lhs
 }
 
-// indices_of returns the ocurrence indices of the rhs in the rule.
+// IndicesOf returns the ocurrence indices of the rhs in the rule.
 //
 // Parameters:
 //   - rhs: The right-hand side to search.
 //
 // Returns:
 //   - []int: The indices of the rhs in the rule.
-func (r Rule[T]) indices_of(rhs T) []int {
+func (r Rule[T]) IndicesOf(rhs T) []int {
 	var indices []int
 
 	for i, r := range r.rhss {

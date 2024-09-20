@@ -85,18 +85,16 @@ func main() {
 	var last_error error
 
 	for node == nil {
-		ap, err := pkg.Parser.Parse()
+		forest, err := pkg.Parser.Parse()
 		if err != nil {
 			if last_error == nil {
 				last_error = err
 			}
 
 			break
-		} else if ap == nil {
+		} else if len(forest) == 0 {
 			break
 		}
-
-		forest := ap.Forest()
 
 		// DEBUG: Print the forest.
 		if debugmode&ShowForest != 0 {

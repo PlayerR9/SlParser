@@ -45,7 +45,7 @@ func NewActiveParser[T gr.TokenTyper](global *Parser[T]) (*ActiveParser[T], erro
 	}, nil
 }
 
-func (ap *ActiveParser[T]) Align(history *bck.History[*Item[T]]) bool {
+func (ap *ActiveParser[T]) Align(history *bck.History[*internal.Item[T]]) bool {
 	dba.AssertNotNil(ap, "ap")
 	dba.AssertNotNil(history, "history")
 
@@ -106,7 +106,7 @@ func (ap *ActiveParser[T]) shift() {
 //
 // Parameters:
 //   - it: the item to reduce. Assumed to be non-nil.
-func (ap *ActiveParser[T]) reduce(it *Item[T]) {
+func (ap *ActiveParser[T]) reduce(it *internal.Item[T]) {
 	dba.AssertNotNil(ap, "ap")
 	dba.AssertNotNil(it, "it")
 
@@ -149,12 +149,12 @@ func (ap *ActiveParser[T]) reduce(it *Item[T]) {
 //
 // Returns:
 //   - bool: True if the active parser has accepted, false otherwise.
-func (ap *ActiveParser[T]) ApplyEvent(item *Item[T]) bool {
+func (ap *ActiveParser[T]) ApplyEvent(item *internal.Item[T]) bool {
 	if ap == nil || item == nil {
 		return false
 	}
 
-	switch item.act {
+	switch item.Act {
 	case internal.ActShift:
 		ap.shift()
 	case internal.ActReduce:
@@ -162,7 +162,7 @@ func (ap *ActiveParser[T]) ApplyEvent(item *Item[T]) bool {
 	case internal.ActAccept:
 		ap.reduce(item)
 	default:
-		ap.err = fmt.Errorf("unexpected action: %v", item.act)
+		ap.err = fmt.Errorf("unexpected action: %v", item.Act)
 	}
 
 	if ap.HasError() {
@@ -171,10 +171,10 @@ func (ap *ActiveParser[T]) ApplyEvent(item *Item[T]) bool {
 		return false
 	}
 
-	return item.act == internal.ActAccept
+	return item.Act == internal.ActAccept
 }
 
-func (ap *ActiveParser[T]) DetermineNextEvents() []*Item[T] {
+func (ap *ActiveParser[T]) DetermineNextEvents() []*internal.Item[T] {
 	dba.AssertNotNil(ap, "ap")
 
 	defer ap.stack.Refuse()

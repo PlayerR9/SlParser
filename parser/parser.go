@@ -57,7 +57,7 @@ func (p *Parser[T]) SetTokens(tokens []*gr.Token[T]) {
 // Returns:
 //   - *ActiveParser[T]: the active parser. Nil the parser has done.
 //   - error: if an error occurred.
-func (p *Parser[T]) Parse() (*ActiveParser[T], error) {
+func (p *Parser[T]) Parse() ([]*gr.ParseTree[T], error) {
 	if p == nil || p.next == nil {
 		return nil, nil
 	}
@@ -69,7 +69,11 @@ func (p *Parser[T]) Parse() (*ActiveParser[T], error) {
 		return nil, nil
 	}
 
-	return ap, nil
+	if ap == nil {
+		return nil, nil
+	}
+
+	return ap.Forest(), nil
 }
 
 // Reset resets the parser; allowing it to be reused.
