@@ -47,7 +47,7 @@ var (
 func init() {
 	builder := prx.NewBuilder(&is)
 
-	builder.Register(NttStatement, func(parser *prx.Parser[TokenType], top1 *gr.ParseTree[TokenType], lookahead *gr.Token[TokenType]) ([]*prx.Item[TokenType], error) {
+	builder.Register(NttStatement, func(parser *prx.ActiveParser[TokenType], top1 *gr.ParseTree[TokenType], lookahead *gr.Token[TokenType]) ([]*prx.Item[TokenType], error) {
 		has_la := lookahead != nil && lookahead.Type == TttNewline
 
 		var it1 *prx.Item[TokenType]

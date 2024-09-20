@@ -112,87 +112,47 @@ func (p Parser[T]) reduce(it *Item[T]) error {
 //
 // Returns:
 //   - error: if an error occurred.
-func (p *Parser[T]) Parse() error {
+func (p *Parser[T]) Parse() (*ActiveParser[T], error) {
 	if p == nil {
-		return nil
+		return nil, nil
 	}
 
-	err := p.shift() // initial shift
-	if err != nil {
-		return err
-	}
-
-	if len(p.table) == 0 {
+	if p.Size() == 0 {
 		top1, ok := p.stack.Pop()
 		dba.AssertOk(ok, "p.pop()")
 
 		p.stack.Refuse()
 
-		return fmt.Errorf("no rule for %q", top1.Type().String())
+		return nil, fmt.Errorf("no rule for %q", top1.Type().String())
 	}
 
-	for {
-		top1, ok := p.stack.Pop()
-		if !ok {
-			break
-		}
+	ap, err := NewActiveParser(p)
+	dba.AssertErr(err, "NewActiveParser(p)")
 
-		la := top1.Lookahead()
+	var aps []*ActiveParser[T]
 
-		fn, ok := p.table[top1.Type()]
-		if !ok {
-			p.stack.Refuse()
+	var history History[*Item[T]]
 
-			return fmt.Errorf("no rule for %q", top1.Type().String())
-		}
+	possible, err := Execute(&history, ap)
+	if len(possible) > 0 {
+		for _, path := range possible {
+			ap, err := NewActiveParser(p)
+			dba.AssertErr(err, "NewActiveParser(p)")
 
-		items, err := fn(p, top1, la)
-		p.stack.Refuse()
-
-		if err != nil {
-			return err
-		}
-
-		if len(items) > 1 {
-			fmt.Printf("WARNING: ambiguous grammar, found %d actions\n", len(items))
-		} else if len(items) == 0 {
-			return fmt.Errorf("no action for %q", top1.Type().String())
-		}
-
-		it := items[0]
-
-		switch act := it.act.(type) {
-		case *shift_action:
-			err := p.shift()
+			err = ap.Align(path)
 			if err != nil {
-				return err
-			}
-		case *reduce_action:
-			err := p.reduce(it)
-			if err != nil {
-				p.stack.Refuse()
-
-				return err
-			}
-		case *accept_action:
-			err := p.reduce(it)
-			if err != nil {
-				p.stack.Refuse()
-
-				return err
+				return nil, err
 			}
 
-			return nil
-		default:
-			p.stack.Refuse()
-
-			return fmt.Errorf("unexpected action: %v", act)
+			aps = append(aps, ap)
 		}
 	}
 
-	p.stack.Refuse()
+	if err == nil {
+		return ap, nil
+	}
 
-	return fmt.Errorf("end of input but no accept action found")
+	return ap, nil
 }
 
 // Forest returns the forest.
@@ -235,4 +195,33 @@ func (p *Parser[T]) Reset() {
 	}
 
 	p.stack.Reset()
+}
+
+// Size returns the size of the table.
+//
+// Returns:
+//   - int: the size of the table.
+func (p Parser[T]) Size() int {
+	return len(p.table)
+}
+
+// ParseFnOf returns the parse function for the given symbol.
+//
+// Parameters:
+//   - symbol: the symbol.
+//
+// Returns:
+//   - ParseFn[T]: the parse function.
+//   - bool: true if the symbol was found, false otherwise.
+func (p Parser[T]) ParseFnOf(symbol T) (ParseFn[T], bool) {
+	if p.table == nil {
+		return nil, false
+	}
+
+	fn, ok := p.table[symbol]
+	if !ok {
+		return nil, false
+	}
+
+	return fn, true
 }

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
+	"github.com/PlayerR9/SlParser/parser/internal"
 	gcers "github.com/PlayerR9/go-commons/errors"
 	dba "github.com/PlayerR9/go-debug/assert"
 )
@@ -15,13 +16,16 @@ type Item[T gr.TokenTyper] struct {
 	rule *Rule[T]
 
 	// act is the action of the item.
-	act actioner
+	act internal.ActionType
 
 	// pos is the position of the rhs in the rule.
 	pos int
 
 	// lookaheads is the list of lookaheads.
 	lookaheads []T
+
+	// expected is the next element that is expected.
+	expected internal.Expecter
 }
 
 // String implements the fmt.Stringer interface.
@@ -47,6 +51,12 @@ func (item Item[T]) String() string {
 		i++
 	}
 
+	elems = append(elems, ".", "("+item.act.String()+")")
+
+	if item.expected != nil {
+		elems = append(elems, "--", item.expected.String())
+	}
+
 	return strings.Join(elems, " ")
 }
 
@@ -69,18 +79,18 @@ func NewItem[T gr.TokenTyper](rule *Rule[T], pos int) (*Item[T], error) {
 		return nil, gcers.NewErrInvalidParameter("pos", gcers.NewErrOutOfBounds(pos, 0, size))
 	}
 
-	var act actioner
+	var act internal.ActionType
 
 	if pos < size-1 {
-		act = &shift_action{}
+		act = internal.ActShift
 	} else {
 		rhs, ok := rule.RhsAt(pos)
 		dba.AssertOk(ok, "rhs_at(%d)", pos)
 
 		if rhs == T(0) {
-			act = &accept_action{}
+			act = internal.ActAccept
 		} else {
-			act = &reduce_action{}
+			act = internal.ActReduce
 		}
 	}
 
@@ -104,18 +114,18 @@ func MustNewItem[T gr.TokenTyper](rule *Rule[T], pos int) *Item[T] {
 		panic(gcers.NewErrInvalidParameter("pos", gcers.NewErrOutOfBounds(pos, 0, size)))
 	}
 
-	var act actioner
+	var act internal.ActionType
 
 	if pos < size-1 {
-		act = &shift_action{}
+		act = internal.ActShift
 	} else {
 		rhs, ok := rule.RhsAt(pos)
 		dba.AssertOk(ok, "rhs_at(%d)", pos)
 
 		if rhs == T(0) {
-			act = &accept_action{}
+			act = internal.ActAccept
 		} else {
-			act = &reduce_action{}
+			act = internal.ActReduce
 		}
 	}
 

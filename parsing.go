@@ -88,8 +88,8 @@ func Parse[T gr.TokenTyper](parser *prx.Parser[T], tokens []*gr.Token[T]) ([]*gr
 	defer parser.Reset()
 
 	parser.SetTokens(tokens)
-	err := parser.Parse()
-	forest := parser.Forest()
+	active, err := parser.Parse()
+	forest := active.Forest()
 
 	return forest, err
 }

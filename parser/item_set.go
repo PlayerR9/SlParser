@@ -206,3 +206,72 @@ func (is *ItemSet[T]) init() {
 	is.make_items()
 	is.make_lookahead()
 }
+
+/*
+func (is *ItemSet[T]) expected_of(symbol T, seen *SeenMap[*Item[T]]) (internal.Expecter, error) {
+	if symbol.IsTerminal() {
+		expected := internal.NewExpectTerminal(symbol)
+		return expected, nil
+	}
+
+	nexts, ok := is.item_table[symbol]
+	if !ok {
+		return nil, errors.New("no nexts")
+	}
+
+	var sub_expecteds []internal.Expecter
+
+	for _, next := range nexts {
+		ok := seen.SetSeen(next)
+		if !ok {
+			continue
+		}
+
+		s, ok := next.RhsAt(0)
+		dba.AssertOk(ok, "next.RhsAt(%d)", 0)
+
+		expected, err := is.expected_of(s)
+		if err != nil {
+			return nil, fmt.Errorf("expected of %q: %w", s.String(), err)
+		}
+
+		sub_expecteds = append(sub_expecteds, expected)
+	}
+
+	expected := internal.NewExpectNonTerminal(symbol, sub_expecteds)
+
+	return expected, nil
+}
+
+func (is *ItemSet[T]) determine_expecteds() {
+	item := is.item_table[T(0)][0]
+
+	var expected internal.Expecter
+
+	next, ok := item.RhsByOffset(-1)
+	if !ok {
+		// TODO: Handle this case.
+	} else {
+		if next.IsTerminal() {
+			expected = internal.NewExpectTerminal(next)
+		} else {
+			next_items, ok := is.item_table[next]
+			if !ok {
+				// TODO: Handle this case.
+			} else {
+				var sub_expecteds []internal.Expecter
+
+				for _, ni := range next_items {
+					s, ok := ni.RhsAt(0)
+					dba.AssertOk(ok, "ni.RhsAt(%d)", 0)
+
+				}
+
+				// TODO: Handle this case.
+			}
+		}
+
+	}
+
+}
+*/

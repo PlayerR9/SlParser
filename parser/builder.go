@@ -19,7 +19,7 @@ import (
 // Returns:
 //   - []*Item: The list of items.
 //   - error: if an error occurred.
-type ParseFn[T gr.TokenTyper] func(parser *Parser[T], top1 *gr.ParseTree[T], lookahead *gr.Token[T]) ([]*Item[T], error)
+type ParseFn[T gr.TokenTyper] func(parser *ActiveParser[T], top1 *gr.ParseTree[T], lookahead *gr.Token[T]) ([]*Item[T], error)
 
 // Builder is a parser builder.
 type Builder[T gr.TokenTyper] struct {
@@ -84,7 +84,7 @@ func apply_items_filter[T gr.TokenTyper](sols *internal.SolWithLevel[*Item[T]], 
 func register_unambiguous[T gr.TokenTyper](items []*Item[T]) ParseFn[T] {
 	dba.Assert(len(items) > 1, "len(items) > 1")
 
-	fn := func(parser *Parser[T], top1 *gr.ParseTree[T], lookahead *gr.Token[T]) ([]*Item[T], error) {
+	fn := func(parser *ActiveParser[T], top1 *gr.ParseTree[T], lookahead *gr.Token[T]) ([]*Item[T], error) {
 		items_left := make([]*Item[T], len(items))
 		copy(items_left, items)
 
@@ -162,11 +162,11 @@ func NewBuilder[T gr.TokenTyper](is *ItemSet[T]) Builder[T] {
 
 		switch len(items) {
 		case 0:
-			fn = func(_ *Parser[T], top1 *gr.ParseTree[T], _ *gr.Token[T]) ([]*Item[T], error) {
+			fn = func(_ *ActiveParser[T], top1 *gr.ParseTree[T], _ *gr.Token[T]) ([]*Item[T], error) {
 				return nil, fmt.Errorf("no rule for %q", top1.Type().String())
 			}
 		case 1:
-			fn = func(parser *Parser[T], top1 *gr.ParseTree[T], lookahead *gr.Token[T]) ([]*Item[T], error) {
+			fn = func(parser *ActiveParser[T], top1 *gr.ParseTree[T], lookahead *gr.Token[T]) ([]*Item[T], error) {
 				return items, nil
 			}
 		default:
