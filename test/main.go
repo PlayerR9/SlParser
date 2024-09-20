@@ -31,6 +31,15 @@ const (
 )
 
 func main() {
+	err := ParseCmd()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	// [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
+}
+
+func ParseCmd() error {
 	var debugmode DebugMode = ShowAll
 
 	if debugmode&ShowItemSet != 0 {
@@ -50,8 +59,7 @@ func main() {
 
 	data, err := os.ReadFile("input.txt")
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
 	tokens, err := sl.Lex(pkg.Lexer, data)
@@ -74,7 +82,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	} else if exit_code != 0 {
-		os.Exit(exit_code + 3)
+		return err
 	}
 
 	defer pkg.Parser.Reset()
@@ -125,8 +133,7 @@ func main() {
 	}
 
 	if node == nil {
-		fmt.Println(last_error.Error())
-		os.Exit(2)
+		return last_error
 	}
 
 	if debugmode&ShowAST != 0 {
@@ -138,9 +145,9 @@ func main() {
 		}
 	}
 
-	// [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
+	return nil
 }
 
-func ParseCmd() {
+func Full() {
 
 }
