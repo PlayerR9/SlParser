@@ -6,6 +6,9 @@ import (
 	"os"
 
 	sl "github.com/PlayerR9/SlParser"
+	ast "github.com/PlayerR9/SlParser/ast"
+	lxr "github.com/PlayerR9/SlParser/lexer"
+	prx "github.com/PlayerR9/SlParser/parser"
 	pkg "github.com/PlayerR9/SlParser/test/parsing"
 	dbp "github.com/PlayerR9/SlParser/util/go-debug/debug"
 	tr "github.com/PlayerR9/tree/tree"
@@ -40,9 +43,44 @@ func main() {
 }
 
 func ParseCmd() error {
-	var debugmode DebugMode = ShowAll
+	data, err := os.ReadFile("input.txt")
+	if err != nil {
+		return err
+	}
 
-	if debugmode&ShowItemSet != 0 {
+	p := &Parsing{
+		debug_mode: ShowAll,
+		lexer:      pkg.Lexer,
+		parser:     pkg.Parser,
+		ast:        pkg.AstMaker,
+	}
+
+	_, err = p.Full(data)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type Parsing struct {
+	debug_mode DebugMode
+
+	lexer  *lxr.Lexer[pkg.TokenType]
+	parser *prx.Parser[pkg.TokenType]
+	ast    *ast.AstMaker[*pkg.Node, pkg.TokenType]
+}
+
+func (p *Parsing) SetMode(mode DebugMode) {
+	if p == nil {
+		return
+	}
+
+	p.debug_mode = mode
+}
+
+func (p Parsing) Full(data []byte) (*pkg.Node, error) {
+	if p.debug_mode&ShowItemSet != 0 {
 		err := dbp.LogPrint(Debugger, "Here's the item set:", func(yield func(string) bool) {
 			lines := pkg.PrintItemSet()
 
@@ -57,15 +95,10 @@ func ParseCmd() error {
 		}
 	}
 
-	data, err := os.ReadFile("input.txt")
-	if err != nil {
-		return err
-	}
-
 	tokens, err := sl.Lex(pkg.Lexer, data)
 
 	// DEBUG: Print the list of tokens.
-	if debugmode&ShowTokens != 0 {
+	if p.debug_mode&ShowTokens != 0 {
 		err := dbp.LogPrint(Debugger, "Here's the list of tokens:", func(yield func(string) bool) {
 			for _, tk := range tokens {
 				if !yield(tk.String()) {
@@ -82,7 +115,7 @@ func ParseCmd() error {
 	if err != nil {
 		panic(err)
 	} else if exit_code != 0 {
-		return err
+		return nil, err
 	}
 
 	defer pkg.Parser.Reset()
@@ -105,7 +138,7 @@ func ParseCmd() error {
 		}
 
 		// DEBUG: Print the forest.
-		if debugmode&ShowForest != 0 {
+		if p.debug_mode&ShowForest != 0 {
 			err := dbp.LogPrint(Debugger, "Here's the forest:", func(yield func(string) bool) {
 				for _, tree := range forest {
 					if !yield(tree.String()) {
@@ -133,10 +166,10 @@ func ParseCmd() error {
 	}
 
 	if node == nil {
-		return last_error
+		return nil, last_error
 	}
 
-	if debugmode&ShowAST != 0 {
+	if p.debug_mode&ShowAST != 0 {
 		err := dbp.LogPrint(Debugger, "Here's the AST:", func(yield func(string) bool) {
 			_ = yield(tr.NewTree(node).String())
 		})
@@ -145,9 +178,5 @@ func ParseCmd() error {
 		}
 	}
 
-	return nil
-}
-
-func Full() {
-
+	return node, nil
 }

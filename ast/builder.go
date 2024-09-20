@@ -88,7 +88,7 @@ func (am *Builder[N, T]) Register(type_ T, fn ToAstFunc[N, T]) {
 	am.table[type_] = fn
 }
 
-func (am Builder[N, T]) Build() AstMaker[N, T] {
+func (am Builder[N, T]) Build() *AstMaker[N, T] {
 	var table map[T]ToAstFunc[N, T]
 
 	if len(am.table) > 0 {
@@ -100,7 +100,7 @@ func (am Builder[N, T]) Build() AstMaker[N, T] {
 
 	// fn := am.make_fake_node
 
-	return AstMaker[N, T]{
+	return &AstMaker[N, T]{
 		table: am.table,
 		// make_fake_node: fn,
 	}

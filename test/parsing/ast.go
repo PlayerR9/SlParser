@@ -32,7 +32,7 @@ const (
 )
 
 var (
-	AstMaker ast.AstMaker[*Node, TokenType]
+	AstMaker *ast.AstMaker[*Node, TokenType]
 )
 
 func init() {
