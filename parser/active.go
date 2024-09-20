@@ -7,6 +7,7 @@ import (
 
 	gr "github.com/PlayerR9/SlParser/grammar"
 	"github.com/PlayerR9/SlParser/parser/internal"
+	bck "github.com/PlayerR9/SlParser/util/go-commons/backup"
 	gcers "github.com/PlayerR9/go-commons/errors"
 	dba "github.com/PlayerR9/go-debug/assert"
 )
@@ -21,6 +22,9 @@ type ActiveParser[T gr.TokenTyper] struct {
 
 	// stack is the parser stack.
 	stack *internal.Stack[T]
+
+	// err is the error.
+	err error
 }
 
 func NewActiveParser[T gr.TokenTyper](global *Parser[T]) (*ActiveParser[T], error) {
@@ -37,27 +41,22 @@ func NewActiveParser[T gr.TokenTyper](global *Parser[T]) (*ActiveParser[T], erro
 		global: global,
 		tokens: tokens,
 		stack:  &stack,
+		err:    nil,
 	}, nil
 }
 
-func (ap *ActiveParser[T]) Align(history *History[*Item[T]]) error {
-	if ap == nil {
-		return gcers.NilReceiver
-	} else if history == nil {
-		return gcers.NewErrNilParameter("history")
+func (ap *ActiveParser[T]) Align(history *bck.History[*Item[T]]) bool {
+	dba.AssertNotNil(ap, "ap")
+	dba.AssertNotNil(history, "history")
+
+	ap.shift()
+	if ap.HasError() {
+		return false
 	}
 
-	err := ap.shift() // initial shift
-	if err != nil {
-		return err
-	}
+	bck.Align(history, ap)
 
-	err = Align(history, ap)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return !ap.HasError()
 }
 
 // SetTokens sets the list of tokens.
@@ -85,62 +84,61 @@ func (p ActiveParser[T]) Pop() (*gr.ParseTree[T], bool) {
 }
 
 // shift is a helper function that shifts a token.
-//
-// Returns:
-//   - error: if an error occurred.
-func (p *ActiveParser[T]) shift() error {
-	if p == nil {
-		return gcers.NilReceiver
+func (ap *ActiveParser[T]) shift() {
+	dba.AssertNotNil(ap, "ap")
+
+	if len(ap.tokens) == 0 {
+		ap.err = io.EOF
+
+		return
 	}
 
-	if len(p.tokens) == 0 {
-		return io.EOF
-	}
-
-	tk := p.tokens[0]
-	p.tokens = p.tokens[1:]
+	tk := ap.tokens[0]
+	ap.tokens = ap.tokens[1:]
 
 	tree, err := gr.NewTree(tk)
 	dba.AssertErr(err, "grammar.NewTree(tk)")
 
-	p.stack.Push(tree)
-
-	return nil
+	ap.stack.Push(tree)
 }
 
 // reduce is a helper function that reduces an item.
 //
 // Parameters:
-//   - it: the item to reduce.
-//
-// Returns:
-//   - error: if an error occurred.
-func (p ActiveParser[T]) reduce(it *Item[T]) error {
+//   - it: the item to reduce. Assumed to be non-nil.
+func (ap *ActiveParser[T]) reduce(it *Item[T]) {
+	dba.AssertNotNil(ap, "ap")
+	dba.AssertNotNil(it, "it")
+
 	var prev *T
 
 	for rhs := range it.BackwardRhs() {
-		top, ok := p.stack.Pop()
+		top, ok := ap.stack.Pop()
 		if !ok {
-			return NewErrUnexpectedToken([]T{rhs}, prev, nil)
+			ap.err = NewErrUnexpectedToken([]T{rhs}, prev, nil)
+
+			return
 		}
 
 		type_ := top.Type()
 		if type_ != rhs {
-			return NewErrUnexpectedToken([]T{rhs}, prev, &type_)
+			ap.err = NewErrUnexpectedToken([]T{rhs}, prev, &type_)
+
+			return
 		}
 
 		prev = &type_
 	}
 
-	popped := p.stack.Popped()
-	p.stack.Accept()
+	popped := ap.stack.Popped()
+	ap.stack.Accept()
 
-	tree, err := gr.Combine(it.Lhs(), popped)
-	dba.AssertErr(err, "grammar.Combine(%s, popped)", it.Lhs().String())
+	lhs := it.Lhs()
 
-	p.stack.Push(tree)
+	tree, err := gr.Combine(lhs, popped)
+	dba.AssertErr(err, "grammar.Combine(%s, popped)", lhs.String())
 
-	return nil
+	ap.stack.Push(tree)
 }
 
 // ApplyEvent applies an event to the active parser. Does nothing if item or
@@ -151,53 +149,41 @@ func (p ActiveParser[T]) reduce(it *Item[T]) error {
 //
 // Returns:
 //   - bool: True if the active parser has accepted, false otherwise.
-//   - error: if an error occurred.
-func (ap *ActiveParser[T]) ApplyEvent(item *Item[T]) (bool, error) {
+func (ap *ActiveParser[T]) ApplyEvent(item *Item[T]) bool {
 	if ap == nil || item == nil {
-		return false, nil
+		return false
 	}
 
 	switch item.act {
 	case internal.ActShift:
-		err := ap.shift()
-		if err != nil {
-			return false, err
-		}
+		ap.shift()
 	case internal.ActReduce:
-		err := ap.reduce(item)
-		if err != nil {
-			ap.stack.Refuse()
-
-			return false, err
-		}
+		ap.reduce(item)
 	case internal.ActAccept:
-		err := ap.reduce(item)
-		if err != nil {
-			ap.stack.Refuse()
-
-			return false, err
-		}
-
-		return true, nil
+		ap.reduce(item)
 	default:
+		ap.err = fmt.Errorf("unexpected action: %v", item.act)
+	}
+
+	if ap.HasError() {
 		ap.stack.Refuse()
 
-		return false, fmt.Errorf("unexpected action: %v", item.act)
+		return false
 	}
 
-	return false, nil
+	return item.act == internal.ActAccept
 }
 
-func (ap *ActiveParser[T]) DetermineNextEvents() ([]*Item[T], error) {
-	if ap == nil {
-		return nil, gcers.NilReceiver
-	}
+func (ap *ActiveParser[T]) DetermineNextEvents() []*Item[T] {
+	dba.AssertNotNil(ap, "ap")
 
 	defer ap.stack.Refuse()
 
 	top, ok := ap.stack.Pop()
 	if !ok {
-		return nil, errors.New("End of Input was reached but no accepting state was found")
+		ap.err = errors.New("End of Input was reached but no accepting state was found")
+
+		return nil
 	}
 
 	lookahead := top.Lookahead()
@@ -205,19 +191,25 @@ func (ap *ActiveParser[T]) DetermineNextEvents() ([]*Item[T], error) {
 
 	fn, ok := ap.global.ParseFnOf(type_)
 	if !ok || fn == nil {
-		return nil, fmt.Errorf("no rule for %q", type_.String())
+		ap.err = fmt.Errorf("no rule for %q", type_.String())
+
+		return nil
 	}
 
 	events, err := fn(ap, top, lookahead)
 	if err != nil {
-		return nil, err
+		ap.err = err
+
+		return nil
 	}
 
 	if len(events) == 0 {
-		return nil, fmt.Errorf("no action for %q", type_.String())
+		ap.err = fmt.Errorf("no action for %q", type_.String())
+
+		return nil
 	}
 
-	return events, nil
+	return events
 }
 
 // Forest returns the forest.
@@ -260,4 +252,12 @@ func (p *ActiveParser[T]) Reset() {
 	}
 
 	p.stack.Reset()
+}
+
+func (ap ActiveParser[T]) HasError() bool {
+	return ap.err != nil
+}
+
+func (ap ActiveParser[T]) Error() error {
+	return ap.err
 }

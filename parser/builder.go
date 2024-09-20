@@ -6,6 +6,7 @@ import (
 
 	gr "github.com/PlayerR9/SlParser/grammar"
 	"github.com/PlayerR9/SlParser/parser/internal"
+	bck "github.com/PlayerR9/SlParser/util/go-commons/backup"
 	dba "github.com/PlayerR9/go-debug/assert"
 )
 
@@ -20,12 +21,6 @@ import (
 //   - []*Item: The list of items.
 //   - error: if an error occurred.
 type ParseFn[T gr.TokenTyper] func(parser *ActiveParser[T], top1 *gr.ParseTree[T], lookahead *gr.Token[T]) ([]*Item[T], error)
-
-// Builder is a parser builder.
-type Builder[T gr.TokenTyper] struct {
-	// table is the parser table.
-	table map[T]ParseFn[T]
-}
 
 // get_rhs_with_offset is a helper function that returns the rhs with the given offset.
 //
@@ -146,94 +141,42 @@ func register_unambiguous[T gr.TokenTyper](items []*Item[T]) ParseFn[T] {
 //
 // Returns:
 //   - Builder: the builder.
-func NewBuilder[T gr.TokenTyper](is *ItemSet[T]) Builder[T] {
-	table := make(map[T]ParseFn[T])
-
-	if is == nil {
-		return Builder[T]{
-			table: table,
-		}
+func Build[T gr.TokenTyper](is *ItemSet[T]) *Parser[T] {
+	p := &Parser[T]{
+		table: make(map[T]ParseFn[T]),
 	}
 
-	is.init()
+	if is != nil {
+		is.init()
 
-	for lhs, items := range is.item_table {
-		var fn ParseFn[T]
+		for lhs, items := range is.item_table {
+			var fn ParseFn[T]
 
-		switch len(items) {
-		case 0:
-			fn = func(_ *ActiveParser[T], top1 *gr.ParseTree[T], _ *gr.Token[T]) ([]*Item[T], error) {
-				return nil, fmt.Errorf("no rule for %q", top1.Type().String())
+			switch len(items) {
+			case 0:
+				fn = func(_ *ActiveParser[T], top1 *gr.ParseTree[T], _ *gr.Token[T]) ([]*Item[T], error) {
+					return nil, fmt.Errorf("no rule for %q", top1.Type().String())
+				}
+			case 1:
+				fn = func(parser *ActiveParser[T], top1 *gr.ParseTree[T], lookahead *gr.Token[T]) ([]*Item[T], error) {
+					return items, nil
+				}
+			default:
+				fn = register_unambiguous(items)
 			}
-		case 1:
-			fn = func(parser *ActiveParser[T], top1 *gr.ParseTree[T], lookahead *gr.Token[T]) ([]*Item[T], error) {
-				return items, nil
-			}
-		default:
-			fn = register_unambiguous(items)
-		}
 
-		table[lhs] = fn
-	}
-
-	return Builder[T]{
-		table: table,
-	}
-}
-
-// Register registers a new parser function.
-//
-// Parameters:
-//   - rhs: the right hand side of the production.
-//   - fn: the parser function.
-//
-// If the receiver or 'fn' are nil, then nothing is registered.
-//
-// Previous functions are overwritten.
-func (b *Builder[T]) Register(rhs T, fn ParseFn[T]) {
-	if b == nil || fn == nil {
-		return
-	}
-
-	b.table[rhs] = fn
-}
-
-// Build builds the parser.
-//
-// Returns:
-//   - Parser: the parser. Never returns nil.
-func (b Builder[T]) Build() *Parser[T] {
-	var table map[T]ParseFn[T]
-
-	if len(b.table) > 0 {
-		table = make(map[T]ParseFn[T], len(b.table))
-		for k, v := range b.table {
-			table[k] = v
+			p.table[lhs] = fn
 		}
 	}
 
-	var stack internal.Stack[T]
+	fn := func() *ActiveParser[T] {
+		ap, err := NewActiveParser(p)
+		dba.AssertErr(err, "NewActiveParser(p)")
 
-	return &Parser[T]{
-		table: table,
-		stack: &stack,
-	}
-}
-
-// Reset resets the builder.
-//
-// Does nothing if the receiver is nil.
-func (b *Builder[T]) Reset() {
-	if b == nil {
-		return
+		return ap
 	}
 
-	if len(b.table) > 0 {
-		for k := range b.table {
-			b.table[k] = nil
-			delete(b.table, k)
-		}
+	p.seq = bck.Subject(fn)
 
-		b.table = make(map[T]ParseFn[T])
-	}
+	return p
 }

@@ -1,7 +1,6 @@
 package parsing
 
 import (
-	gr "github.com/PlayerR9/SlParser/grammar"
 	prx "github.com/PlayerR9/SlParser/parser"
 	dba "github.com/PlayerR9/go-debug/assert"
 )
@@ -45,33 +44,7 @@ var (
 )
 
 func init() {
-	builder := prx.NewBuilder(&is)
-
-	builder.Register(NttStatement, func(parser *prx.ActiveParser[TokenType], top1 *gr.ParseTree[TokenType], lookahead *gr.Token[TokenType]) ([]*prx.Item[TokenType], error) {
-		has_la := lookahead != nil && lookahead.Type == TttNewline
-
-		var it1 *prx.Item[TokenType]
-
-		if has_la {
-			// source1 : statement # NEWLINE source1 ;
-
-			it1 = prx.MustNewItem(rule2, 0)
-		} else {
-			// source1 : statement # ;
-
-			it1 = prx.MustNewItem(rule1, 0)
-		}
-
-		return []*prx.Item[TokenType]{it1}, nil
-	})
-
-	/* builder.Register(NttSource1, func(parser *prx.Parser[TokenType], top1, lookahead *gr.Token[TokenType]) ([]*prx.Item[TokenType], error) {
-		// source : NEWLINE source1 # EOF ;
-
-		// source1 : statement NEWLINE source1 # ;
-	}) */
-
-	Parser = builder.Build()
+	Parser = prx.Build(&is)
 }
 
 // PrintItemSet prints the item set.

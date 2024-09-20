@@ -77,33 +77,57 @@ func main() {
 		os.Exit(exit_code + 3)
 	}
 
-	forest, err := sl.Parse(pkg.Parser, tokens)
+	defer pkg.Parser.Reset()
 
-	// DEBUG: Print the forest.
-	if debugmode&ShowForest != 0 {
-		err := dbp.LogPrint(Debugger, "Here's the forest:", func(yield func(string) bool) {
-			for _, tree := range forest {
-				if !yield(tree.String()) {
-					return
-				}
-			}
-		})
+	pkg.Parser.SetTokens(tokens)
+
+	var node *pkg.Node
+	var last_error error
+
+	for node == nil {
+		ap, err := pkg.Parser.Parse()
 		if err != nil {
-			panic(err)
+			if last_error == nil {
+				last_error = err
+			}
+
+			break
+		} else if ap == nil {
+			break
+		}
+
+		forest := ap.Forest()
+
+		// DEBUG: Print the forest.
+		if debugmode&ShowForest != 0 {
+			err := dbp.LogPrint(Debugger, "Here's the forest:", func(yield func(string) bool) {
+				for _, tree := range forest {
+					if !yield(tree.String()) {
+						return
+					}
+				}
+			})
+			if err != nil {
+				panic(err)
+			}
+		}
+
+		if len(forest) != 1 {
+			last_error = fmt.Errorf("expected one forest, got %d instead", len(forest))
+
+			continue
+		}
+
+		node, err = pkg.AstMaker.Convert(forest[0])
+		if err != nil {
+			last_error = err
+
+			continue
 		}
 	}
 
-	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(2)
-	} else if len(forest) != 1 {
-		fmt.Println(fmt.Errorf("expected one forest, got %d instead", len(forest)))
-		os.Exit(2)
-	}
-
-	node, err := pkg.AstMaker.Convert(forest[0])
-	if err != nil {
-		fmt.Println(err)
+	if node == nil {
+		fmt.Println(last_error.Error())
 		os.Exit(2)
 	}
 
