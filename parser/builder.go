@@ -7,6 +7,7 @@ import (
 	gr "github.com/PlayerR9/SlParser/grammar"
 	"github.com/PlayerR9/SlParser/parser/internal"
 	bck "github.com/PlayerR9/go-commons/backup"
+	gcslc "github.com/PlayerR9/go-commons/slices"
 	dba "github.com/PlayerR9/go-debug/assert"
 )
 
@@ -62,7 +63,7 @@ func apply_items_filter[T gr.TokenTyper](sols *internal.SolWithLevel[*internal.I
 		return ok && type_ == rhs
 	}
 
-	items = SliceFilter(items, fn)
+	items = gcslc.SliceFilter(items, fn)
 	return items
 }
 

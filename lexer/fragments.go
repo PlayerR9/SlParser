@@ -6,6 +6,8 @@ import (
 	"io"
 	"strings"
 
+	gcers "github.com/PlayerR9/go-commons/errors"
+	gcch "github.com/PlayerR9/go-commons/runes"
 	dba "github.com/PlayerR9/go-debug/assert"
 )
 
@@ -59,12 +61,12 @@ func FragNewline(opts ...LexOption) LexFragment {
 			}
 
 			if err == io.EOF {
-				return "", NewErrUnexpectedChar('\r', []rune{'\n'}, nil)
+				return "", fmt.Errorf("after %q, %w", '\r', gcers.NewErrValue("character", '\r', nil, true))
 			} else if err != nil {
 				return "", err
 			}
 
-			return "", NewErrUnexpectedChar('\r', []rune{'\n'}, &next)
+			return "", gcers.NewErrValue("character", '\r', '\n', true)
 		}
 
 		err = lexer.UnreadRune()
@@ -147,7 +149,7 @@ func FragGroup(is_fn GroupFn, opts ...LexOption) LexFragment {
 //
 // If the word is not found in the lexer's input, a ErrUnexpectedChar error is returned.
 func FragWord(word string, opts ...LexOption) LexFragment {
-	chars, err := StringToUtf8(word)
+	chars, err := gcch.StringToUtf8(word)
 	if err != nil {
 		return func(lexer RuneStreamer) (string, error) {
 			return "", fmt.Errorf("invalid word: %w", err)
@@ -160,13 +162,13 @@ func FragWord(word string, opts ...LexOption) LexFragment {
 		for _, char := range chars[1:] {
 			c, err := lexer.NextRune()
 			if err == io.EOF {
-				return "", NewErrUnexpectedChar(prev, []rune{char}, nil)
+				return "", fmt.Errorf("after %q, %w", prev, gcers.NewErrValue("character", char, nil, true))
 			} else if err != nil {
 				return "", err
 			}
 
 			if c != char {
-				return "", NewErrUnexpectedChar(prev, []rune{char}, &c)
+				return "", fmt.Errorf("after %q, %w", prev, gcers.NewErrValue("character", char, c, true))
 			}
 
 			prev = char
@@ -222,7 +224,7 @@ func FragUntil(prev, until rune, allow_eof bool) LexFragment {
 			for {
 				char, err := lexer.NextRune()
 				if err == io.EOF {
-					return builder.String(), NewErrUnexpectedChar(prev, []rune{until}, nil)
+					return builder.String(), fmt.Errorf("after %q, %w", prev, gcers.NewErrValue("character", until, nil, true))
 				} else if err != nil {
 					return builder.String(), err
 				}

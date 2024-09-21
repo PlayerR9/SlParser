@@ -8,6 +8,7 @@ import (
 	"github.com/PlayerR9/SlParser/parser/internal"
 	bck "github.com/PlayerR9/go-commons/backup"
 	gcers "github.com/PlayerR9/go-commons/errors"
+	gcmap "github.com/PlayerR9/go-commons/maps"
 	dba "github.com/PlayerR9/go-debug/assert"
 )
 
@@ -137,7 +138,7 @@ func (is ItemSet[T]) ItemsWithLhsOf(lhs T) []*internal.Item[T] {
 	return items
 }
 
-func get_lookahead_of[T gr.TokenTyper](is *ItemSet[T], item *internal.Item[T], seen *SeenMap[*internal.Item[T]]) []T {
+func get_lookahead_of[T gr.TokenTyper](is *ItemSet[T], item *internal.Item[T], seen *gcmap.SeenMap[*internal.Item[T]]) []T {
 	ok := seen.SetSeen(item)
 	if !ok {
 		panic("somehow the item was already seen")
@@ -178,7 +179,7 @@ func get_lookahead_of[T gr.TokenTyper](is *ItemSet[T], item *internal.Item[T], s
 }
 
 func (is ItemSet[T]) make_lookahead() {
-	seen := NewSeenMap[*internal.Item[T]]()
+	seen := gcmap.NewSeenMap[*internal.Item[T]]()
 
 	for _, items := range is.item_table {
 		if len(items) == 0 {
