@@ -3,7 +3,7 @@ package parsing
 import (
 	ast "github.com/PlayerR9/SlParser/ast"
 	gr "github.com/PlayerR9/SlParser/grammar"
-	util "github.com/PlayerR9/SlParser/util/go-commons/errors"
+	gcers "github.com/PlayerR9/go-commons/errors"
 )
 
 //go:generate stringer -type=NodeType -linecomment
@@ -46,7 +46,7 @@ func init() {
 
 		children := tk.GetChildren()
 		if len(children) != 3 {
-			return nil, util.NewErrValue("children", 3, len(children), true)
+			return nil, gcers.NewErrValue("children", 3, len(children), true)
 		}
 
 		err := ast.CheckType(children, 0, TttNewline)
@@ -90,7 +90,7 @@ func init() {
 
 				node = tmp
 			default:
-				return nil, util.NewErrValues("children", []int{1, 2}, len(children), false)
+				return nil, gcers.NewErrValues("children", []int{1, 2}, len(children), false)
 			}
 
 			return node, nil
@@ -116,7 +116,7 @@ func init() {
 
 		children := tk.GetChildren()
 		if len(children) != 1 {
-			return nil, util.NewErrValue("children", 1, len(children), true)
+			return nil, gcers.NewErrValue("children", 1, len(children), true)
 		}
 
 		node, err := AstMaker.Convert(children[0])
@@ -132,7 +132,7 @@ func init() {
 
 		children := tk.GetChildren()
 		if len(children) != 0 {
-			return nil, util.NewErrValue("children", 0, len(children), true)
+			return nil, gcers.NewErrValue("children", 0, len(children), true)
 		}
 
 		node := NewNode(tk.Pos(), ListComprehensionNode, tk.Data())
@@ -145,7 +145,7 @@ func init() {
 
 		children := tk.GetChildren()
 		if len(children) != 0 {
-			return nil, util.NewErrValue("children", 0, len(children), true)
+			return nil, gcers.NewErrValue("children", 0, len(children), true)
 		}
 
 		node := NewNode(tk.Pos(), PrintStmtNode, tk.Data())

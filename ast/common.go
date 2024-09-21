@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
-	util "github.com/PlayerR9/SlParser/util/go-commons/errors"
 	gcers "github.com/PlayerR9/go-commons/errors"
 )
 
@@ -65,14 +64,14 @@ func CheckType[T gr.TokenTyper](children []*gr.ParseTree[T], at int, type_ T) er
 	pos_str := gcers.GetOrdinalSuffix(at+1) + " child"
 
 	if at >= len(children) {
-		return util.NewErrValue(pos_str, type_, nil, true)
+		return gcers.NewErrValue(pos_str, type_, nil, true)
 	}
 
 	tk := children[at]
 	if tk == nil {
-		return util.NewErrValue(pos_str, type_, nil, true)
+		return gcers.NewErrValue(pos_str, type_, nil, true)
 	} else if tk.Type() != type_ {
-		return util.NewErrValue(pos_str, type_, tk.Type(), true)
+		return gcers.NewErrValue(pos_str, type_, tk.Type(), true)
 	}
 
 	return nil
