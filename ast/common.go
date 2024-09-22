@@ -1,12 +1,8 @@
 package ast
 
 import (
-	"errors"
-	"fmt"
-
 	gr "github.com/PlayerR9/SlParser/grammar"
 	gcers "github.com/PlayerR9/errors"
-	"github.com/dustin/go-humanize"
 )
 
 /* // TransformFakeNode transforms a node into a fake AST node.
@@ -62,46 +58,69 @@ func CheckType[T gr.TokenTyper](children []*gr.ParseTree[T], at int, type_ T) er
 		return gcers.NewErrInvalidParameter("at must be non-negative")
 	}
 
-	pos_str := humanize.Ordinal(at+1) + " child"
-
 	if at >= len(children) {
-		return gcers.NewErrAt(pos_str, fmt.Errorf("expected %q, got nothing instead", type_.String()))
+		return NewBadSyntaxTree(at, type_, "")
 	}
 
 	tk := children[at]
 	if tk == nil {
-		return gcers.NewErrAt(pos_str, fmt.Errorf("expected %q, got nothing instead", type_.String()))
-	} else if tk.Type() != type_ {
-		return gcers.NewErrAt(pos_str, fmt.Errorf("expected %q, got %q instead", type_.String(), tk.Type().String()))
+		return NewBadSyntaxTree(at, type_, "")
+	}
+
+	tk_type := tk.Type()
+
+	if tk_type != type_ {
+		return NewBadSyntaxTree(at, type_, tk_type.String())
 	}
 
 	return nil
 }
 
+// LhsDoFunc is a function that does the conversion.
+//
+// Parameters:
+//   - children: The list of children.
+//
+// Returns:
+//   - N: The converted node.
+//   - error: if an error occurred.
+type LhsDoFunc[N interface {
+	AddChildren(children []N)
+}, T gr.TokenTyper] func(children []*gr.ParseTree[T]) (N, error)
+
 // LhsToAst is a function that converts a token to an ast node.
 //
 // Parameters:
+//   - at: The position of the token.
 //   - root: The root token. Assumed to be non-nil.
 //   - lhs: The lhs token.
 //   - do: The function that does the conversion.
+//
+// Returns:
+//   - []N: The converted nodes.
+//   - error: if an error occurred.
+//
+// Errors:
+//   - *errors.ErrNilParameter: If 'root' or 'do' is nil.
 func LhsToAst[N interface {
 	AddChildren(children []N)
-}, T gr.TokenTyper](root *gr.ParseTree[T], lhs T, do func(children []*gr.ParseTree[T]) (N, error)) ([]N, error) {
+}, T gr.TokenTyper](at int, children []*gr.ParseTree[T], lhs T, do LhsDoFunc[N, T]) ([]N, error) {
 	if do == nil {
 		return nil, gcers.NewErrNilParameter("do")
-	} else if root == nil {
-		return nil, gcers.NewErrNilParameter("root")
-	} else if root.Type() != lhs {
-		return nil, fmt.Errorf("expected %q, got %s instead", lhs.String(), root.Type().String())
 	}
 
+	err := CheckType(children, at, lhs)
+	if err != nil {
+		return nil, err
+	}
+
+	root := children[at]
 	var nodes []N
 
 	for root != nil {
 		children := root.GetChildren()
-
 		if len(children) == 0 {
-			return nil, errors.New("expected at least one child")
+			break
 		}
 
 		last_child := children[len(children)-1]

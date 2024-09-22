@@ -6,7 +6,9 @@ import (
 	"io"
 
 	lxr "github.com/PlayerR9/SlParser/lexer"
+	gcerr "github.com/PlayerR9/errors/error"
 	gcby "github.com/PlayerR9/go-commons/bytes"
+	dba "github.com/PlayerR9/go-debug/assert"
 	"github.com/dustin/go-humanize"
 )
 
@@ -118,7 +120,7 @@ func DisplayErr(w io.Writer, data []byte, err error) (int, error) {
 	}
 
 	data_err := []byte(err.Error())
-	var lexing_err *lxr.Err
+	var lexing_err *gcerr.Err[lxr.ErrorCode]
 
 	ok := errors.As(err, &lexing_err)
 	if !ok {
@@ -126,14 +128,19 @@ func DisplayErr(w io.Writer, data []byte, err error) (int, error) {
 		return 0, err
 	}
 
-	display_data := Display(data, lexing_err.Pos)
+	x, ok := Value(*lexing_err, "pos")
+	dba.AssertOk(ok, "ok")
+
+	pos := AssertConv[int](x, "pos")
+
+	display_data := Display(data, pos)
 
 	err = gcby.Write(w, display_data)
 	if err != nil {
 		return 0, err
 	}
 
-	x_coord, y_coord := GetCoords(data, lexing_err.Pos)
+	x_coord, y_coord := GetCoords(data, pos)
 
 	var builder bytes.Buffer
 

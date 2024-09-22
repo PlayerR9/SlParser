@@ -2,10 +2,10 @@ package lexer
 
 import (
 	"errors"
-	"fmt"
 	"io"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
+	gcers "github.com/PlayerR9/errors/error"
 )
 
 // RuneStreamer is a rune streamer.
@@ -324,17 +324,15 @@ func (l *Lexer[T]) Reset() {
 //
 // Returns:
 //   - *Err: the last error. Never returns nil.
-func (l Lexer[T]) make_error() *Err {
+func (l Lexer[T]) make_error() *gcers.Err[ErrorCode] {
 	pos := l.next_pos
 
 	if l.state.last_char_read == nil {
-		err := &Err{
-			Code:   InvalidInputStream,
-			Pos:    pos,
-			Reason: l.state.last_err,
-		}
-
+		err := gcers.NewErr(gcers.FATAL, InvalidInputStream, l.state.last_err.Error())
 		err.AddSuggestion("Input is most likely not a valid input for the current lexer.")
+		err.AddFrame("lexer", "Lexer[T]")
+
+		AddContext(err, "pos", pos)
 
 		return err
 	}
@@ -343,31 +341,24 @@ func (l Lexer[T]) make_error() *Err {
 
 	_, ok := l.table[last_read]
 	if !ok && l.def_fn == nil {
-		err := &Err{
-			Code:   UnrecognizedChar,
-			Pos:    pos,
-			Reason: fmt.Errorf("character (%q) is not a recognized character", last_read),
-		}
+		err := gcers.NewErr(gcers.FATAL, UnrecognizedChar, l.state.last_err.Error())
 
 		err.AddSuggestion(
-			"1. Input provided cannot be lexed by the current lexer.",
-			"You may want to check for typos in the input.",
+			"Input provided cannot be lexed by the current lexer. You may want to check for typos in the input.",
 		)
 		err.AddSuggestion(
-			"2. (Less likely) The lexer table is not configured correctly.",
-			"Contact the developer and provide this error code.",
+			"(Less likely) The lexer table is not configured correctly. Contact the developer and provide this error code.",
 		)
+
+		AddContext(err, "pos", pos)
 
 		return err
 	}
 
-	err := &Err{
-		Code:   BadWord,
-		Pos:    pos,
-		Reason: l.state.last_err,
-	}
-
+	err := gcers.NewErr(gcers.FATAL, BadWord, l.state.last_err.Error())
 	err.AddSuggestion("You may want to check for typos in the input.")
+
+	AddContext(err, "pos", pos)
 
 	return err
 }

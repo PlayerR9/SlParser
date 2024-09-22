@@ -97,7 +97,7 @@ func init() {
 			return node, nil
 		}
 
-		subnodes, err := ast.LhsToAst(children[1], NttSource1, fn)
+		subnodes, err := ast.LhsToAst(1, children, NttSource1, fn)
 		if err != nil {
 			return nil, err
 		}

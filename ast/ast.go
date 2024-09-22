@@ -1,8 +1,6 @@
 package ast
 
 import (
-	"fmt"
-
 	gr "github.com/PlayerR9/SlParser/grammar"
 	gcers "github.com/PlayerR9/errors"
 )
@@ -42,17 +40,9 @@ func (am AstMaker[N, T]) Convert(root *gr.ParseTree[T]) (N, error) {
 
 	fn, ok := am.table[type_]
 	if !ok {
-		err = fmt.Errorf("type is not registered")
+		err = NewUnregisteredType(type_, type_.String())
 	} else {
 		node, err = fn(root)
-	}
-
-	if err != nil {
-		// if am.make_fake_node != nil {
-		// 	node = TransformFakeNode[N](root, am.make_fake_node)
-		// }
-
-		err = NewErrIn(type_, err)
 	}
 
 	return node, err

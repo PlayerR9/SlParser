@@ -1,8 +1,7 @@
 package grammar
 
 import (
-	"errors"
-
+	gcers "github.com/PlayerR9/errors"
 	gcslc "github.com/PlayerR9/go-commons/slices"
 	dba "github.com/PlayerR9/go-debug/assert"
 )
@@ -23,7 +22,7 @@ import (
 func Combine[T TokenTyper](type_ T, subtrees []*ParseTree[T]) (*ParseTree[T], error) {
 	subtrees = gcslc.FilterNilValues(subtrees)
 	if len(subtrees) == 0 {
-		return nil, errors.New("cannot combine an empty list of subtrees")
+		return nil, gcers.NewErrInvalidParameter("cannot combine an empty list of subtrees")
 	}
 
 	last_tk := subtrees[len(subtrees)-1].Root()

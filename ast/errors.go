@@ -5,7 +5,41 @@ import (
 	"strings"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
+	gcers "github.com/PlayerR9/errors/error"
+	gcstr "github.com/PlayerR9/go-commons/strings"
+	"github.com/dustin/go-humanize"
 )
+
+//go:generate stringer -type=ErrorCode
+
+type ErrorCode int
+
+const (
+	UnregisteredType ErrorCode = iota
+	BadSyntaxTree
+)
+
+func NewUnregisteredType[T gr.TokenTyper](type_ T, in string) *gcers.Err[ErrorCode] {
+	err := gcers.NewErr(gcers.FATAL, UnregisteredType, "type "+type_.String()+"is not registered")
+	err.AddFrame("", in)
+
+	return err
+}
+
+func NewBadSyntaxTree[T gr.TokenTyper](at int, type_ T, got string) *gcers.Err[ErrorCode] {
+	if got != "" {
+		got = strconv.Quote(got)
+	}
+
+	msg := gcstr.ExpectedValue("type", Quote(type_), got)
+
+	err := gcers.NewErr(gcers.FATAL, BadSyntaxTree, msg)
+	err.AddFrame("", humanize.Ordinal(at+1)+" child")
+
+	return err
+}
+
+//////////////////////////////////////////////
 
 type ErrIn[T gr.TokenTyper] struct {
 	Type   T
