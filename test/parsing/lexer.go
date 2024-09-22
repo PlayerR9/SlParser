@@ -1,9 +1,11 @@
 package parsing
 
 import (
+	"fmt"
 	"io"
 
 	lxr "github.com/PlayerR9/SlParser/lexer"
+	gcers "github.com/PlayerR9/go-commons/errors"
 	dba "github.com/PlayerR9/go-debug/assert"
 )
 
@@ -64,13 +66,13 @@ func init() {
 	builder.Register('\r', func(lexer lxr.RuneStreamer, char rune) (TokenType, string, error) {
 		char, err := lexer.NextRune()
 		if err == io.EOF {
-			return EttInvalid, "", lxr.NewErrUnexpectedChar('\r', []rune{'\n'}, nil)
+			return EttInvalid, "", fmt.Errorf("after %q, %w", '\r', gcers.NewErrValue("character", '\n', nil, true))
 		} else if err != nil {
 			return EttInvalid, "", err
 		}
 
 		if char != '\n' {
-			return EttInvalid, "", lxr.NewErrUnexpectedChar('\r', []rune{'\n'}, nil)
+			return EttInvalid, "", fmt.Errorf("after %q, %w", '\r', gcers.NewErrValue("character", '\n', char, true))
 		}
 
 		str, err := newline_fn(lexer)
@@ -95,13 +97,13 @@ func init() {
 	builder.Register('s', func(lexer lxr.RuneStreamer, char rune) (TokenType, string, error) {
 		char, err := lexer.NextRune()
 		if err == io.EOF {
-			return EttInvalid, "", lxr.NewErrUnexpectedChar('s', []rune{'q'}, nil)
+			return EttInvalid, "", fmt.Errorf("after %q, %w", 's', gcers.NewErrValue("character", 'q', nil, true))
 		} else if err != nil {
 			return EttInvalid, "", err
 		}
 
 		if char != 'q' {
-			return EttInvalid, "", lxr.NewErrUnexpectedChar('s', []rune{'q'}, &char)
+			return EttInvalid, "", fmt.Errorf("after %q, %w", 's', gcers.NewErrValue("character", 'q', char, true))
 		}
 
 		next, err := lexer.NextRune()

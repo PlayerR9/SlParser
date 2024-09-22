@@ -6,6 +6,7 @@ import (
 	"io"
 
 	lxr "github.com/PlayerR9/SlParser/lexer"
+	gcby "github.com/PlayerR9/go-commons/bytes"
 	gcers "github.com/PlayerR9/go-commons/errors"
 )
 
@@ -20,7 +21,7 @@ import (
 func Display(data []byte, pos int) []byte {
 	var before, faulty_line, after []byte
 
-	last_idx := ReverseSearch(data, pos, []byte{'\n'})
+	last_idx := gcby.ReverseSearch(data, pos, []byte{'\n'})
 	if last_idx < 0 {
 		faulty_line = make([]byte, len(data[:pos]))
 		copy(faulty_line, data[:pos])
@@ -36,7 +37,7 @@ func Display(data []byte, pos int) []byte {
 		copy(faulty_line, data[last_idx:pos])
 	}
 
-	first_idx := ForwardSearch(data, pos, []byte{'\n'})
+	first_idx := gcby.ForwardSearch(data, pos, []byte{'\n'})
 	if first_idx < 0 {
 		faulty_line = append(faulty_line, data[pos:]...)
 	} else {
@@ -121,13 +122,13 @@ func DisplayErr(w io.Writer, data []byte, err error) (int, error) {
 
 	ok := errors.As(err, &lexing_err)
 	if !ok {
-		err := Write(w, data_err)
+		err := gcby.Write(w, data_err)
 		return 0, err
 	}
 
 	display_data := Display(data, lexing_err.Pos)
 
-	err = Write(w, display_data)
+	err = gcby.Write(w, display_data)
 	if err != nil {
 		return 0, err
 	}
@@ -150,7 +151,7 @@ func DisplayErr(w io.Writer, data []byte, err error) (int, error) {
 		builder.WriteRune('\n')
 	}
 
-	err = Write(w, builder.Bytes())
+	err = gcby.Write(w, builder.Bytes())
 	if err != nil {
 		return 0, err
 	}

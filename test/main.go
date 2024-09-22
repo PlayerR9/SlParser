@@ -10,7 +10,7 @@ import (
 	lxr "github.com/PlayerR9/SlParser/lexer"
 	prx "github.com/PlayerR9/SlParser/parser"
 	pkg "github.com/PlayerR9/SlParser/test/parsing"
-	dbp "github.com/PlayerR9/SlParser/util/go-debug/debug"
+	dbp "github.com/PlayerR9/go-debug/debug"
 	tr "github.com/PlayerR9/tree/tree"
 )
 
