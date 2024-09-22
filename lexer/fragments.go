@@ -6,7 +6,6 @@ import (
 	"io"
 	"strings"
 
-	gcers "github.com/PlayerR9/go-commons/errors"
 	gcch "github.com/PlayerR9/go-commons/runes"
 	dba "github.com/PlayerR9/go-debug/assert"
 )
@@ -61,12 +60,18 @@ func FragNewline(opts ...LexOption) LexFragment {
 			}
 
 			if err == io.EOF {
-				return "", fmt.Errorf("after %q, %w", '\r', gcers.NewErrValue("character", '\r', nil, true))
+				return "", fmt.Errorf("after %q, %w",
+					'\r',
+					fmt.Errorf("expected %q, got nothing instead", '\n'),
+				)
 			} else if err != nil {
 				return "", err
 			}
 
-			return "", gcers.NewErrValue("character", '\r', '\n', true)
+			return "", fmt.Errorf("expected %q, got %q instead",
+				'\n',
+				next,
+			)
 		}
 
 		err = lexer.UnreadRune()
@@ -162,13 +167,17 @@ func FragWord(word string, opts ...LexOption) LexFragment {
 		for _, char := range chars[1:] {
 			c, err := lexer.NextRune()
 			if err == io.EOF {
-				return "", fmt.Errorf("after %q, %w", prev, gcers.NewErrValue("character", char, nil, true))
+				return "", fmt.Errorf("after %q, %w", prev,
+					fmt.Errorf("expected %q, got nothing instead", char),
+				)
 			} else if err != nil {
 				return "", err
 			}
 
 			if c != char {
-				return "", fmt.Errorf("after %q, %w", prev, gcers.NewErrValue("character", char, c, true))
+				return "", fmt.Errorf("after %q, %w", prev,
+					fmt.Errorf("expected %q, got %q instead", char, c),
+				)
 			}
 
 			prev = char
@@ -224,7 +233,9 @@ func FragUntil(prev, until rune, allow_eof bool) LexFragment {
 			for {
 				char, err := lexer.NextRune()
 				if err == io.EOF {
-					return builder.String(), fmt.Errorf("after %q, %w", prev, gcers.NewErrValue("character", until, nil, true))
+					return builder.String(), fmt.Errorf("after %q, %w", prev,
+						fmt.Errorf("expected %q, got nothing instead", until),
+					)
 				} else if err != nil {
 					return builder.String(), err
 				}

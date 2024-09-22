@@ -1,13 +1,12 @@
 package parser
 
 import (
-	"errors"
 	"slices"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
 	"github.com/PlayerR9/SlParser/parser/internal"
+	gcers "github.com/PlayerR9/errors"
 	bck "github.com/PlayerR9/go-commons/backup"
-	gcers "github.com/PlayerR9/go-commons/errors"
 	gcmap "github.com/PlayerR9/go-commons/maps"
 	dba "github.com/PlayerR9/go-debug/assert"
 )
@@ -72,9 +71,9 @@ func (is ItemSet[T]) PrintTable() []string {
 //   - gcers.ErrInvalidParameter: if the rule does not have at least one right hand side.
 func (is *ItemSet[T]) AddRule(lhs T, rhss ...T) error {
 	if is == nil {
-		return gcers.NilReceiver
+		return nil
 	} else if len(rhss) == 0 {
-		return gcers.NewErrInvalidParameter("rhss", errors.New("at least one right hand side is required"))
+		return gcers.NewErrInvalidParameter("rhss must have at least one element")
 	}
 
 	pos, ok := slices.BinarySearch(is.symbols, lhs)

@@ -7,7 +7,7 @@ import (
 
 	lxr "github.com/PlayerR9/SlParser/lexer"
 	gcby "github.com/PlayerR9/go-commons/bytes"
-	gcers "github.com/PlayerR9/go-commons/errors"
+	"github.com/dustin/go-humanize"
 )
 
 // Display is a function that displays the given data.
@@ -138,9 +138,9 @@ func DisplayErr(w io.Writer, data []byte, err error) (int, error) {
 	var builder bytes.Buffer
 
 	builder.WriteString("\n\nError at ")
-	builder.WriteString(gcers.GetOrdinalSuffix(x_coord))
+	builder.WriteString(humanize.Ordinal(x_coord))
 	builder.WriteString(" column of the ")
-	builder.WriteString(gcers.GetOrdinalSuffix(y_coord))
+	builder.WriteString(humanize.Ordinal(y_coord))
 	builder.WriteString(" line:\n\t")
 	builder.WriteString(lexing_err.Error())
 	builder.WriteString(".\n\nHints:\n")

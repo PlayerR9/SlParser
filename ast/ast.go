@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
-	gcers "github.com/PlayerR9/go-commons/errors"
+	gcers "github.com/PlayerR9/errors"
 )
 
 type ToAstFunc[N interface {

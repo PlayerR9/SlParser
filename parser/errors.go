@@ -51,7 +51,7 @@ func (e ErrUnexpectedToken[T]) Error() string {
 	} else {
 		elems := gcstr.SliceOfStringer(e.Expecteds)
 		gcstr.QuoteStrings(elems)
-		builder.WriteString(gcstr.EitherOrString(elems))
+		builder.WriteString(gcstr.EitherOr(elems))
 	}
 
 	builder.WriteString(after)

@@ -5,7 +5,8 @@ import (
 	"fmt"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
-	gcers "github.com/PlayerR9/go-commons/errors"
+	gcers "github.com/PlayerR9/errors"
+	"github.com/dustin/go-humanize"
 )
 
 /* // TransformFakeNode transforms a node into a fake AST node.
@@ -58,20 +59,20 @@ func TransformFakeNode[N interface {
 //     'at' is out of range.
 func CheckType[T gr.TokenTyper](children []*gr.ParseTree[T], at int, type_ T) error {
 	if at < 0 {
-		return gcers.NewErrInvalidParameter("at", gcers.NewErrGTE(0))
+		return gcers.NewErrInvalidParameter("at must be non-negative")
 	}
 
-	pos_str := gcers.GetOrdinalSuffix(at+1) + " child"
+	pos_str := humanize.Ordinal(at+1) + " child"
 
 	if at >= len(children) {
-		return gcers.NewErrValue(pos_str, type_, nil, true)
+		return gcers.NewErrAt(pos_str, fmt.Errorf("expected %q, got nothing instead", type_.String()))
 	}
 
 	tk := children[at]
 	if tk == nil {
-		return gcers.NewErrValue(pos_str, type_, nil, true)
+		return gcers.NewErrAt(pos_str, fmt.Errorf("expected %q, got nothing instead", type_.String()))
 	} else if tk.Type() != type_ {
-		return gcers.NewErrValue(pos_str, type_, tk.Type(), true)
+		return gcers.NewErrAt(pos_str, fmt.Errorf("expected %q, got %q instead", type_.String(), tk.Type().String()))
 	}
 
 	return nil

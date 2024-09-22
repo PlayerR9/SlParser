@@ -7,8 +7,8 @@ import (
 
 	gr "github.com/PlayerR9/SlParser/grammar"
 	"github.com/PlayerR9/SlParser/parser/internal"
+	gcers "github.com/PlayerR9/errors"
 	bck "github.com/PlayerR9/go-commons/backup"
-	gcers "github.com/PlayerR9/go-commons/errors"
 	dba "github.com/PlayerR9/go-debug/assert"
 )
 

@@ -5,7 +5,7 @@ import (
 
 	gr "github.com/PlayerR9/SlParser/grammar"
 	lxr "github.com/PlayerR9/SlParser/lexer"
-	gcers "github.com/PlayerR9/go-commons/errors"
+	gcers "github.com/PlayerR9/errors"
 )
 
 // Lex is a function that lexes the given data.

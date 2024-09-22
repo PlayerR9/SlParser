@@ -3,7 +3,7 @@ package grammar
 import (
 	"iter"
 
-	gcers "github.com/PlayerR9/go-commons/errors"
+	gcers "github.com/PlayerR9/errors"
 	gcslc "github.com/PlayerR9/go-commons/slices"
 	dba "github.com/PlayerR9/go-debug/assert"
 )

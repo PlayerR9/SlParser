@@ -1,11 +1,12 @@
 package internal
 
 import (
+	"fmt"
 	"iter"
 	"strings"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
-	gcers "github.com/PlayerR9/go-commons/errors"
+	gcers "github.com/PlayerR9/errors"
 	dba "github.com/PlayerR9/go-debug/assert"
 )
 
@@ -75,7 +76,7 @@ func NewItem[T gr.TokenTyper](rule *Rule[T], pos int) (*Item[T], error) {
 
 	size := rule.Size()
 	if pos < 0 || pos >= size {
-		return nil, gcers.NewErrInvalidParameter("pos", gcers.NewErrOutOfBounds(pos, 0, size))
+		return nil, gcers.NewErrInvalidParameter(fmt.Sprintf("pos of (%d) must be in range [0, %d)", pos, size))
 	}
 
 	var act ActionType
@@ -110,7 +111,7 @@ func MustNewItem[T gr.TokenTyper](rule *Rule[T], pos int) *Item[T] {
 
 	size := rule.Size()
 	if pos < 0 || pos >= size {
-		panic(gcers.NewErrInvalidParameter("pos", gcers.NewErrOutOfBounds(pos, 0, size)))
+		panic(gcers.NewErrInvalidParameter(fmt.Sprintf("pos of (%d) must be in range [0, %d)", pos, size)))
 	}
 
 	var act ActionType

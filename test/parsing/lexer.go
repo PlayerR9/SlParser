@@ -5,7 +5,6 @@ import (
 	"io"
 
 	lxr "github.com/PlayerR9/SlParser/lexer"
-	gcers "github.com/PlayerR9/go-commons/errors"
 	dba "github.com/PlayerR9/go-debug/assert"
 )
 
@@ -66,13 +65,17 @@ func init() {
 	builder.Register('\r', func(lexer lxr.RuneStreamer, char rune) (TokenType, string, error) {
 		char, err := lexer.NextRune()
 		if err == io.EOF {
-			return EttInvalid, "", fmt.Errorf("after %q, %w", '\r', gcers.NewErrValue("character", '\n', nil, true))
+			return EttInvalid, "", fmt.Errorf("after %q, %w", '\r',
+				fmt.Errorf("expected %q, got nothing instead", '\n'),
+			)
 		} else if err != nil {
 			return EttInvalid, "", err
 		}
 
 		if char != '\n' {
-			return EttInvalid, "", fmt.Errorf("after %q, %w", '\r', gcers.NewErrValue("character", '\n', char, true))
+			return EttInvalid, "", fmt.Errorf("after %q, %w", '\r',
+				fmt.Errorf("expected %q, got %q instead", '\n', char),
+			)
 		}
 
 		str, err := newline_fn(lexer)
@@ -97,13 +100,17 @@ func init() {
 	builder.Register('s', func(lexer lxr.RuneStreamer, char rune) (TokenType, string, error) {
 		char, err := lexer.NextRune()
 		if err == io.EOF {
-			return EttInvalid, "", fmt.Errorf("after %q, %w", 's', gcers.NewErrValue("character", 'q', nil, true))
+			return EttInvalid, "", fmt.Errorf("after %q, %w", 's',
+				fmt.Errorf("expected %q, got nothing instead", 'q'),
+			)
 		} else if err != nil {
 			return EttInvalid, "", err
 		}
 
 		if char != 'q' {
-			return EttInvalid, "", fmt.Errorf("after %q, %w", 's', gcers.NewErrValue("character", 'q', char, true))
+			return EttInvalid, "", fmt.Errorf("after %q, %w", 's',
+				fmt.Errorf("expected %q, got %q instead", 'q', char),
+			)
 		}
 
 		next, err := lexer.NextRune()

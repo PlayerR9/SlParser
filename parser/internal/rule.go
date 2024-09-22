@@ -4,7 +4,7 @@ import (
 	"iter"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
-	gcers "github.com/PlayerR9/go-commons/errors"
+	gcers "github.com/PlayerR9/errors"
 )
 
 // A rule is a production of a grammar.
@@ -18,7 +18,7 @@ type Rule[T gr.TokenTyper] struct {
 
 func NewRule[T gr.TokenTyper](lhs T, rhss []T) (*Rule[T], error) {
 	if len(rhss) == 0 {
-		return nil, gcers.NewErrInvalidParameter("rhss", gcers.NewErrNilParameter("rhss"))
+		return nil, gcers.NewErrInvalidParameter("rhss must have at least one element")
 	}
 
 	return &Rule[T]{
