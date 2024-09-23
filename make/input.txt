@@ -1,0 +1,5 @@
+source : NEWLINE source1 EOF ;
+source1 : statement ;
+source1 : statement NEWLINE source1 ;
+statement : LIST_COMPREHENSION ;
+statement : PRINT_STMT ;
