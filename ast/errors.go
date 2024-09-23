@@ -19,19 +19,23 @@ const (
 	BadSyntaxTree
 )
 
-func NewUnregisteredType[T gr.TokenTyper](type_ T, in string) *gcers.Err[ErrorCode] {
+func (e ErrorCode) Int() int {
+	return int(e)
+}
+
+func NewUnregisteredType[T gr.TokenTyper](type_ T, in string) *gcers.Err {
 	err := gcers.NewErr(gcers.FATAL, UnregisteredType, "type "+type_.String()+"is not registered")
 	err.AddFrame("", in)
 
 	return err
 }
 
-func NewBadSyntaxTree[T gr.TokenTyper](at int, type_ T, got string) *gcers.Err[ErrorCode] {
+func NewBadSyntaxTree[T gr.TokenTyper](at int, type_ T, got string) *gcers.Err {
 	if got != "" {
 		got = strconv.Quote(got)
 	}
 
-	msg := gcstr.ExpectedValue("type", Quote(type_), got)
+	msg := gcstr.ExpectedValue("type", gcstr.Quote(type_), got)
 
 	err := gcers.NewErr(gcers.FATAL, BadSyntaxTree, msg)
 	err.AddFrame("", humanize.Ordinal(at+1)+" child")

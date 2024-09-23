@@ -25,3 +25,7 @@ const (
 	// 	Lex(L, "01")
 	BadWord
 )
+
+func (e ErrorCode) Int() int {
+	return int(e)
+}

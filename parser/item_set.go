@@ -7,8 +7,9 @@ import (
 	"github.com/PlayerR9/SlParser/parser/internal"
 	gcers "github.com/PlayerR9/errors"
 	bck "github.com/PlayerR9/go-commons/backup"
-	gcmap "github.com/PlayerR9/go-commons/maps"
+	gcslc "github.com/PlayerR9/go-commons/slices"
 	dba "github.com/PlayerR9/go-debug/assert"
+	gcmap "github.com/PlayerR9/go-sets"
 )
 
 // ItemSet is an item set.
@@ -99,7 +100,7 @@ func (is *ItemSet[T]) make_items() {
 		return
 	}
 
-	var item_list internal.SliceBuilder[*internal.Item[T]]
+	var item_list gcslc.Builder[*internal.Item[T]]
 
 	for _, rhs := range is.symbols {
 		for _, rule := range is.rules {
@@ -137,11 +138,8 @@ func (is ItemSet[T]) ItemsWithLhsOf(lhs T) []*internal.Item[T] {
 	return items
 }
 
-func get_lookahead_of[T gr.TokenTyper](is *ItemSet[T], item *internal.Item[T], seen *gcmap.SeenMap[*internal.Item[T]]) []T {
-	ok := seen.SetSeen(item)
-	if !ok {
-		panic("somehow the item was already seen")
-	}
+func get_lookahead_of[T gr.TokenTyper](is *ItemSet[T], item *internal.Item[T], seen *gcmap.SeenSet[*internal.Item[T]]) []T {
+	seen.SetSeen(item)
 
 	stack := []*internal.Item[T]{item}
 
@@ -178,7 +176,7 @@ func get_lookahead_of[T gr.TokenTyper](is *ItemSet[T], item *internal.Item[T], s
 }
 
 func (is ItemSet[T]) make_lookahead() {
-	seen := gcmap.NewSeenMap[*internal.Item[T]]()
+	seen := gcmap.NewSeenSet[*internal.Item[T]]()
 
 	for _, items := range is.item_table {
 		if len(items) == 0 {

@@ -5,7 +5,7 @@ import (
 	"os"
 
 	internal "github.com/PlayerR9/SlParser/cmd/internal"
-	ggen "github.com/PlayerR9/go-commons/generator"
+	ggen "github.com/PlayerR9/go-generator"
 )
 
 var (

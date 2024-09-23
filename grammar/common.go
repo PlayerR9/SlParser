@@ -20,7 +20,7 @@ import (
 //   - *ParseTree[T]: The new tree.
 //   - error: an error if there are no subtrees. Nil parse trees are ignored.
 func Combine[T TokenTyper](type_ T, subtrees []*ParseTree[T]) (*ParseTree[T], error) {
-	subtrees = gcslc.FilterNilValues(subtrees)
+	subtrees = gcslc.FilterZeroValues(subtrees)
 	if len(subtrees) == 0 {
 		return nil, gcers.NewErrInvalidParameter("cannot combine an empty list of subtrees")
 	}

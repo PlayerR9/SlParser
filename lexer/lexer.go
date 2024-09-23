@@ -324,7 +324,7 @@ func (l *Lexer[T]) Reset() {
 //
 // Returns:
 //   - *Err: the last error. Never returns nil.
-func (l Lexer[T]) make_error() *gcers.Err[ErrorCode] {
+func (l Lexer[T]) make_error() *gcers.Err {
 	pos := l.next_pos
 
 	if l.state.last_char_read == nil {
@@ -332,7 +332,7 @@ func (l Lexer[T]) make_error() *gcers.Err[ErrorCode] {
 		err.AddSuggestion("Input is most likely not a valid input for the current lexer.")
 		err.AddFrame("lexer", "Lexer[T]")
 
-		AddContext(err, "pos", pos)
+		err.AddContext("pos", pos)
 
 		return err
 	}
@@ -350,7 +350,7 @@ func (l Lexer[T]) make_error() *gcers.Err[ErrorCode] {
 			"(Less likely) The lexer table is not configured correctly. Contact the developer and provide this error code.",
 		)
 
-		AddContext(err, "pos", pos)
+		err.AddContext("pos", pos)
 
 		return err
 	}
@@ -358,7 +358,7 @@ func (l Lexer[T]) make_error() *gcers.Err[ErrorCode] {
 	err := gcers.NewErr(gcers.FATAL, BadWord, l.state.last_err.Error())
 	err.AddSuggestion("You may want to check for typos in the input.")
 
-	AddContext(err, "pos", pos)
+	err.AddContext("pos", pos)
 
 	return err
 }

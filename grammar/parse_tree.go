@@ -178,7 +178,7 @@ func (t *ParseTree[T]) SetChildren(children []*ParseTree[T]) error {
 		return nil
 	}
 
-	children = gcslc.FilterNilValues(children)
+	children = gcslc.FilterZeroValues(children)
 	if len(children) == 0 {
 		return nil
 	}

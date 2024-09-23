@@ -27,11 +27,32 @@ func (mt MatchTable[T]) MakeFunc() LexFunc[T] {
 			return T(-1), "", fmt.Errorf("no words start with %q", char)
 		}
 
+		limit := 1
+
 		for len(indices) > 1 {
 			c, err := lexer.NextRune()
 			if err == io.EOF {
-
+				// TODO: Handle this case.
+			} else if err != nil {
+				// TODO: Handle this case.
 			}
+
+			var top int
+
+			for i := 0; i < len(indices); i++ {
+				idx := indices[i]
+
+				word := mt.words[idx]
+
+				if word[limit] == c {
+					indices[top] = idx
+					top++
+				}
+			}
+
+			indices = indices[:top:top]
+
+			limit++
 		}
 
 		return T(indices[0]), string(mt.words[indices[0]]), nil

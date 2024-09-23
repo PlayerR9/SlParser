@@ -51,7 +51,7 @@ func get_rhs_with_offset[T gr.TokenTyper](items []*internal.Item[T], offset int)
 	return all_rhs
 }
 
-func apply_items_filter[T gr.TokenTyper](sols *internal.SolWithLevel[*internal.Item[T]], type_ T, offset int, items []*internal.Item[T]) []*internal.Item[T] {
+func apply_items_filter[T gr.TokenTyper](sols *gcslc.SolWithLevel[*internal.Item[T]], type_ T, offset int, items []*internal.Item[T]) []*internal.Item[T] {
 	dba.AssertNotNil(sols, "sols")
 
 	fn := func(item *internal.Item[T]) bool {
@@ -63,7 +63,7 @@ func apply_items_filter[T gr.TokenTyper](sols *internal.SolWithLevel[*internal.I
 		return ok && type_ == rhs
 	}
 
-	items = gcslc.SliceFilter(items, fn)
+	items = gcslc.FilterSlice(items, fn)
 	return items
 }
 
@@ -84,7 +84,7 @@ func register_unambiguous[T gr.TokenTyper](items []*internal.Item[T]) ParseFn[T]
 		items_left := make([]*internal.Item[T], len(items))
 		copy(items_left, items)
 
-		var sols internal.SolWithLevel[*internal.Item[T]]
+		var sols gcslc.SolWithLevel[*internal.Item[T]]
 		offset := 1
 
 		prev := top1.Type()

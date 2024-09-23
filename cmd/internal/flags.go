@@ -1,7 +1,7 @@
 package internal
 
 import (
-	ggen "github.com/PlayerR9/go-commons/generator"
+	ggen "github.com/PlayerR9/go-generator"
 )
 
 var (
