@@ -2,10 +2,10 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 
 	"github.com/PlayerR9/SlParser/make/internal"
 	"github.com/PlayerR9/go-generator"
@@ -68,42 +68,24 @@ func main() {
 		rules = append(rules, rule)
 	}
 
-	tk_symbols := internal.TokenSymbols(tokens)
-
-	all_symbols := internal.ExtractSymbols(tk_symbols)
-	Sort(all_symbols)
-
-	var last_terminal string
-
-	for _, symbol := range all_symbols {
-		if strings.HasPrefix(symbol, "Ntt") {
-			break
-		}
-
-		last_terminal = symbol
-	}
-
-	if last_terminal == "" {
-		panic("missing terminal")
-	}
-
-	gd := &internal.GenData{
-		Symbols:      all_symbols,
-		LastTerminal: last_terminal,
-	}
-
-	for _, rule := range rules {
-		gd.Rules = append(gd.Rules, rule.String())
-	}
-
 	generator.ParseFlags()
 
-	gen, err := internal.Generator.Generate(internal.OutputLocFlag, "lexer", gd)
+	tk_symbols, err := internal.TokenSymbols(tokens)
 	if err != nil {
 		panic(err)
 	}
 
-	err = gen.WriteFile()
+	err = GenerateParser(tk_symbols, rules)
+	if err != nil {
+		panic(err)
+	}
+
+	err = GenerateNode()
+	if err != nil {
+		panic(err)
+	}
+
+	err = GenerateAst(tk_symbols)
 	if err != nil {
 		panic(err)
 	}
@@ -115,4 +97,79 @@ func main() {
 	}
 
 	fmt.Println("Successfully generated lexer.")
+}
+
+func GenerateParser(tk_symbols []*internal.Token, rules []*internal.Rule) error {
+	ok := internal.CheckEofExists(tk_symbols)
+	if !ok {
+		return errors.New("missing EOF")
+	}
+
+	all_symbols := internal.ExtractSymbols(tk_symbols)
+
+	last_terminal := internal.FindLastTerminal(tk_symbols)
+	if last_terminal == nil {
+		return errors.New("missing terminal")
+	}
+
+	gd := &internal.GenData{
+		Symbols:      all_symbols,
+		LastTerminal: last_terminal.String(),
+	}
+
+	for _, rule := range rules {
+		gd.Rules = append(gd.Rules, rule.String())
+	}
+
+	gen, err := internal.Generator.Generate(internal.OutputLocFlag, "lexer", gd)
+	if err != nil {
+		return err
+	}
+
+	gen.ModifyPrefixPath("lexer_", "internal")
+
+	err = gen.WriteFile()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GenerateNode() error {
+	nd := &internal.NodeData{}
+
+	node_gen, err := internal.NodeGenerator.Generate(internal.OutputLocFlag, "node", nd)
+	if err != nil {
+		return err
+	}
+
+	node_gen.ModifyPrefixPath("node_")
+
+	err = node_gen.WriteFile()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GenerateAst(tk_symbols []*internal.Token) error {
+	gen := &internal.ASTGen{
+		Ast: internal.CandidatesForAst(tk_symbols),
+	}
+
+	ast_gen, err := internal.ASTGenerator.Generate(internal.OutputLocFlag, "ast", gen)
+	if err != nil {
+		return err
+	}
+
+	ast_gen.ModifyPrefixPath("ast_")
+
+	err = ast_gen.WriteFile()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -81,7 +81,7 @@ func unique(tokens []*Token) []*Token {
 	return tokens
 }
 
-func Sort(tokens []*Token) error {
+func sort(tokens []*Token) error {
 	buckets := make(map[TokenType][]*Token, 3)
 	buckets[ExtraTk] = make([]*Token, 0)
 	buckets[TerminalTk] = make([]*Token, 0)
@@ -98,84 +98,110 @@ func Sort(tokens []*Token) error {
 		buckets[type_] = append(prev, tk)
 	}
 
-	// StableSort each buckets
+	for type_, bucket := range buckets {
+		slices.SortStableFunc(bucket, func(a, b *Token) int {
+			return strings.Compare(a.Data, b.Data)
+		})
 
-	for key, bucket := range buckets {
-		slices.Sort(bucket)
-
-		buckets[key] = bucket
+		buckets[type_] = bucket
 	}
-
-	// Concatenate each buckets
-	elems := buckets['E']
 
 	i := 0
 
-	for _, elem := range elems {
-		slice[i] = elem
+	tks := buckets[ExtraTk]
+	for _, tk := range tks {
+		tokens[i] = tk
 		i++
 	}
 
-	elems = buckets['T']
-
-	for _, elem := range elems {
-		slice[i] = elem
+	tks = buckets[TerminalTk]
+	for _, tk := range tks {
+		tokens[i] = tk
 		i++
 	}
 
-	elems = buckets['N']
-
-	for _, elem := range elems {
-		slice[i] = elem
+	tks = buckets[NonterminalTk]
+	for _, tk := range tks {
+		tokens[i] = tk
 		i++
 	}
+
+	return nil
 }
 
-func TokenSymbols(tokens []*Token) []*Token {
+func TokenSymbols(tokens []*Token) ([]*Token, error) {
+	if len(tokens) == 0 {
+		return nil, nil
+	}
+
+	tokens = unique(tokens)
+	err := sort(tokens)
+	if err != nil {
+		return nil, err
+	}
+
+	return tokens, nil
+}
+
+func ExtractSymbols(tokens []*Token) []string {
 	if len(tokens) == 0 {
 		return nil
 	}
 
-	tokens = unique(tokens)
-
-	return tokens
-}
-
-func ExtractSymbols(tokens []*Token) []string {
-	var symbols []string
+	symbols := make([]string, 0, len(tokens))
 
 	for _, tk := range tokens {
 		s := tk.String()
-
-		pos, ok := slices.BinarySearch(symbols, s)
-		if !ok {
-			symbols = slices.Insert(symbols, pos, s)
-		}
+		symbols = append(symbols, s)
 	}
 
 	return symbols
 }
 
-func FindLastTerminal(symbols []string) (string, bool) {
-	if len(symbols) == 0 {
-		return "", false
+func FindLastTerminal(tokens []*Token) *Token {
+	if len(tokens) == 0 {
+		return nil
 	}
 
 	idx := -1
 
-	for i := 0; i < len(symbols) && idx == -1; i++ {
-		if strings.HasPrefix(symbols[i], "Ntt") {
+	for i := 0; i < len(tokens) && idx == -1; i++ {
+		if tokens[i].Type == NonterminalTk {
 			idx = i
 		}
 	}
 
 	if idx == -1 {
-		return symbols[len(symbols)-1], true
+		return tokens[len(tokens)-1]
+	} else if idx == 0 {
+		return nil
 	}
 
-	if idx == 0 {
-		return "", false
+	return tokens[idx-1]
+}
+
+func CheckEofExists(tokens []*Token) bool {
+	for _, tk := range tokens {
+		if tk.Type == ExtraTk && tk.Data == "EOF" {
+			return true
+		}
 	}
 
-	return symbols[idx-1], true
+	return false
+}
+
+func CandidatesForAst(tokens []*Token) []string {
+	if len(tokens) == 0 {
+		return nil
+	}
+
+	var candidates []string
+
+	for _, tk := range tokens {
+		if tk.IsCandidateForAst() {
+			candidates = append(candidates, tk.Data)
+		}
+	}
+
+	return candidates
 }

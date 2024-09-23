@@ -5,11 +5,10 @@ import (
 
 	ast "github.com/PlayerR9/SlParser/ast"
 	gr "github.com/PlayerR9/SlParser/grammar"
+	"github.com/PlayerR9/SlParser/test/parsing/internal"
 )
 
 //go:generate stringer -type=NodeType -linecomment
-
-// go:generate go run github.com/PlayerR9/SlParser/cmd -o=node.go
 
 type NodeType int
 
@@ -33,13 +32,13 @@ const (
 )
 
 var (
-	AstMaker *ast.AstMaker[*Node, TokenType]
+	ast_maker *ast.AstMaker[*Node, internal.TokenType]
 )
 
 func init() {
-	builder := ast.NewBuilder[*Node, TokenType]()
+	builder := ast.NewBuilder[*Node, internal.TokenType]()
 
-	builder.Register(NttSource, func(tk *gr.ParseTree[TokenType]) (*Node, error) {
+	builder.Register(internal.NtSource, func(tk *gr.ParseTree[internal.TokenType]) (*Node, error) {
 		// Token[T][79:NttSource]
 		//  ├── Token[T][79:TttNewline]
 		//  ├── Token[T][80:NttSource1]
@@ -50,17 +49,17 @@ func init() {
 			return nil, fmt.Errorf("expected 3 children, got %d instead", len(children))
 		}
 
-		err := ast.CheckType(children, 0, TttNewline)
+		err := ast.CheckType(children, 0, internal.TtNewline)
 		if err != nil {
 			return nil, err
 		}
 
-		err = ast.CheckType(children, 2, EttEOF)
+		err = ast.CheckType(children, 2, internal.EtEOF)
 		if err != nil {
 			return nil, err
 		}
 
-		fn := func(children []*gr.ParseTree[TokenType]) (*Node, error) {
+		fn := func(children []*gr.ParseTree[internal.TokenType]) (*Node, error) {
 			var node *Node
 
 			switch len(children) {
@@ -68,7 +67,7 @@ func init() {
 				// Token[T][112:NttStatement]
 				// └── Token[T][112:TttPrintStmt ("sq")]
 
-				tmp, err := AstMaker.Convert(children[0])
+				tmp, err := ast_maker.Convert(children[0])
 				if err != nil {
 					return nil, err
 				}
@@ -79,12 +78,12 @@ func init() {
 				// ├── Token[T][80:TttListComprehension ("sq = [x * x for x in range(10)]")]
 				// └── Token[T][111:TttNewline]
 
-				err := ast.CheckType(children, 1, TttNewline)
+				err := ast.CheckType(children, 1, internal.TtNewline)
 				if err != nil {
 					return nil, err
 				}
 
-				tmp, err := AstMaker.Convert(children[0])
+				tmp, err := ast_maker.Convert(children[0])
 				if err != nil {
 					return nil, err
 				}
@@ -97,7 +96,7 @@ func init() {
 			return node, nil
 		}
 
-		subnodes, err := ast.LhsToAst(1, children, NttSource1, fn)
+		subnodes, err := ast.LhsToAst(1, children, internal.NtSource1, fn)
 		if err != nil {
 			return nil, err
 		}
@@ -108,7 +107,7 @@ func init() {
 		return node, nil
 	})
 
-	builder.Register(NttStatement, func(tk *gr.ParseTree[TokenType]) (*Node, error) {
+	builder.Register(internal.NtStatement, func(tk *gr.ParseTree[internal.TokenType]) (*Node, error) {
 		// Token[T][80:NttStatement]
 		//  └── Token[T][80:TttListComprehension ("sq = [x * x for x in range(10)]")]
 
@@ -120,7 +119,7 @@ func init() {
 			return nil, fmt.Errorf("expected 1 child, got %d instead", len(children))
 		}
 
-		node, err := AstMaker.Convert(children[0])
+		node, err := ast_maker.Convert(children[0])
 		if err != nil {
 			return nil, err
 		}
@@ -128,7 +127,7 @@ func init() {
 		return node, nil
 	})
 
-	builder.Register(TttListComprehension, func(tk *gr.ParseTree[TokenType]) (*Node, error) {
+	builder.Register(internal.TtListComprehension, func(tk *gr.ParseTree[internal.TokenType]) (*Node, error) {
 		// Token[T][80:TttListComprehension ("sq = [x * x for x in range(10)]")]
 
 		children := tk.GetChildren()
@@ -141,7 +140,7 @@ func init() {
 		return node, nil
 	})
 
-	builder.Register(TttPrintStmt, func(tk *gr.ParseTree[TokenType]) (*Node, error) {
+	builder.Register(internal.TtPrintStmt, func(tk *gr.ParseTree[internal.TokenType]) (*Node, error) {
 		// Token[T][112:TttPrintStmt ("sq")]
 
 		children := tk.GetChildren()
@@ -154,5 +153,5 @@ func init() {
 		return node, nil
 	})
 
-	AstMaker = builder.Build()
+	ast_maker = builder.Build()
 }

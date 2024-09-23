@@ -26,12 +26,12 @@ func init() {
 // LexFragment is a function that lexes a fragment.
 //
 // Parameters:
-//   - lexer: the lexer. Assumed to be non-nil.
+//   - stream: The rune stream. Assumed to be non-nil.
 //
 // Returns:
 //   - string: the fragment. Empty string if nothing was lexed.
 //   - error: if an error occurred.
-type LexFragment func(lexer RuneStreamer) (string, error)
+type LexFragment func(stream RuneStreamer) (string, error)
 
 // FragNewline lexes a newline.
 //
