@@ -11,9 +11,9 @@ import (
 
 	sl "github.com/PlayerR9/SlParser"
 	"github.com/PlayerR9/SlParser/ast"
+	"github.com/PlayerR9/SlParser/cmd/test/internal"
 	"github.com/PlayerR9/SlParser/grammar"
 	"github.com/PlayerR9/SlParser/lexer"
-	"github.com/PlayerR9/SlParser/make/test/internal"
 	"github.com/PlayerR9/SlParser/parser"
 )
 

@@ -1,14 +1,13 @@
 package internal
 
 import (
-	ggen "github.com/PlayerR9/go-generator"
+	"github.com/PlayerR9/go-generator"
 )
 
 var (
-	// OutputLocFlag is the output location flag.
-	OutputLocFlag *ggen.OutputLocVal
+	OutputLocFlag *generator.OutputLocVal
 )
 
 func init() {
-	OutputLocFlag = ggen.NewOutputFlag("", true)
+	OutputLocFlag = generator.NewOutputFlag("", true)
 }
