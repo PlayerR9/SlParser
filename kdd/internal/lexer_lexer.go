@@ -6,6 +6,7 @@ import (
 	"unicode"
 
 	"github.com/PlayerR9/SlParser/lexer"
+	gers "github.com/PlayerR9/go-errors"
 )
 
 var (
@@ -19,11 +20,15 @@ func init() {
 
 	// COLON : ':' ;
 	builder.Register(':', func(stream lexer.RuneStreamer, char rune) (TokenType, string, error) {
+		gers.AssertNotNil(stream, "stream")
+
 		return TtColon, ":", nil
 	})
 
 	// SEMICOLON : ';' ;
 	builder.Register(';', func(stream lexer.RuneStreamer, char rune) (TokenType, string, error) {
+		gers.AssertNotNil(stream, "stream")
+
 		return TtSemicolon, ";", nil
 	})
 
@@ -32,6 +37,8 @@ func init() {
 
 	// NEWLINE : ('\r'? '\n')+ ;
 	builder.Register('\n', func(stream lexer.RuneStreamer, char rune) (TokenType, string, error) {
+		gers.AssertNotNil(stream, "stream")
+
 		str, err := lexer.ApplyMany(stream, lexer.FragNewline)
 		str = "\n" + str
 
@@ -43,6 +50,8 @@ func init() {
 	})
 
 	builder.Register('\r', func(stream lexer.RuneStreamer, char rune) (TokenType, string, error) {
+		gers.AssertNotNil(stream, "stream")
+
 		var builder strings.Builder
 		builder.WriteRune('\r')
 
@@ -78,6 +87,8 @@ func init() {
 	// fragment CONT1 : UPPERCASE ;
 	// fragment CONT1 : UPPERCASE LOWERCASES ;
 	frag_cont1 := func(stream lexer.RuneStreamer) (string, error) {
+		gers.AssertNotNil(stream, "stream")
+
 		char, err := stream.NextRune()
 		if err == io.EOF {
 			return "", lexer.NewErrBadGroup("uppercase", nil)
@@ -110,6 +121,8 @@ func init() {
 	// fragment UPPERCASE_ID1 : UPPERCASES UNDERSCORE UPPERCASE_ID1 ;
 
 	frag_uppercase_id1 := func(stream lexer.RuneStreamer) (string, error) {
+		gers.AssertNotNil(stream, "stream")
+
 		var builder strings.Builder
 
 		for {
@@ -144,6 +157,8 @@ func init() {
 	}
 
 	builder.Default(func(stream lexer.RuneStreamer, char rune) (TokenType, string, error) {
+		gers.AssertNotNil(stream, "stream")
+
 		char, err := stream.NextRune()
 		if err == io.EOF {
 			return EtInvalid, "", lexer.NewErrBadGroup("letter", nil)
