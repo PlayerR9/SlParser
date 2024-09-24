@@ -1,5 +1,13 @@
-source : NEWLINE source1 EOF ;
-source1 : statement ;
-source1 : statement NEWLINE source1 ;
-statement : LIST_COMPREHENSION ;
-statement : PRINT_STMT ;
+source : rule EOF ;
+source : rule source1 EOF ;
+
+source1 : rule ;
+source1 : rule NEWLINE source1 ;
+
+rule : LOWERCASE_ID COLON rule1 SEMICOLON ;
+
+rule1 : rhs ;
+rule1 : rhs rule1 ;
+
+rhs : UPPERCASE_ID ;
+rhs : LOWERCASE_ID ;

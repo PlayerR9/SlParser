@@ -31,6 +31,8 @@ func init() {
 // Returns:
 //   - string: the fragment. Empty string if nothing was lexed.
 //   - error: if an error occurred.
+//
+// It can only either return NotFound or an error.
 type LexFragment func(stream RuneStreamer) (string, error)
 
 // FragNewline lexes a newline.
@@ -40,6 +42,10 @@ type LexFragment func(stream RuneStreamer) (string, error)
 //
 // Returns:
 //   - LexFragment: a function that lexes a newline.
+//
+// By default, the lexer does allow optional fragments and only lexes once.
+//   - Use WithAllowOptional(false) to disable optional fragments.
+//   - Use WithLexMany(true) to enable one or more fragments.
 func FragNewline(opts ...LexOption) LexFragment {
 	fn := func(lexer RuneStreamer) (string, error) {
 		char, err := lexer.NextRune()
@@ -60,18 +66,12 @@ func FragNewline(opts ...LexOption) LexFragment {
 			}
 
 			if err == io.EOF {
-				return "", fmt.Errorf("after %q, %w",
-					'\r',
-					fmt.Errorf("expected %q, got nothing instead", '\n'),
-				)
+				return "", NewErrGotNothing('\r', '\n')
 			} else if err != nil {
 				return "", err
 			}
 
-			return "", fmt.Errorf("expected %q, got %q instead",
-				'\n',
-				next,
-			)
+			return "", NewErrGotUnexpected('\r', '\n', next)
 		}
 
 		err = lexer.UnreadRune()
@@ -91,6 +91,10 @@ func FragNewline(opts ...LexOption) LexFragment {
 //
 // Returns:
 //   - LexFragment: a function that lexes a whitespace.
+//
+// By default, the lexer does allow optional fragments and only lexes once.
+//   - Use WithAllowOptional(false) to disable optional fragments.
+//   - Use WithLexMany(true) to enable one or more fragments.
 func FragWs(include_newline bool, opts ...LexOption) LexFragment {
 	var is_fn GroupFn
 
@@ -107,15 +111,20 @@ func FragWs(include_newline bool, opts ...LexOption) LexFragment {
 //
 // Parameters:
 //   - is_fn: the function to lex the group.
+//   - opts: the lexer options.
 //
 // Returns:
 //   - LexFragment: a function that lexes the group.
 //
 // If 'is_fn' is nil, a function that returns an error is returned.
+//
+// By default, the lexer does allow optional fragments and only lexes once.
+//   - Use WithAllowOptional(false) to disable optional fragments.
+//   - Use WithLexMany(true) to enable one or more fragments.
 func FragGroup(is_fn GroupFn, opts ...LexOption) LexFragment {
 	if is_fn == nil {
 		return func(lexer RuneStreamer) (string, error) {
-			return "", errors.New("no group function provided")
+			return "", NewErrNoGroupSpecified()
 		}
 	}
 
@@ -153,6 +162,10 @@ func FragGroup(is_fn GroupFn, opts ...LexOption) LexFragment {
 // If 'word' is an invalid UTF-8 string, a function that returns an error is returned.
 //
 // If the word is not found in the lexer's input, a ErrUnexpectedChar error is returned.
+//
+// By default, the lexer does allow optional fragments and only lexes once.
+//   - Use WithAllowOptional(false) to disable optional fragments.
+//   - Use WithLexMany(true) to enable one or more fragments.
 func FragWord(word string, opts ...LexOption) LexFragment {
 	chars, err := gcch.StringToUtf8(word)
 	if err != nil {
@@ -167,17 +180,13 @@ func FragWord(word string, opts ...LexOption) LexFragment {
 		for _, char := range chars[1:] {
 			c, err := lexer.NextRune()
 			if err == io.EOF {
-				return "", fmt.Errorf("after %q, %w", prev,
-					fmt.Errorf("expected %q, got nothing instead", char),
-				)
+				return "", NewErrGotNothing(prev, char)
 			} else if err != nil {
 				return "", err
 			}
 
 			if c != char {
-				return "", fmt.Errorf("after %q, %w", prev,
-					fmt.Errorf("expected %q, got %q instead", char, c),
-				)
+				return "", NewErrGotUnexpected(prev, char, c)
 			}
 
 			prev = char
@@ -233,9 +242,7 @@ func FragUntil(prev, until rune, allow_eof bool) LexFragment {
 			for {
 				char, err := lexer.NextRune()
 				if err == io.EOF {
-					return builder.String(), fmt.Errorf("after %q, %w", prev,
-						fmt.Errorf("expected %q, got nothing instead", until),
-					)
+					return builder.String(), NewErrGotNothing(prev, until)
 				} else if err != nil {
 					return builder.String(), err
 				}

@@ -3,18 +3,34 @@ package main
 import (
 	"bytes"
 	"errors"
-	"fmt"
+	"log"
 	"os"
-	"os/exec"
 
 	"github.com/PlayerR9/SlParser/cmd/internal"
 	"github.com/PlayerR9/go-generator"
 )
 
+var (
+	Logger *log.Logger
+)
+
+func init() {
+	Logger = log.New(os.Stdout, "[Sl Parser]: ", log.LstdFlags)
+}
+
 func main() {
-	data, err := os.ReadFile("input.txt")
+	err := internal.ParseFlags()
 	if err != nil {
-		panic(err)
+		generator.PrintFlags()
+
+		Logger.Fatalf("Error parsing flags: %v", err)
+	}
+
+	input_loc := *internal.InputFileFlag
+
+	data, err := os.ReadFile(input_loc)
+	if err != nil {
+		Logger.Fatalf("Error reading file: %v", err)
 	}
 
 	lines := bytes.Split(data, []byte{'\n'})
@@ -23,7 +39,7 @@ func main() {
 
 	var rules []*internal.Rule
 
-	for _, line := range lines {
+	for i, line := range lines {
 		if len(line) == 0 {
 			continue
 		}
@@ -34,30 +50,30 @@ func main() {
 		}
 
 		if len(fields) <= 3 {
-			panic(fmt.Errorf("invalid line: %q", line))
+			Logger.Fatalf("invalid line at %d: %q", i, line)
 		}
 
 		if !bytes.Equal(fields[1], []byte(":")) {
-			panic(fmt.Errorf("missing colon: %q", line))
+			Logger.Fatalf("missing colon at %d: %q", i, line)
 		}
 
 		if !bytes.Equal(fields[len(fields)-1], []byte(";")) {
-			panic(fmt.Errorf("missing semicolon: %q", line))
+			Logger.Fatalf("missing semicolon at %d: %q", i, line)
 		}
 
 		lhs, err := internal.MakeToken(fields[0])
 		if err != nil {
-			panic(fmt.Errorf("invalid lhs: %w", err))
+			Logger.Fatalf("invalid lhs at %d: %v", i, err)
 		}
 
 		tokens = append(tokens, lhs)
 
 		var rhss []*internal.Token
 
-		for i := 2; i < len(fields)-1; i++ {
-			tk, err := internal.MakeToken(fields[i])
+		for j := 2; j < len(fields)-1; j++ {
+			tk, err := internal.MakeToken(fields[j])
 			if err != nil {
-				panic(fmt.Errorf("invalid rhs at %d: %w", i, err))
+				Logger.Fatalf("invalid token at %d of line %d: %v", j, i, err)
 			}
 
 			rhss = append(rhss, tk)
@@ -68,38 +84,41 @@ func main() {
 		rules = append(rules, rule)
 	}
 
-	generator.ParseFlags()
-
 	tk_symbols, err := internal.TokenSymbols(tokens)
 	if err != nil {
-		panic(err)
+		Logger.Fatalf("Error parsing tokens: %v", err)
 	}
 
-	err = GenerateParser(tk_symbols, rules)
+	err = GenerateTokens(tk_symbols, rules)
 	if err != nil {
-		panic(err)
+		Logger.Fatalf("Error generating tokens: %v", err)
+	}
+
+	err = GenerateLexer()
+	if err != nil {
+		Logger.Fatalf("Error generating lexer: %v", err)
 	}
 
 	err = GenerateNode()
 	if err != nil {
-		panic(err)
+		Logger.Fatalf("Error generating node: %v", err)
 	}
 
 	err = GenerateAst(tk_symbols)
 	if err != nil {
-		panic(err)
+		Logger.Fatalf("Error generating ast: %v", err)
 	}
 
-	cmd := exec.Command("go", "generate")
-	err = cmd.Run()
-	if err != nil {
-		panic(err)
-	}
+	// cmd := exec.Command("go", "generate", "./...")
+	// err = cmd.Run()
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	fmt.Println("Successfully generated lexer.")
+	Logger.Println("Successfully generated parser. Make sure to run go generate ./...")
 }
 
-func GenerateParser(tk_symbols []*internal.Token, rules []*internal.Rule) error {
+func GenerateTokens(tk_symbols []*internal.Token, rules []*internal.Rule) error {
 	ok := internal.CheckEofExists(tk_symbols)
 	if !ok {
 		return errors.New("missing EOF")
@@ -112,7 +131,7 @@ func GenerateParser(tk_symbols []*internal.Token, rules []*internal.Rule) error 
 		return errors.New("missing terminal")
 	}
 
-	gd := &internal.GenData{
+	gd := &internal.TokenGen{
 		Symbols:      all_symbols,
 		LastTerminal: last_terminal.String(),
 	}
@@ -121,7 +140,25 @@ func GenerateParser(tk_symbols []*internal.Token, rules []*internal.Rule) error 
 		gd.Rules = append(gd.Rules, rule.String())
 	}
 
-	gen, err := internal.Generator.Generate(internal.OutputLocFlag, "lexer", gd)
+	gen, err := internal.TokenGenerator.Generate(internal.OutputLocFlag, "lexer", gd)
+	if err != nil {
+		return err
+	}
+
+	gen.ModifyPrefixPath("token_", "internal")
+
+	err = gen.WriteFile()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GenerateLexer() error {
+	gd := &internal.LexerGen{}
+
+	gen, err := internal.LexerGenerator.Generate(internal.OutputLocFlag, "lexer", gd)
 	if err != nil {
 		return err
 	}

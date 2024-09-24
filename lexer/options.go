@@ -56,6 +56,8 @@ type LexOptions struct {
 //   - LexFragment: the lexer fragment.
 //
 // By default, the lexer does allow optional fragments and only lexes once.
+//   - Use WithAllowOptional(false) to disable optional fragments.
+//   - Use WithLexMany(true) to enable one or more fragments.
 //
 // If 'frag_fn' is nil, then a function that returns an error is returned.
 func FragWithOptions(frag_fn LexFragment, options ...LexOption) LexFragment {
@@ -77,7 +79,7 @@ func FragWithOptions(frag_fn LexFragment, options ...LexOption) LexFragment {
 	var fn LexFragment
 
 	if settings.lex_many {
-		if settings.allow_optional {
+		if !settings.allow_optional {
 			fn = func(lexer RuneStreamer) (string, error) {
 				str, err := frag_fn(lexer)
 				if err != nil {

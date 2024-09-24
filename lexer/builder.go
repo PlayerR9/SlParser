@@ -7,7 +7,7 @@ import (
 // LexFunc is a function that lexes a token.
 //
 // Parameters:
-//   - lexer: the lexer. Assumed to be non-nil.
+//   - stream: the lexer. Assumed to be non-nil.
 //   - char: the first character of the token.
 //
 // Returns:
@@ -16,7 +16,7 @@ import (
 //   - error: if an error occurred.
 //
 // If the returned token is nil, then the token is marked to be skipped.
-type LexFunc[T gr.TokenTyper] func(lexer RuneStreamer, char rune) (T, string, error)
+type LexFunc[T gr.TokenTyper] func(stream RuneStreamer, char rune) (T, string, error)
 
 // Builder is a lexer builder.
 type Builder[T gr.TokenTyper] struct {

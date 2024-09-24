@@ -10,17 +10,21 @@ func _() {
 	var x [1]struct{}
 	_ = x[EtInvalid - -1]
 	_ = x[EtEOF-0]
-	_ = x[TtListComprehension-1]
-	_ = x[TtNewline-2]
-	_ = x[TtPrintStmt-3]
-	_ = x[NtSource-4]
-	_ = x[NtSource1-5]
-	_ = x[NtStatement-6]
+	_ = x[TtColon-1]
+	_ = x[TtLowercaseId-2]
+	_ = x[TtNewline-3]
+	_ = x[TtSemicolon-4]
+	_ = x[TtUppercaseId-5]
+	_ = x[NtRhs-6]
+	_ = x[NtRule-7]
+	_ = x[NtRule1-8]
+	_ = x[NtSource-9]
+	_ = x[NtSource1-10]
 }
 
-const _TokenType_name = "EtInvalidEtEOFTtListComprehensionTtNewlineTtPrintStmtNtSourceNtSource1NtStatement"
+const _TokenType_name = "EtInvalidEtEOFTtColonTtLowercaseIdTtNewlineTtSemicolonTtUppercaseIdNtRhsNtRuleNtRule1NtSourceNtSource1"
 
-var _TokenType_index = [...]uint8{0, 9, 14, 33, 42, 53, 61, 70, 81}
+var _TokenType_index = [...]uint8{0, 9, 14, 21, 34, 43, 54, 67, 72, 78, 85, 93, 102}
 
 func (i TokenType) String() string {
 	i -= -1
