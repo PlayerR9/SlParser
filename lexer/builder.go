@@ -80,6 +80,27 @@ func (b *Builder[T]) Register(char rune, fn LexFunc[T]) {
 	b.table[char] = fn
 }
 
+// RegisterChar registers a new lexer function for a single character.
+//
+// Parameters:
+//   - char: the first character of the token.
+//   - type_: the type of the token.
+//
+// Behaviors:
+//   - If the receiver is nil, then nothing is registered.
+//   - If a 'char' is already registered, then the previous function is overwritten.
+func (b *Builder[T]) RegisterChar(char rune, type_ T) {
+	if b == nil {
+		return
+	}
+
+	fn := func(lexer RuneStreamer, char rune) (T, error) {
+		return type_, nil
+	}
+
+	b.table[char] = fn
+}
+
 // Default sets the default lexer function.
 //
 // Parameters:

@@ -24,8 +24,6 @@ func TestLexer(t *testing.T) {
 	}
 
 	if err != nil {
-		t.Errorf("Unexpected error: %s", err)
+		t.Errorf("unexpected error: %v", err)
 	}
-
-	t.Errorf("Not implemented yet")
 }

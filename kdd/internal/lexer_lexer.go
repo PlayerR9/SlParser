@@ -18,17 +18,10 @@ func init() {
 	// TODO: Add here your own custom rules...
 
 	// COLON : ':' ;
-	builder.Register(':', func(stream lexer.RuneStreamer, char rune) (TokenType, error) {
-		gers.AssertNotNil(stream, "stream")
-		return TtColon, nil
-	})
+	builder.RegisterChar(':', TtColon)
 
 	// SEMICOLON : ';' ;
-	builder.Register(';', func(stream lexer.RuneStreamer, char rune) (TokenType, error) {
-		gers.AssertNotNil(stream, "stream")
-
-		return TtSemicolon, nil
-	})
+	builder.RegisterChar(';', TtSemicolon)
 
 	// WS : [ \t]+ -> skip ;
 	builder.RegisterSkip(' ', lexer.FragWs(false))

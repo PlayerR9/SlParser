@@ -52,7 +52,14 @@ import (
 type NodeType int
 
 const (
+	/*InvalidNode represents an invalid node.
+	Node[InvalidNode]
+	*/
 	InvalidNode NodeType = iota -1{{ range $index, $value := .Ast }}
+	
+	/*{{ $value }}Node is [...].
+	Node[{{ $value }}Node]
+	*/
 	{{ $value }}Node // {{ $value }}
 	{{- end }}
 )
