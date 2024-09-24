@@ -8,7 +8,7 @@ import (
 	"github.com/PlayerR9/SlParser/parser/internal"
 	bck "github.com/PlayerR9/go-commons/backup"
 	gcslc "github.com/PlayerR9/go-commons/slices"
-	dba "github.com/PlayerR9/go-debug/assert"
+	gers "github.com/PlayerR9/go-errors"
 )
 
 // ParseFn is a function that parses a production.
@@ -52,7 +52,7 @@ func get_rhs_with_offset[T gr.TokenTyper](items []*internal.Item[T], offset int)
 }
 
 func apply_items_filter[T gr.TokenTyper](sols *gcslc.SolWithLevel[*internal.Item[T]], type_ T, offset int, items []*internal.Item[T]) []*internal.Item[T] {
-	dba.AssertNotNil(sols, "sols")
+	gers.AssertNotNil(sols, "sols")
 
 	fn := func(item *internal.Item[T]) bool {
 		rhs, ok := item.RhsByOffset(offset)
@@ -78,7 +78,7 @@ func apply_items_filter[T gr.TokenTyper](sols *gcslc.SolWithLevel[*internal.Item
 //
 // If the receiver is nil or 'items' is empty or all items are nil, then nothing is registered.
 func register_unambiguous[T gr.TokenTyper](items []*internal.Item[T]) ParseFn[T] {
-	dba.Assert(len(items) > 1, "len(items) > 1")
+	gers.Assert(len(items) > 1, "len(items) > 1")
 
 	fn := func(parser *ActiveParser[T], top1 *gr.ParseTree[T], lookahead *gr.Token[T]) ([]*internal.Item[T], error) {
 		items_left := make([]*internal.Item[T], len(items))
@@ -172,7 +172,7 @@ func Build[T gr.TokenTyper](is *ItemSet[T]) *Parser[T] {
 
 	fn := func() *ActiveParser[T] {
 		ap, err := NewActiveParser(p)
-		dba.AssertErr(err, "NewActiveParser(p)")
+		gers.AssertErr(err, "NewActiveParser(p)")
 
 		return ap
 	}

@@ -7,7 +7,6 @@ import (
 	"github.com/PlayerR9/SlParser/parser/internal"
 	bck "github.com/PlayerR9/go-commons/backup"
 	gcslc "github.com/PlayerR9/go-commons/slices"
-	dba "github.com/PlayerR9/go-debug/assert"
 	gcers "github.com/PlayerR9/go-errors"
 	gcmap "github.com/PlayerR9/go-sets"
 )
@@ -111,7 +110,7 @@ func (is *ItemSet[T]) make_items() {
 
 			for _, idx := range indices {
 				item, err := internal.NewItem(rule, idx)
-				dba.AssertErr(err, "internal.NewItem(rule, %d)", idx)
+				gcers.AssertErr(err, "internal.NewItem(rule, %d)", idx)
 
 				item_list.Append(item)
 			}
@@ -279,7 +278,7 @@ func (b ItemSet[T]) Build() *Parser[T] {
 
 	fn := func() *ActiveParser[T] {
 		ap, err := NewActiveParser(p)
-		dba.AssertErr(err, "NewActiveParser(p)")
+		gcers.AssertErr(err, "NewActiveParser(p)")
 
 		return ap
 	}

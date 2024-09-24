@@ -4,7 +4,6 @@ import (
 	"iter"
 
 	gcslc "github.com/PlayerR9/go-commons/slices"
-	dba "github.com/PlayerR9/go-debug/assert"
 	gcers "github.com/PlayerR9/go-errors"
 )
 
@@ -21,25 +20,25 @@ type ParseTree[T TokenTyper] struct {
 }
 
 func (t ParseTree[T]) Pos() int {
-	dba.AssertNotNil(t.root, "t.root")
+	gcers.AssertNotNil(t.root, "t.root")
 
 	return t.root.Pos
 }
 
 func (t ParseTree[T]) Type() T {
-	dba.AssertNotNil(t.root, "t.root")
+	gcers.AssertNotNil(t.root, "t.root")
 
 	return t.root.Type
 }
 
 func (t ParseTree[T]) Lookahead() *Token[T] {
-	dba.AssertNotNil(t.root, "t.root")
+	gcers.AssertNotNil(t.root, "t.root")
 
 	return t.root.Lookahead
 }
 
 func (t ParseTree[T]) Data() string {
-	dba.AssertNotNil(t.root, "t.root")
+	gcers.AssertNotNil(t.root, "t.root")
 
 	return t.root.Data
 }
@@ -143,7 +142,7 @@ func NewTree[T TokenTyper](root *Token[T]) (*ParseTree[T], error) {
 // Returns:
 //   - *Token[T]: The root of the tree. Never returns nil.
 func (t ParseTree[T]) Root() *Token[T] {
-	dba.AssertNotNil(t.root, "t.root")
+	gcers.AssertNotNil(t.root, "t.root")
 
 	return t.root
 }
@@ -153,7 +152,7 @@ func (t ParseTree[T]) Root() *Token[T] {
 // Returns:
 //   - []*Token[T]: The leaves of the tree. Never returns nil.
 func (t ParseTree[T]) Leaves() []*Token[T] {
-	dba.AssertNotNil(t.root, "t.root")
+	gcers.AssertNotNil(t.root, "t.root")
 
 	return t.leaves
 }
@@ -215,7 +214,7 @@ func (t ParseTree[T]) GetChildren() []*ParseTree[T] {
 
 	for child := range t.root.Child() {
 		tree, err := NewTree(child)
-		dba.AssertErr(err, "NewTree(child)")
+		gcers.AssertErr(err, "NewTree(child)")
 
 		children = append(children, tree)
 	}

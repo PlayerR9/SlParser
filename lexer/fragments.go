@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	gcch "github.com/PlayerR9/go-commons/runes"
-	dba "github.com/PlayerR9/go-debug/assert"
+	gers "github.com/PlayerR9/go-errors"
 )
 
 var (
@@ -79,7 +79,7 @@ func init() {
 		}
 
 		err = lexer.UnreadRune()
-		dba.AssertErr(err, "lexer.UnreadRune()")
+		gers.AssertErr(err, "lexer.UnreadRune()")
 
 		return "", NotFound
 	}
@@ -143,7 +143,7 @@ func FragGroup(is_fn GroupFn) LexFragment {
 		}
 
 		err = lexer.UnreadRune()
-		dba.AssertErr(err, "lexer.UnreadRune()")
+		gers.AssertErr(err, "lexer.UnreadRune()")
 
 		return "", NotFound
 	}

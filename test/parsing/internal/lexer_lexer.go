@@ -6,7 +6,7 @@ import (
 
 	"github.com/PlayerR9/SlParser/lexer"
 	"github.com/PlayerR9/SlParser/parser"
-	dba "github.com/PlayerR9/go-debug/assert"
+	gers "github.com/PlayerR9/go-errors"
 )
 
 //go:generate stringer -type=TokenType
@@ -113,7 +113,7 @@ func init() {
 
 		if next != ' ' {
 			err := stream.UnreadRune()
-			dba.AssertErr(err, "lexer.UnreadRune()")
+			gers.AssertErr(err, "lexer.UnreadRune()")
 
 			return TtPrintStmt, "sq", nil
 		}

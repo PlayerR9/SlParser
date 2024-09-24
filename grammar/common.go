@@ -2,7 +2,6 @@ package grammar
 
 import (
 	gcslc "github.com/PlayerR9/go-commons/slices"
-	dba "github.com/PlayerR9/go-debug/assert"
 	gcers "github.com/PlayerR9/go-errors"
 )
 
@@ -35,7 +34,7 @@ func Combine[T TokenTyper](type_ T, subtrees []*ParseTree[T]) (*ParseTree[T], er
 	}
 
 	tree, err := NewTree(root_tk)
-	dba.AssertErr(err, "NewTree(root_tk)")
+	gcers.AssertErr(err, "NewTree(root_tk)")
 	tree.SetChildren(subtrees)
 
 	return tree, nil

@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
-	dba "github.com/PlayerR9/go-debug/assert"
 	gcers "github.com/PlayerR9/go-errors"
 )
 
@@ -85,7 +84,7 @@ func NewItem[T gr.TokenTyper](rule *Rule[T], pos int) (*Item[T], error) {
 		act = ActShift
 	} else {
 		rhs, ok := rule.RhsAt(pos)
-		dba.AssertOk(ok, "rhs_at(%d)", pos)
+		gcers.AssertOk(ok, "rhs_at(%d)", pos)
 
 		if rhs == T(0) {
 			act = ActAccept
@@ -120,7 +119,7 @@ func MustNewItem[T gr.TokenTyper](rule *Rule[T], pos int) *Item[T] {
 		act = ActShift
 	} else {
 		rhs, ok := rule.RhsAt(pos)
-		dba.AssertOk(ok, "rhs_at(%d)", pos)
+		gcers.AssertOk(ok, "rhs_at(%d)", pos)
 
 		if rhs == T(0) {
 			act = ActAccept
@@ -140,7 +139,7 @@ func MustNewItem[T gr.TokenTyper](rule *Rule[T], pos int) *Item[T] {
 // Returns:
 //   - iter.Seq[T]: The forward rhs of the item.
 func (item Item[T]) ForwardRhs() iter.Seq[T] {
-	dba.AssertNotNil(item.rule, "item.rule")
+	gcers.AssertNotNil(item.rule, "item.rule")
 
 	return item.rule.ForwardRhs()
 }
@@ -150,7 +149,7 @@ func (item Item[T]) ForwardRhs() iter.Seq[T] {
 // Returns:
 //   - iter.Seq[T]: the backward rhs of the item.
 func (item Item[T]) BackwardRhs() iter.Seq[T] {
-	dba.AssertNotNil(item.rule, "item.rule")
+	gcers.AssertNotNil(item.rule, "item.rule")
 
 	return item.rule.BackwardRhs()
 }
@@ -160,7 +159,7 @@ func (item Item[T]) BackwardRhs() iter.Seq[T] {
 // Returns:
 //   - T: the left hand side of the item.
 func (item Item[T]) Lhs() T {
-	dba.AssertNotNil(item.rule, "item.rule")
+	gcers.AssertNotNil(item.rule, "item.rule")
 
 	return item.rule.Lhs()
 }

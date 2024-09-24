@@ -8,7 +8,6 @@ import (
 	gr "github.com/PlayerR9/SlParser/grammar"
 	"github.com/PlayerR9/SlParser/parser/internal"
 	bck "github.com/PlayerR9/go-commons/backup"
-	dba "github.com/PlayerR9/go-debug/assert"
 	gcers "github.com/PlayerR9/go-errors"
 )
 
@@ -46,8 +45,8 @@ func NewActiveParser[T gr.TokenTyper](global *Parser[T]) (*ActiveParser[T], erro
 }
 
 func (ap *ActiveParser[T]) Align(history *bck.History[*internal.Item[T]]) bool {
-	dba.AssertNotNil(ap, "ap")
-	dba.AssertNotNil(history, "history")
+	gcers.AssertNotNil(ap, "ap")
+	gcers.AssertNotNil(history, "history")
 
 	ap.shift()
 	if ap.HasError() {
@@ -85,7 +84,7 @@ func (p ActiveParser[T]) Pop() (*gr.ParseTree[T], bool) {
 
 // shift is a helper function that shifts a token.
 func (ap *ActiveParser[T]) shift() {
-	dba.AssertNotNil(ap, "ap")
+	gcers.AssertNotNil(ap, "ap")
 
 	if len(ap.tokens) == 0 {
 		ap.err = io.EOF
@@ -97,7 +96,7 @@ func (ap *ActiveParser[T]) shift() {
 	ap.tokens = ap.tokens[1:]
 
 	tree, err := gr.NewTree(tk)
-	dba.AssertErr(err, "grammar.NewTree(tk)")
+	gcers.AssertErr(err, "grammar.NewTree(tk)")
 
 	ap.stack.Push(tree)
 }
@@ -107,8 +106,8 @@ func (ap *ActiveParser[T]) shift() {
 // Parameters:
 //   - it: the item to reduce. Assumed to be non-nil.
 func (ap *ActiveParser[T]) reduce(it *internal.Item[T]) {
-	dba.AssertNotNil(ap, "ap")
-	dba.AssertNotNil(it, "it")
+	gcers.AssertNotNil(ap, "ap")
+	gcers.AssertNotNil(it, "it")
 
 	var prev *T
 
@@ -136,7 +135,7 @@ func (ap *ActiveParser[T]) reduce(it *internal.Item[T]) {
 	lhs := it.Lhs()
 
 	tree, err := gr.Combine(lhs, popped)
-	dba.AssertErr(err, "grammar.Combine(%s, popped)", lhs.String())
+	gcers.AssertErr(err, "grammar.Combine(%s, popped)", lhs.String())
 
 	ap.stack.Push(tree)
 }
@@ -175,7 +174,7 @@ func (ap *ActiveParser[T]) ApplyEvent(item *internal.Item[T]) bool {
 }
 
 func (ap *ActiveParser[T]) DetermineNextEvents() []*internal.Item[T] {
-	dba.AssertNotNil(ap, "ap")
+	gcers.AssertNotNil(ap, "ap")
 
 	defer ap.stack.Refuse()
 
