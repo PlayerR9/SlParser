@@ -50,28 +50,7 @@ func init() {
 	comment_fn := lexer.FragUntil('#', '\n', true)
 	builder.RegisterSkip('#', comment_fn)
 
-	builder.RegisterSkip('#', func(stream lexer.RuneStreamer) (string, error) {
-		for {
-			char, err := stream.NextRune()
-			if err == io.EOF {
-				break
-			} else if err != nil {
-				return "", err
-			}
-
-			if char == '\n' {
-				break
-			}
-		}
-
-		return "", nil
-	})
-
 	// NEWLINE : ('\r'? '\n')+ ;
-	newline_fn := lexer.FragNewline(
-		lexer.WithLexMany(true),
-	)
-
 	builder.Register('\r', func(stream lexer.RuneStreamer, char rune) (TokenType, string, error) {
 		char, err := stream.NextRune()
 		if err == io.EOF {
@@ -88,7 +67,7 @@ func init() {
 			)
 		}
 
-		str, err := newline_fn(stream)
+		str, err := lexer.ApplyMany(stream, lexer.FragNewline)
 		if err != nil && err != lexer.NotFound {
 			return EtInvalid, "", err
 		}
@@ -97,7 +76,7 @@ func init() {
 	})
 
 	builder.Register('\n', func(stream lexer.RuneStreamer, char rune) (TokenType, string, error) {
-		str, err := newline_fn(stream)
+		str, err := lexer.ApplyMany(stream, lexer.FragNewline)
 		if err != nil && err != lexer.NotFound {
 			return EtInvalid, "", err
 		}
@@ -107,6 +86,8 @@ func init() {
 
 	// LIST_COMPREHENSION : 'sq = [x * x for x in range(10)]' ;
 	// PRINT_STMT : 'sq' ;
+	word_fn := lexer.FragWord(" = [x * x for x in range(10)]")
+
 	builder.Register('s', func(stream lexer.RuneStreamer, char rune) (TokenType, string, error) {
 		char, err := stream.NextRune()
 		if err == io.EOF {
@@ -136,8 +117,6 @@ func init() {
 
 			return TtPrintStmt, "sq", nil
 		}
-
-		word_fn := lexer.FragWord(" = [x * x for x in range(10)]")
 
 		word, err := word_fn(stream)
 		if err != nil {

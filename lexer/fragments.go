@@ -35,19 +35,23 @@ func init() {
 // It can only either return NotFound or an error.
 type LexFragment func(stream RuneStreamer) (string, error)
 
-// FragNewline lexes a newline.
-//
-// Parameters:
-//   - opts: the lexer options.
-//
-// Returns:
-//   - LexFragment: a function that lexes a newline.
-//
-// By default, the lexer does allow optional fragments and only lexes once.
-//   - Use WithAllowOptional(false) to disable optional fragments.
-//   - Use WithLexMany(true) to enable one or more fragments.
-func FragNewline(opts ...LexOption) LexFragment {
-	fn := func(lexer RuneStreamer) (string, error) {
+var (
+	// FragNewline lexes a newline.
+	//
+	// Parameters:
+	//   - opts: the lexer options.
+	//
+	// Returns:
+	//   - LexFragment: a function that lexes a newline.
+	//
+	// By default, the lexer does allow optional fragments and only lexes once.
+	//   - Use WithAllowOptional(false) to disable optional fragments.
+	//   - Use WithLexMany(true) to enable one or more fragments.
+	FragNewline LexFragment
+)
+
+func init() {
+	FragNewline = func(lexer RuneStreamer) (string, error) {
 		char, err := lexer.NextRune()
 		if err == io.EOF {
 			return "", NotFound
@@ -79,8 +83,6 @@ func FragNewline(opts ...LexOption) LexFragment {
 
 		return "", NotFound
 	}
-
-	return FragWithOptions(fn, opts...)
 }
 
 // FragWs lexes a whitespace.
@@ -95,7 +97,7 @@ func FragNewline(opts ...LexOption) LexFragment {
 // By default, the lexer does allow optional fragments and only lexes once.
 //   - Use WithAllowOptional(false) to disable optional fragments.
 //   - Use WithLexMany(true) to enable one or more fragments.
-func FragWs(include_newline bool, opts ...LexOption) LexFragment {
+func FragWs(include_newline bool) LexFragment {
 	var is_fn GroupFn
 
 	if include_newline {
@@ -104,7 +106,7 @@ func FragWs(include_newline bool, opts ...LexOption) LexFragment {
 		is_fn = GroupWs
 	}
 
-	return FragGroup(is_fn, opts...)
+	return FragGroup(is_fn)
 }
 
 // FragGroup lexes a group.
@@ -121,14 +123,14 @@ func FragWs(include_newline bool, opts ...LexOption) LexFragment {
 // By default, the lexer does allow optional fragments and only lexes once.
 //   - Use WithAllowOptional(false) to disable optional fragments.
 //   - Use WithLexMany(true) to enable one or more fragments.
-func FragGroup(is_fn GroupFn, opts ...LexOption) LexFragment {
+func FragGroup(is_fn GroupFn) LexFragment {
 	if is_fn == nil {
 		return func(lexer RuneStreamer) (string, error) {
 			return "", NewErrNoGroupSpecified()
 		}
 	}
 
-	fn := func(lexer RuneStreamer) (string, error) {
+	return func(lexer RuneStreamer) (string, error) {
 		char, err := lexer.NextRune()
 		if err == io.EOF {
 			return "", NotFound
@@ -145,8 +147,6 @@ func FragGroup(is_fn GroupFn, opts ...LexOption) LexFragment {
 
 		return "", NotFound
 	}
-
-	return FragWithOptions(fn, opts...)
 }
 
 // FragWord lexes a word. However, the first character of the word is ignored
@@ -166,7 +166,7 @@ func FragGroup(is_fn GroupFn, opts ...LexOption) LexFragment {
 // By default, the lexer does allow optional fragments and only lexes once.
 //   - Use WithAllowOptional(false) to disable optional fragments.
 //   - Use WithLexMany(true) to enable one or more fragments.
-func FragWord(word string, opts ...LexOption) LexFragment {
+func FragWord(word string) LexFragment {
 	chars, err := gcch.StringToUtf8(word)
 	if err != nil {
 		return func(lexer RuneStreamer) (string, error) {
@@ -174,7 +174,7 @@ func FragWord(word string, opts ...LexOption) LexFragment {
 		}
 	}
 
-	fn := func(lexer RuneStreamer) (string, error) {
+	return func(lexer RuneStreamer) (string, error) {
 		prev := chars[0]
 
 		for _, char := range chars[1:] {
@@ -194,8 +194,6 @@ func FragWord(word string, opts ...LexOption) LexFragment {
 
 		return word, nil
 	}
-
-	return FragWithOptions(fn, opts...)
 }
 
 // FragUntil lexes until a character is found.

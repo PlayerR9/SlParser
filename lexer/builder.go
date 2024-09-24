@@ -43,19 +43,25 @@ func NewBuilder[T gr.TokenTyper]() Builder[T] {
 // Behaviors:
 //   - If the receiver or 'fn' are nil, then nothing is registered.
 //   - If a 'char' is already registered, then the previous function is overwritten.
-func (b *Builder[T]) RegisterSkip(char rune, fn LexFragment) {
-	if b == nil || fn == nil {
+func (b *Builder[T]) RegisterSkip(char rune, frag LexFragment) {
+	if b == nil || frag == nil {
 		return
 	}
 
-	b.table[char] = func(lexer RuneStreamer, char rune) (T, string, error) {
-		_, err := fn(lexer)
-		if err == nil || err == NotFound {
-			err = SkipToken
+	fn := func(lexer RuneStreamer, char rune) (T, string, error) {
+		for {
+			_, err := frag(lexer)
+			if err == NotFound {
+				break
+			} else if err != nil {
+				return T(-1), "", err
+			}
 		}
 
-		return T(-1), "", err
+		return T(-1), "", SkipToken
 	}
+
+	b.table[char] = fn
 }
 
 // Register registers a new lexer function.
