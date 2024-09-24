@@ -1,9 +1,9 @@
 package grammar
 
 import (
-	gcers "github.com/PlayerR9/errors"
 	gcslc "github.com/PlayerR9/go-commons/slices"
 	dba "github.com/PlayerR9/go-debug/assert"
+	gcers "github.com/PlayerR9/go-errors"
 )
 
 // Combine creates a new ParseTree by combining the subtrees.

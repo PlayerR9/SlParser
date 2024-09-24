@@ -3,7 +3,7 @@ package lexer
 import (
 	"strings"
 
-	gcers "github.com/PlayerR9/errors"
+	gcers "github.com/PlayerR9/go-errors"
 )
 
 // FragWithOptions lexes a fragment with options.

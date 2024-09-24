@@ -3,7 +3,7 @@ package lexer
 import (
 	"fmt"
 
-	gcerr "github.com/PlayerR9/errors/error"
+	gcerr "github.com/PlayerR9/go-errors/error"
 )
 
 //go:generate stringer -type=ErrorCode
@@ -63,7 +63,7 @@ func NewErrInvalidInputStream(reason error) *gcerr.Err {
 		msg = reason.Error()
 	}
 
-	err := gcerr.NewErr(gcerr.FATAL, InvalidInputStream, msg)
+	err := gcerr.New(InvalidInputStream, msg)
 	return err
 }
 
@@ -81,7 +81,7 @@ func NewErrInvalidInputStream(reason error) *gcerr.Err {
 func NewErrGotNothing(prev, expected rune) *gcerr.Err {
 	msg := fmt.Sprintf("expected %q after %q, got nothing instead", expected, prev)
 
-	err := gcerr.NewErr(gcerr.FATAL, BadWord, msg)
+	err := gcerr.New(BadWord, msg)
 	return err
 }
 
@@ -99,7 +99,7 @@ func NewErrGotNothing(prev, expected rune) *gcerr.Err {
 func NewErrGotUnexpected(after, expected, got rune) *gcerr.Err {
 	msg := fmt.Sprintf("expected %q before %q, got %q instead", expected, after, got)
 
-	err := gcerr.NewErr(gcerr.FATAL, BadWord, msg)
+	err := gcerr.New(BadWord, msg)
 	return err
 }
 
@@ -123,7 +123,7 @@ func NewErrBadGroup(expected string, got *rune) *gcerr.Err {
 		msg = fmt.Sprintf("expected group %q, got %q instead", expected, *got)
 	}
 
-	err := gcerr.NewErr(gcerr.FATAL, BadGroup, msg)
+	err := gcerr.New(BadGroup, msg)
 
 	return err
 }
@@ -136,6 +136,6 @@ func NewErrBadGroup(expected string, got *rune) *gcerr.Err {
 // Returns:
 //   - *gcerr.Err: The error. Never returns nil.
 func NewErrNoGroupSpecified() *gcerr.Err {
-	err := gcerr.NewErr(gcerr.FATAL, BadGroup, "no group was specified")
+	err := gcerr.New(BadGroup, "no group was specified")
 	return err
 }

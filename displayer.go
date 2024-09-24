@@ -6,9 +6,9 @@ import (
 	"io"
 
 	lxr "github.com/PlayerR9/SlParser/lexer"
-	gcers "github.com/PlayerR9/errors"
-	gcerr "github.com/PlayerR9/errors/error"
 	gcby "github.com/PlayerR9/go-commons/bytes"
+	gcers "github.com/PlayerR9/go-errors"
+	gcerr "github.com/PlayerR9/go-errors/error"
 	"github.com/dustin/go-humanize"
 )
 

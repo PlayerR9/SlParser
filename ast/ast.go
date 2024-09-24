@@ -2,7 +2,7 @@ package ast
 
 import (
 	gr "github.com/PlayerR9/SlParser/grammar"
-	gcers "github.com/PlayerR9/errors"
+	gcers "github.com/PlayerR9/go-errors"
 )
 
 type ToAstFunc[N interface {

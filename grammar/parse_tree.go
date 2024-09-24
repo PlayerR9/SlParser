@@ -3,9 +3,9 @@ package grammar
 import (
 	"iter"
 
-	gcers "github.com/PlayerR9/errors"
 	gcslc "github.com/PlayerR9/go-commons/slices"
 	dba "github.com/PlayerR9/go-debug/assert"
+	gcers "github.com/PlayerR9/go-errors"
 )
 
 // ParseTree is a generic data structure that represents a tree.

@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
-	gcers "github.com/PlayerR9/errors"
 	dba "github.com/PlayerR9/go-debug/assert"
+	gcers "github.com/PlayerR9/go-errors"
 )
 
 // Item is an item in the parsing table.

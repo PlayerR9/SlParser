@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
-	gcers "github.com/PlayerR9/errors/error"
 	gcstr "github.com/PlayerR9/go-commons/strings"
+	gcers "github.com/PlayerR9/go-errors/error"
 	"github.com/dustin/go-humanize"
 )
 
@@ -24,7 +24,7 @@ func (e ErrorCode) Int() int {
 }
 
 func NewUnregisteredType[T gr.TokenTyper](type_ T, in string) *gcers.Err {
-	err := gcers.NewErr(gcers.FATAL, UnregisteredType, "type "+type_.String()+"is not registered")
+	err := gcers.New(UnregisteredType, "type "+type_.String()+"is not registered")
 	err.AddFrame("", in)
 
 	return err
@@ -37,7 +37,7 @@ func NewBadSyntaxTree[T gr.TokenTyper](at int, type_ T, got string) *gcers.Err {
 
 	msg := gcstr.ExpectedValue("type", gcstr.Quote(type_), got)
 
-	err := gcers.NewErr(gcers.FATAL, BadSyntaxTree, msg)
+	err := gcers.New(BadSyntaxTree, msg)
 	err.AddFrame("", humanize.Ordinal(at+1)+" child")
 
 	return err

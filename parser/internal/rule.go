@@ -4,7 +4,7 @@ import (
 	"iter"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
-	gcers "github.com/PlayerR9/errors"
+	gcers "github.com/PlayerR9/go-errors"
 )
 
 // A rule is a production of a grammar.
