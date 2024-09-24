@@ -44,8 +44,6 @@ func ApplyMany(stream RuneStreamer, frag LexFragment) (string, error) {
 		} else if err != nil {
 			return builder.String(), err
 		}
-
-		builder.WriteString(str)
 	}
 
 	return builder.String(), nil

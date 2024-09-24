@@ -97,7 +97,10 @@ func init() {
 		}
 
 		if !unicode.IsUpper(char) {
-			return "", lexer.NewErrBadGroup("uppercase", &char)
+			err := stream.UnreadRune()
+			gers.AssertErr(err, "stream.UnreadRune()")
+
+			return "", lexer.NotFound
 		}
 
 		str, err := lexer.ApplyMany(stream, frag_may_lowercases)
@@ -159,20 +162,12 @@ func init() {
 	builder.Default(func(stream lexer.RuneStreamer, char rune) (TokenType, string, error) {
 		gers.AssertNotNil(stream, "stream")
 
-		char, err := stream.NextRune()
-		if err == io.EOF {
-			return EtInvalid, "", lexer.NewErrBadGroup("letter", nil)
-		} else if err != nil {
-			return EtInvalid, "", lexer.NewErrInvalidInputStream(err)
-		}
+		var builder strings.Builder
+		builder.WriteRune(char)
 
 		if !unicode.IsLetter(char) {
-			return EtInvalid, "", lexer.NewErrBadGroup("letter", &char)
+			return EtInvalid, builder.String(), lexer.NewErrBadGroup("letter", &char)
 		}
-
-		var builder strings.Builder
-
-		builder.WriteRune(char)
 
 		if unicode.IsLower(char) {
 			char, err := stream.NextRune()
@@ -182,23 +177,23 @@ func init() {
 
 				return TtLowercaseId, builder.String(), nil
 			} else if err != nil {
-				return EtInvalid, "", lexer.NewErrInvalidInputStream(err)
-			}
-
-			if !unicode.IsLetter(char) {
-				return EtInvalid, "", lexer.NewErrBadGroup("letter", &char)
+				return EtInvalid, builder.String(), lexer.NewErrInvalidInputStream(err)
 			}
 
 			builder.WriteRune(char)
+
+			if !unicode.IsLetter(char) {
+				return EtInvalid, builder.String(), lexer.NewErrBadGroup("letter", &char)
+			}
 
 			if unicode.IsLower(char) {
 				// lowercases (LOWERCASE) ;
 
 				lower, err := lexer.ApplyMany(stream, frag_must_lowercases)
 				if err == lexer.NotFound {
-					return EtInvalid, "", lexer.NewErrBadGroup("lowercase letter", &char)
+					return EtInvalid, builder.String(), lexer.NewErrBadGroup("lowercase letter", &char)
 				} else if err != nil {
-					return EtInvalid, "", err
+					return EtInvalid, builder.String(), err
 				}
 
 				builder.WriteString(lower)
@@ -210,16 +205,16 @@ func init() {
 				if err == nil {
 					builder.WriteString(str)
 				} else if err != lexer.NotFound {
-					return EtInvalid, "", err
+					return EtInvalid, builder.String(), err
 				}
 			} else {
 				// LOWERCASE_ID : (LOWERCASE) CONT ;
 
 				str, err := lexer.ApplyMany(stream, frag_conts)
 				if err == lexer.NotFound {
-					return EtInvalid, "", lexer.NewErrBadGroup("uppercase letter", &char)
+					return EtInvalid, builder.String(), lexer.NewErrBadGroup("uppercase letter", &char)
 				} else if err != nil {
-					return EtInvalid, "", err
+					return EtInvalid, builder.String(), err
 				}
 
 				builder.WriteString(str)
@@ -237,7 +232,7 @@ func init() {
 			if err == io.EOF {
 				must = false
 			} else if err != nil {
-				return EtInvalid, "", lexer.NewErrInvalidInputStream(err)
+				return EtInvalid, builder.String(), lexer.NewErrInvalidInputStream(err)
 			}
 
 			if char == '_' {
@@ -254,9 +249,9 @@ func init() {
 			if err == nil {
 				builder.WriteString(str)
 			} else if err != lexer.NotFound {
-				return EtInvalid, "", err
+				return EtInvalid, builder.String(), err
 			} else if must {
-				return EtInvalid, "", lexer.NewErrBadGroup("uppercase letter", &char)
+				return EtInvalid, builder.String(), lexer.NewErrBadGroup("uppercase letter", &char)
 			}
 
 			return TtUppercaseId, builder.String(), nil
