@@ -1,8 +1,6 @@
 package lexer
 
 import (
-	"strings"
-
 	gcers "github.com/PlayerR9/go-errors"
 )
 
@@ -19,32 +17,28 @@ import (
 //   - Use WithLexMany(true) to enable one or more fragments.
 //
 // If 'frag_fn' is nil, then a function that returns an error is returned.
-func ApplyMany(stream RuneStreamer, frag LexFragment) (string, error) {
+func ApplyMany(stream RuneStreamer, frag LexFragment) error {
 	if frag == nil {
-		return "", gcers.NewErrNilParameter("frag")
-	} else if stream == nil {
-		return "", NotFound
+		return gcers.NewErrNilParameter("frag")
 	}
 
-	var builder strings.Builder
+	if stream == nil {
+		return NotFound
+	}
 
-	str, err := frag(stream)
-	builder.WriteString(str)
-
+	err := frag(stream)
 	if err != nil {
-		return builder.String(), err
+		return err
 	}
 
 	for {
-		str, err := frag(stream)
-		builder.WriteString(str)
-
+		err := frag(stream)
 		if err == NotFound {
 			break
 		} else if err != nil {
-			return builder.String(), err
+			return err
 		}
 	}
 
-	return builder.String(), nil
+	return nil
 }

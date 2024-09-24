@@ -2,7 +2,6 @@ package internal
 
 import (
 	"io"
-	"strings"
 	"unicode"
 
 	"github.com/PlayerR9/SlParser/lexer"
@@ -19,62 +18,54 @@ func init() {
 	// TODO: Add here your own custom rules...
 
 	// COLON : ':' ;
-	builder.Register(':', func(stream lexer.RuneStreamer, char rune) (TokenType, string, error) {
+	builder.Register(':', func(stream lexer.RuneStreamer, char rune) (TokenType, error) {
 		gers.AssertNotNil(stream, "stream")
-
-		return TtColon, ":", nil
+		return TtColon, nil
 	})
 
 	// SEMICOLON : ';' ;
-	builder.Register(';', func(stream lexer.RuneStreamer, char rune) (TokenType, string, error) {
+	builder.Register(';', func(stream lexer.RuneStreamer, char rune) (TokenType, error) {
 		gers.AssertNotNil(stream, "stream")
 
-		return TtSemicolon, ";", nil
+		return TtSemicolon, nil
 	})
 
 	// WS : [ \t]+ -> skip ;
 	builder.RegisterSkip(' ', lexer.FragWs(false))
 
 	// NEWLINE : ('\r'? '\n')+ ;
-	builder.Register('\n', func(stream lexer.RuneStreamer, char rune) (TokenType, string, error) {
+	builder.Register('\n', func(stream lexer.RuneStreamer, char rune) (TokenType, error) {
 		gers.AssertNotNil(stream, "stream")
 
-		str, err := lexer.ApplyMany(stream, lexer.FragNewline)
-		str = "\n" + str
+		err := lexer.ApplyMany(stream, lexer.FragNewline)
 
 		if err == nil || err == lexer.NotFound {
-			return TtNewline, str, nil
+			return TtNewline, nil
 		} else {
-			return EtInvalid, str, err
+			return EtInvalid, err
 		}
 	})
 
-	builder.Register('\r', func(stream lexer.RuneStreamer, char rune) (TokenType, string, error) {
+	builder.Register('\r', func(stream lexer.RuneStreamer, char rune) (TokenType, error) {
 		gers.AssertNotNil(stream, "stream")
-
-		var builder strings.Builder
-		builder.WriteRune('\r')
 
 		char, err := stream.NextRune()
 		if err == io.EOF {
-			return EtInvalid, builder.String(), lexer.NewErrGotNothing('\n', '\r')
+			return EtInvalid, lexer.NewErrGotNothing('\n', '\r')
 		} else if err != nil {
-			return EtInvalid, builder.String(), lexer.NewErrInvalidInputStream(err)
+			return EtInvalid, err
 		}
-
-		builder.WriteRune(char)
 
 		if char != '\n' {
-			return EtInvalid, builder.String(), lexer.NewErrGotUnexpected('\r', '\n', char)
+			return EtInvalid, lexer.NewErrGotUnexpected('\r', '\n', char)
 		}
 
-		str, err := lexer.ApplyMany(stream, lexer.FragNewline)
-		builder.WriteString(str)
+		err = lexer.ApplyMany(stream, lexer.FragNewline)
 
 		if err == nil || err == lexer.NotFound {
-			return TtNewline, builder.String(), nil
+			return TtNewline, nil
 		} else {
-			return EtInvalid, builder.String(), err
+			return EtInvalid, err
 		}
 	})
 
@@ -86,31 +77,31 @@ func init() {
 
 	// fragment CONT1 : UPPERCASE ;
 	// fragment CONT1 : UPPERCASE LOWERCASES ;
-	frag_cont1 := func(stream lexer.RuneStreamer) (string, error) {
+	frag_cont1 := func(stream lexer.RuneStreamer) error {
 		gers.AssertNotNil(stream, "stream")
 
 		char, err := stream.NextRune()
 		if err == io.EOF {
-			return "", lexer.NewErrBadGroup("uppercase", nil)
+			return lexer.NewErrBadGroup("uppercase", nil)
 		} else if err != nil {
-			return "", lexer.NewErrInvalidInputStream(err)
+			return err
 		}
 
 		if !unicode.IsUpper(char) {
 			err := stream.UnreadRune()
 			gers.AssertErr(err, "stream.UnreadRune()")
 
-			return "", lexer.NotFound
+			return lexer.NotFound
 		}
 
-		str, err := lexer.ApplyMany(stream, frag_may_lowercases)
+		err = lexer.ApplyMany(stream, frag_may_lowercases)
 		if err == lexer.NotFound {
-			return string(char), nil
+			return nil
 		} else if err != nil {
-			return "", err
+			return err
 		}
 
-		return string(char) + str, nil
+		return nil
 	}
 
 	// fragment CONT : CONT1 ;
@@ -123,26 +114,22 @@ func init() {
 	// fragment UPPERCASE_ID1 : UPPERCASES ;
 	// fragment UPPERCASE_ID1 : UPPERCASES UNDERSCORE UPPERCASE_ID1 ;
 
-	frag_uppercase_id1 := func(stream lexer.RuneStreamer) (string, error) {
+	frag_uppercase_id1 := func(stream lexer.RuneStreamer) error {
 		gers.AssertNotNil(stream, "stream")
 
-		var builder strings.Builder
-
 		for {
-			str, err := lexer.ApplyMany(stream, frag_uppercases)
+			err := lexer.ApplyMany(stream, frag_uppercases)
 			if err == lexer.NotFound {
-				return "", lexer.NewErrBadGroup("uppercase", nil)
+				return lexer.NewErrBadGroup("uppercase", nil)
 			} else if err != nil {
-				return "", err
+				return err
 			}
-
-			builder.WriteString(str)
 
 			char, err := stream.NextRune()
 			if err == io.EOF {
 				break
 			} else if err != nil {
-				return "", lexer.NewErrInvalidInputStream(err)
+				return err
 			}
 
 			if char != '_' {
@@ -152,21 +139,14 @@ func init() {
 			}
 		}
 
-		if builder.Len() == 0 {
-			return "", lexer.NotFound
-		}
-
-		return builder.String(), nil
+		return nil
 	}
 
-	builder.Default(func(stream lexer.RuneStreamer, char rune) (TokenType, string, error) {
+	builder.Default(func(stream lexer.RuneStreamer, char rune) (TokenType, error) {
 		gers.AssertNotNil(stream, "stream")
 
-		var builder strings.Builder
-		builder.WriteRune(char)
-
 		if !unicode.IsLetter(char) {
-			return EtInvalid, builder.String(), lexer.NewErrBadGroup("letter", &char)
+			return EtInvalid, lexer.NewErrBadGroup("letter", &char)
 		}
 
 		if unicode.IsLower(char) {
@@ -175,52 +155,44 @@ func init() {
 				// nothing
 				// LOWERCASE_ID : (LOWERCASE) ;
 
-				return TtLowercaseId, builder.String(), nil
+				return TtLowercaseId, nil
 			} else if err != nil {
-				return EtInvalid, builder.String(), lexer.NewErrInvalidInputStream(err)
+				return EtInvalid, err
 			}
 
-			builder.WriteRune(char)
-
 			if !unicode.IsLetter(char) {
-				return EtInvalid, builder.String(), lexer.NewErrBadGroup("letter", &char)
+				return EtInvalid, lexer.NewErrBadGroup("letter", &char)
 			}
 
 			if unicode.IsLower(char) {
 				// lowercases (LOWERCASE) ;
 
-				lower, err := lexer.ApplyMany(stream, frag_must_lowercases)
+				err := lexer.ApplyMany(stream, frag_must_lowercases)
 				if err == lexer.NotFound {
-					return EtInvalid, builder.String(), lexer.NewErrBadGroup("lowercase letter", &char)
+					return EtInvalid, lexer.NewErrBadGroup("lowercase letter", &char)
 				} else if err != nil {
-					return EtInvalid, builder.String(), err
+					return EtInvalid, err
 				}
-
-				builder.WriteString(lower)
 
 				// LOWERCASE_ID : (LOWERCASE) LOWERCASES ;
 				// LOWERCASE_ID : (LOWERCASE) LOWERCASES CONT ;
 
-				str, err := lexer.ApplyMany(stream, frag_may_conts)
-				if err == nil {
-					builder.WriteString(str)
-				} else if err != lexer.NotFound {
-					return EtInvalid, builder.String(), err
+				err = lexer.ApplyMany(stream, frag_may_conts)
+				if err != nil && err != lexer.NotFound {
+					return EtInvalid, err
 				}
 			} else {
 				// LOWERCASE_ID : (LOWERCASE) CONT ;
 
-				str, err := lexer.ApplyMany(stream, frag_conts)
+				err := lexer.ApplyMany(stream, frag_conts)
 				if err == lexer.NotFound {
-					return EtInvalid, builder.String(), lexer.NewErrBadGroup("uppercase letter", &char)
+					return EtInvalid, lexer.NewErrBadGroup("uppercase letter", &char)
 				} else if err != nil {
-					return EtInvalid, builder.String(), err
+					return EtInvalid, err
 				}
-
-				builder.WriteString(str)
 			}
 
-			return TtLowercaseId, builder.String(), nil
+			return TtLowercaseId, nil
 		} else {
 			// UPPERCASE_ID : (UPPERCASE) ;
 			// UPPERCASE_ID : (UPPERCASE) UPPERCASE_ID1 ;
@@ -232,29 +204,27 @@ func init() {
 			if err == io.EOF {
 				must = false
 			} else if err != nil {
-				return EtInvalid, builder.String(), lexer.NewErrInvalidInputStream(err)
+				return EtInvalid, err
 			}
 
 			if char == '_' {
 				must = true
-
-				builder.WriteRune(char)
 			} else {
 				_ = stream.UnreadRune()
 
 				must = false
 			}
 
-			str, err := frag_uppercase_id1(stream)
+			err = frag_uppercase_id1(stream)
 			if err == nil {
-				builder.WriteString(str)
+				return TtUppercaseId, nil
 			} else if err != lexer.NotFound {
-				return EtInvalid, builder.String(), err
+				return EtInvalid, err
 			} else if must {
-				return EtInvalid, builder.String(), lexer.NewErrBadGroup("uppercase letter", &char)
+				return EtInvalid, lexer.NewErrBadGroup("uppercase letter", &char)
+			} else {
+				return TtUppercaseId, nil
 			}
-
-			return TtUppercaseId, builder.String(), nil
 		}
 
 		// fragment LOWERCASE : [a-z];

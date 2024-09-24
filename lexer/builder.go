@@ -12,11 +12,10 @@ import (
 //
 // Returns:
 //   - T: the type of the token.
-//   - string: the data of the token.
 //   - error: if an error occurred.
 //
 // If the returned token is nil, then the token is marked to be skipped.
-type LexFunc[T gr.TokenTyper] func(stream RuneStreamer, char rune) (T, string, error)
+type LexFunc[T gr.TokenTyper] func(stream RuneStreamer, char rune) (T, error)
 
 // Builder is a lexer builder.
 type Builder[T gr.TokenTyper] struct {
@@ -48,17 +47,17 @@ func (b *Builder[T]) RegisterSkip(char rune, frag LexFragment) {
 		return
 	}
 
-	fn := func(lexer RuneStreamer, char rune) (T, string, error) {
+	fn := func(lexer RuneStreamer, char rune) (T, error) {
 		for {
-			_, err := frag(lexer)
+			err := frag(lexer)
 			if err == NotFound {
 				break
 			} else if err != nil {
-				return T(-1), "", err
+				return T(-1), err
 			}
 		}
 
-		return T(-1), "", SkipToken
+		return T(-1), SkipToken
 	}
 
 	b.table[char] = fn

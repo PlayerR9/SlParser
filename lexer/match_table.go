@@ -12,7 +12,7 @@ type MatchTable[T gr.TokenTyper] struct {
 }
 
 func (mt MatchTable[T]) MakeFunc() LexFunc[T] {
-	fn := func(lexer RuneStreamer, char rune) (T, string, error) {
+	fn := func(lexer RuneStreamer, char rune) (T, error) {
 		var indices []int
 
 		for i, word := range mt.words {
@@ -24,7 +24,7 @@ func (mt MatchTable[T]) MakeFunc() LexFunc[T] {
 		}
 
 		if len(indices) == 0 {
-			return T(-1), "", fmt.Errorf("no words start with %q", char)
+			return T(-1), fmt.Errorf("no words start with %q", char)
 		}
 
 		limit := 1
@@ -55,7 +55,7 @@ func (mt MatchTable[T]) MakeFunc() LexFunc[T] {
 			limit++
 		}
 
-		return T(indices[0]), string(mt.words[indices[0]]), nil
+		return T(indices[0]), nil
 	}
 
 	return fn

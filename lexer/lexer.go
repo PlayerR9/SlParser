@@ -76,18 +76,23 @@ func (l *Lexer[T]) NextRune() (rune, error) {
 	}
 
 	c, size, err := l.input_stream.ReadRune()
-	if err != nil {
-		l.state.UpdateLastErr(err)
+	if err == nil {
+		l.next_pos += size
+		l.last_read_size = size
 
-		return 0, err
+		l.state.UpdateLastErr(nil)
+		l.state.SetChar(c)
+
+		return c, nil
 	}
 
-	l.next_pos += size
-	l.last_read_size = size
+	if err != io.EOF {
+		err = NewErrInvalidInputStream(err)
+	}
 
-	l.state.UpdateLastErr(nil)
+	l.state.UpdateLastErr(err)
 
-	return c, nil
+	return 0, err
 }
 
 // UnreadRune implements RuneStreamer interface.
@@ -103,6 +108,8 @@ func (l *Lexer[T]) UnreadRune() error {
 
 	l.next_pos -= l.last_read_size
 	l.last_read_size = 0
+
+	l.state.RemoveChar()
 
 	return nil
 }
@@ -172,8 +179,9 @@ func (l *Lexer[T]) Lex() error {
 
 			l.state.UpdateLastCharRead(&char)
 
-			type_, data, err := l.def_fn(l, char)
+			type_, err := l.def_fn(l, char)
 			if err == nil {
+				data := l.state.GetData()
 				tk := gr.NewToken(type_, data, l.pos)
 
 				l.add_token(tk)
@@ -205,7 +213,6 @@ func (l *Lexer[T]) Lex() error {
 			l.state.UpdateLastCharRead(&char)
 
 			var type_ T
-			var data string
 
 			var tk *gr.Token[T]
 
@@ -214,9 +221,10 @@ func (l *Lexer[T]) Lex() error {
 				return l.make_error()
 			}
 
-			type_, data, err = fn(l, char)
+			type_, err = fn(l, char)
 
 			if err == nil {
+				data := l.state.GetData()
 				tk = gr.NewToken(type_, data, l.pos)
 
 				l.add_token(tk)
@@ -227,6 +235,7 @@ func (l *Lexer[T]) Lex() error {
 
 				return l.make_error()
 			} else {
+				_ = l.state.GetData()
 				l.add_token(nil)
 			}
 		}
@@ -245,18 +254,18 @@ func (l *Lexer[T]) Lex() error {
 		l.state.UpdateLastCharRead(&char)
 
 		var type_ T
-		var data string
 
 		var tk *gr.Token[T]
 
 		fn, ok := l.table[char]
 		if ok {
-			type_, data, err = fn(l, char)
+			type_, err = fn(l, char)
 		} else {
-			type_, data, err = l.def_fn(l, char)
+			type_, err = l.def_fn(l, char)
 		}
 
 		if err == nil {
+			data := l.state.GetData()
 			tk = gr.NewToken(type_, data, l.pos)
 
 			l.add_token(tk)
@@ -267,6 +276,7 @@ func (l *Lexer[T]) Lex() error {
 
 			return l.make_error()
 		} else {
+			_ = l.state.GetData()
 			l.add_token(nil)
 		}
 	}

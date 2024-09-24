@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"fmt"
 	"io"
 
 	"github.com/PlayerR9/SlParser/lexer"
@@ -51,79 +50,77 @@ func init() {
 	builder.RegisterSkip('#', comment_fn)
 
 	// NEWLINE : ('\r'? '\n')+ ;
-	builder.Register('\r', func(stream lexer.RuneStreamer, char rune) (TokenType, string, error) {
+	builder.Register('\r', func(stream lexer.RuneStreamer, char rune) (TokenType, error) {
+		gers.AssertNotNil(stream, "stream")
+
 		char, err := stream.NextRune()
 		if err == io.EOF {
-			return EtInvalid, "", fmt.Errorf("after %q, %w", '\r',
-				fmt.Errorf("expected %q, got nothing instead", '\n'),
-			)
+			return EtInvalid, lexer.NewErrGotNothing('\r', '\n')
 		} else if err != nil {
-			return EtInvalid, "", err
+			return EtInvalid, err
 		}
 
 		if char != '\n' {
-			return EtInvalid, "", fmt.Errorf("after %q, %w", '\r',
-				fmt.Errorf("expected %q, got %q instead", '\n', char),
-			)
+			return EtInvalid, lexer.NewErrGotUnexpected('\r', '\n', char)
 		}
 
-		str, err := lexer.ApplyMany(stream, lexer.FragNewline)
+		err = lexer.ApplyMany(stream, lexer.FragNewline)
 		if err != nil && err != lexer.NotFound {
-			return EtInvalid, "", err
+			return EtInvalid, err
 		}
 
-		return TtNewline, str, nil
+		return TtNewline, nil
 	})
 
-	builder.Register('\n', func(stream lexer.RuneStreamer, char rune) (TokenType, string, error) {
-		str, err := lexer.ApplyMany(stream, lexer.FragNewline)
+	builder.Register('\n', func(stream lexer.RuneStreamer, char rune) (TokenType, error) {
+		gers.AssertNotNil(stream, "stream")
+
+		err := lexer.ApplyMany(stream, lexer.FragNewline)
 		if err != nil && err != lexer.NotFound {
-			return EtInvalid, "", err
+			return EtInvalid, err
 		}
 
-		return TtNewline, str, nil
+		return TtNewline, nil
 	})
 
 	// LIST_COMPREHENSION : 'sq = [x * x for x in range(10)]' ;
 	// PRINT_STMT : 'sq' ;
 	word_fn := lexer.FragWord(" = [x * x for x in range(10)]")
 
-	builder.Register('s', func(stream lexer.RuneStreamer, char rune) (TokenType, string, error) {
+	builder.Register('s', func(stream lexer.RuneStreamer, char rune) (TokenType, error) {
+		gers.AssertNotNil(stream, "stream")
+
 		char, err := stream.NextRune()
 		if err == io.EOF {
-			return EtInvalid, "", fmt.Errorf("after %q, %w", 's',
-				fmt.Errorf("expected %q, got nothing instead", 'q'),
-			)
+			return EtInvalid, lexer.NewErrGotNothing('s', 'q')
 		} else if err != nil {
-			return EtInvalid, "", err
+			return EtInvalid, err
 		}
 
 		if char != 'q' {
-			return EtInvalid, "", fmt.Errorf("after %q, %w", 's',
-				fmt.Errorf("expected %q, got %q instead", 'q', char),
-			)
+			return EtInvalid, lexer.NewErrGotUnexpected('s', 'q', char)
 		}
 
 		next, err := stream.NextRune()
 		if err == io.EOF {
-			return TtPrintStmt, "sq", nil
+			return TtPrintStmt, nil
 		} else if err != nil {
-			return EtInvalid, "", err
+			return EtInvalid, err
 		}
 
 		if next != ' ' {
 			err := stream.UnreadRune()
 			gers.AssertErr(err, "lexer.UnreadRune()")
 
-			return TtPrintStmt, "sq", nil
+			return TtPrintStmt, nil
 		}
 
-		word, err := word_fn(stream)
+		err = word_fn(stream)
 		if err != nil {
-			return EtInvalid, "", err
+			return EtInvalid, err
 		}
 
-		return TtListComprehension, "sq" + word, nil
+		return TtListComprehension, nil
 	})
 
 	Lexer = builder.Build()
