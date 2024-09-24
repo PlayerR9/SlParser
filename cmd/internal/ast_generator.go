@@ -1,6 +1,9 @@
 package internal
 
-import "github.com/PlayerR9/go-generator"
+import (
+	kdd "github.com/PlayerR9/SlParser/kdd"
+	"github.com/PlayerR9/go-generator"
+)
 
 type ASTGen struct {
 	PackageName string
@@ -13,6 +16,19 @@ func (g *ASTGen) SetPackageName(pkg_name string) {
 	}
 
 	g.PackageName = pkg_name
+}
+
+func NewASTGen(tokens []*kdd.Node) (*ASTGen, error) {
+	candidates, err := CandidatesForAst(tokens)
+	if err != nil {
+		return nil, err
+	}
+
+	gen := &ASTGen{
+		Ast: candidates,
+	}
+
+	return gen, nil
 }
 
 var (
@@ -56,7 +72,7 @@ const (
 	Node[InvalidNode]
 	*/
 	InvalidNode NodeType = iota -1{{ range $index, $value := .Ast }}
-	
+
 	/*{{ $value }}Node is [...].
 	Node[{{ $value }}Node]
 	*/

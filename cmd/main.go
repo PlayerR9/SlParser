@@ -1,12 +1,12 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"log"
 	"os"
 
 	"github.com/PlayerR9/SlParser/cmd/internal"
+	kdd "github.com/PlayerR9/SlParser/kdd"
 	"github.com/PlayerR9/go-generator"
 )
 
@@ -33,60 +33,20 @@ func main() {
 		Logger.Fatalf("Error reading file: %v", err)
 	}
 
-	lines := bytes.Split(data, []byte{'\n'})
+	parser := kdd.NewParser()
+	parser.SetDebugger(Logger)
+	parser.SetMode(kdd.ShowAll)
 
-	var tokens []*internal.Token
-
-	var rules []*internal.Rule
-
-	for i, line := range lines {
-		if len(line) == 0 {
-			continue
-		}
-
-		fields := bytes.Fields(line)
-		if len(fields) == 0 {
-			continue
-		}
-
-		if len(fields) <= 3 {
-			Logger.Fatalf("invalid line at %d: %q", i, line)
-		}
-
-		if !bytes.Equal(fields[1], []byte(":")) {
-			Logger.Fatalf("missing colon at %d: %q", i, line)
-		}
-
-		if !bytes.Equal(fields[len(fields)-1], []byte(";")) {
-			Logger.Fatalf("missing semicolon at %d: %q", i, line)
-		}
-
-		lhs, err := internal.MakeToken(fields[0])
-		if err != nil {
-			Logger.Fatalf("invalid lhs at %d: %v", i, err)
-		}
-
-		tokens = append(tokens, lhs)
-
-		var rhss []*internal.Token
-
-		for j := 2; j < len(fields)-1; j++ {
-			tk, err := internal.MakeToken(fields[j])
-			if err != nil {
-				Logger.Fatalf("invalid token at %d of line %d: %v", j, i, err)
-			}
-
-			rhss = append(rhss, tk)
-			tokens = append(tokens, tk)
-		}
-
-		rule := internal.NewRule(lhs, rhss)
-		rules = append(rules, rule)
+	root, err := parser.Full(data)
+	if err != nil {
+		Logger.Fatalf("Error parsing file: %v", err)
 	}
 
-	tk_symbols, err := internal.TokenSymbols(tokens)
+	tk_symbols := internal.ExtractSymbols(root)
+
+	rules, err := internal.ExtractRules(root)
 	if err != nil {
-		Logger.Fatalf("Error parsing tokens: %v", err)
+		Logger.Fatalf("Error extracting rules: %v", err)
 	}
 
 	err = GenerateTokens(tk_symbols, rules)
@@ -118,22 +78,15 @@ func main() {
 	Logger.Println("Successfully generated parser. Make sure to run go generate ./...")
 }
 
-func GenerateTokens(tk_symbols []*internal.Token, rules []*internal.Rule) error {
+func GenerateTokens(tk_symbols []*kdd.Node, rules []*internal.Rule) error {
 	ok := internal.CheckEofExists(tk_symbols)
 	if !ok {
 		return errors.New("missing EOF")
 	}
 
-	all_symbols := internal.ExtractSymbols(tk_symbols)
-
-	last_terminal := internal.FindLastTerminal(tk_symbols)
-	if last_terminal == nil {
-		return errors.New("missing terminal")
-	}
-
-	gd := &internal.TokenGen{
-		Symbols:      all_symbols,
-		LastTerminal: last_terminal.String(),
+	gd, err := internal.NewTokenGen(tk_symbols)
+	if err != nil {
+		return err
 	}
 
 	for _, rule := range rules {
@@ -191,9 +144,10 @@ func GenerateNode() error {
 	return nil
 }
 
-func GenerateAst(tk_symbols []*internal.Token) error {
-	gen := &internal.ASTGen{
-		Ast: internal.CandidatesForAst(tk_symbols),
+func GenerateAst(tk_symbols []*kdd.Node) error {
+	gen, err := internal.NewASTGen(tk_symbols)
+	if err != nil {
+		return err
 	}
 
 	ast_gen, err := internal.ASTGenerator.Generate(internal.OutputLocFlag, "ast", gen)

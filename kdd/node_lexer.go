@@ -14,6 +14,8 @@ type Node struct {
 	Data                                                    string
 	Type                                                    NodeType
 	Pos                                                     int
+
+	IsTerminal bool
 }
 
 // IsLeaf implements the tree.Noder interface.

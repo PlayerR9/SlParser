@@ -1,6 +1,11 @@
 package internal
 
-import "github.com/PlayerR9/go-generator"
+import (
+	"errors"
+
+	kdd "github.com/PlayerR9/SlParser/kdd"
+	"github.com/PlayerR9/go-generator"
+)
 
 type TokenGen struct {
 	PackageName  string
@@ -15,6 +20,36 @@ func (gd *TokenGen) SetPackageName(pkg_name string) {
 	}
 
 	gd.PackageName = pkg_name
+}
+
+func NewTokenGen(tokens []*kdd.Node) (*TokenGen, error) {
+	var symbols []string
+
+	if len(tokens) > 0 {
+		symbols = make([]string, 0, len(tokens))
+
+		for _, tk := range tokens {
+			if tk == nil {
+				continue
+			}
+
+			symbols = append(symbols, tk.Data)
+		}
+	}
+
+	lt, err := FindLastTerminal(tokens)
+	if err != nil {
+		return nil, err
+	} else if lt == nil {
+		return nil, errors.New("missing terminal")
+	}
+
+	gd := &TokenGen{
+		Symbols:      symbols,
+		LastTerminal: lt.Data,
+	}
+
+	return gd, nil
 }
 
 var (

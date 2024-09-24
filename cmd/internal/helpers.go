@@ -8,8 +8,116 @@ import (
 	"strings"
 	"unicode"
 
+	kdd "github.com/PlayerR9/SlParser/kdd"
 	gcch "github.com/PlayerR9/go-commons/runes"
+	gers "github.com/PlayerR9/go-errors"
 )
+
+// TypeOf returns the type of a kdd.Node.
+//
+// Parameters:
+//   - n: The node.
+//
+// Returns:
+//   - TokenType: The type of the node.
+//   - error: An error if the node is nil or not a RHS node.
+func TypeOf(n *kdd.Node) (TokenType, error) {
+	if n == nil {
+		return ExtraTk, errors.New("node must not be nil")
+	}
+
+	if n.Type != kdd.RhsNode {
+		return ExtraTk, fmt.Errorf("node must be a RHS node, got %s instead", n.Type.String())
+	}
+
+	if !n.IsTerminal {
+		return NonterminalTk, nil
+	}
+
+	if n.Data == "EOF" {
+		return ExtraTk, nil
+	}
+
+	return TerminalTk, nil
+}
+
+func CheckEofExists(tokens []*kdd.Node) bool {
+	if len(tokens) == 0 {
+		return false
+	}
+
+	for _, tk := range tokens {
+		gers.AssertNotNil(tk, "tk")
+
+		if tk.Type == kdd.RhsNode && tk.Data == "EOF" {
+			return true
+		}
+	}
+
+	return false
+}
+
+func FindLastTerminal(tokens []*kdd.Node) (*kdd.Node, error) {
+	if len(tokens) == 0 {
+		return nil, nil
+	}
+
+	idx := -1
+
+	for i := 0; i < len(tokens) && idx == -1; i++ {
+		gers.AssertNotNil(tokens[i], "tokens[i]")
+
+		type_, err := TypeOf(tokens[i])
+		if err != nil {
+			return nil, fmt.Errorf("at index %d: %w", i, err)
+		}
+
+		if type_ == NonterminalTk {
+			idx = i
+		}
+	}
+
+	if idx == -1 {
+		return tokens[len(tokens)-1], nil
+	} else if idx == 0 {
+		return nil, nil
+	}
+
+	return tokens[idx-1], nil
+}
+
+func CandidatesForAst(tokens []*kdd.Node) ([]string, error) {
+	if len(tokens) == 0 {
+		return nil, nil
+	}
+
+	var candidates []string
+
+	for i, tk := range tokens {
+		if tk == nil {
+			continue
+		}
+
+		type_, err := TypeOf(tk)
+		if err != nil {
+			return nil, fmt.Errorf("at index %d: %w", i, err)
+		}
+
+		ok := IsCandidateForAst(type_, tk.Data)
+		if !ok {
+			continue
+		}
+
+		pos, ok := slices.BinarySearch(candidates, tk.Data)
+		if !ok {
+			candidates = slices.Insert(candidates, pos, tk.Data)
+		}
+	}
+
+	return candidates, nil
+}
+
+/////////////////////////
 
 func replace_underscore(chars []rune) string {
 	var builder strings.Builder
@@ -64,12 +172,12 @@ func MakeToken(symbol []byte) (*Token, error) {
 	return tk, nil
 }
 
-func unique(tokens []*Token) []*Token {
+/* func unique(tokens []string) []string {
 	for i := 0; i < len(tokens)-1; i++ {
 		top := i + 1
 
 		for j := i + 1; j < len(tokens); j++ {
-			if tokens[j].Data != tokens[i].Data {
+			if tokens[j] != tokens[i] {
 				tokens[top] = tokens[j]
 				top++
 			}
@@ -79,129 +187,4 @@ func unique(tokens []*Token) []*Token {
 	}
 
 	return tokens
-}
-
-func sort(tokens []*Token) error {
-	buckets := make(map[TokenType][]*Token, 3)
-	buckets[ExtraTk] = make([]*Token, 0)
-	buckets[TerminalTk] = make([]*Token, 0)
-	buckets[NonterminalTk] = make([]*Token, 0)
-
-	for _, tk := range tokens {
-		type_ := tk.Type
-
-		prev, ok := buckets[type_]
-		if !ok {
-			return fmt.Errorf("bucket %q not found", type_.String())
-		}
-
-		buckets[type_] = append(prev, tk)
-	}
-
-	for type_, bucket := range buckets {
-		slices.SortStableFunc(bucket, func(a, b *Token) int {
-			return strings.Compare(a.Data, b.Data)
-		})
-
-		buckets[type_] = bucket
-	}
-
-	i := 0
-
-	tks := buckets[ExtraTk]
-	for _, tk := range tks {
-		tokens[i] = tk
-		i++
-	}
-
-	tks = buckets[TerminalTk]
-	for _, tk := range tks {
-		tokens[i] = tk
-		i++
-	}
-
-	tks = buckets[NonterminalTk]
-	for _, tk := range tks {
-		tokens[i] = tk
-		i++
-	}
-
-	return nil
-}
-
-func TokenSymbols(tokens []*Token) ([]*Token, error) {
-	if len(tokens) == 0 {
-		return nil, nil
-	}
-
-	tokens = unique(tokens)
-	err := sort(tokens)
-	if err != nil {
-		return nil, err
-	}
-
-	return tokens, nil
-}
-
-func ExtractSymbols(tokens []*Token) []string {
-	if len(tokens) == 0 {
-		return nil
-	}
-
-	symbols := make([]string, 0, len(tokens))
-
-	for _, tk := range tokens {
-		s := tk.String()
-		symbols = append(symbols, s)
-	}
-
-	return symbols
-}
-
-func FindLastTerminal(tokens []*Token) *Token {
-	if len(tokens) == 0 {
-		return nil
-	}
-
-	idx := -1
-
-	for i := 0; i < len(tokens) && idx == -1; i++ {
-		if tokens[i].Type == NonterminalTk {
-			idx = i
-		}
-	}
-
-	if idx == -1 {
-		return tokens[len(tokens)-1]
-	} else if idx == 0 {
-		return nil
-	}
-
-	return tokens[idx-1]
-}
-
-func CheckEofExists(tokens []*Token) bool {
-	for _, tk := range tokens {
-		if tk.Type == ExtraTk && tk.Data == "EOF" {
-			return true
-		}
-	}
-
-	return false
-}
-
-func CandidatesForAst(tokens []*Token) []string {
-	if len(tokens) == 0 {
-		return nil
-	}
-
-	var candidates []string
-
-	for _, tk := range tokens {
-		if tk.IsCandidateForAst() {
-			candidates = append(candidates, tk.Data)
-		}
-	}
-
-	return candidates
-}
+} */

@@ -31,11 +31,11 @@ func NewToken(type_ TokenType, data string) *Token {
 	}
 }
 
-func (t Token) IsCandidateForAst() bool {
-	if t.Type != NonterminalTk || t.Data == "" {
+func IsCandidateForAst(type_ TokenType, data string) bool {
+	if type_ != NonterminalTk || data == "" {
 		return false
 	}
 
-	r, _ := utf8.DecodeLastRuneInString(t.Data)
+	r, _ := utf8.DecodeLastRuneInString(data)
 	return !unicode.IsDigit(r) && unicode.IsLetter(r)
 }
