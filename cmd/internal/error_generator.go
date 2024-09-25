@@ -48,8 +48,6 @@ import (
 	gerr "github.com/PlayerR9/go-errors/error"
 )
 
-//go:generate stringer -type=ErrorCode
-
 type ErrorCode int
 
 const (

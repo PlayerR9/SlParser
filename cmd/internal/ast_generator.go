@@ -86,8 +86,6 @@ import (
 	"github.com/PlayerR9/SlParser/parser"
 )
 
-//go:generate stringer -type=NodeType -linecomment
-
 type NodeType int
 
 const (

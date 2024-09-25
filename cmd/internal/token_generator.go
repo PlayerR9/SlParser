@@ -98,8 +98,6 @@ import (
 	"github.com/PlayerR9/SlParser/parser"
 )
 
-//go:generate stringer -type=TokenType
-
 type TokenType int
 
 const (

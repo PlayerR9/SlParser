@@ -79,6 +79,11 @@ func main() {
 		Logger.Fatalf("Error generating parsing: %v", err)
 	}
 
+	err = GenerateGen()
+	if err != nil {
+		Logger.Fatalf("Error generating gen: %v", err)
+	}
+
 	// cmd := exec.Command("go", "generate", "./...")
 	// err = cmd.Run()
 	// if err != nil {
@@ -198,6 +203,20 @@ func GenerateError() error {
 	}
 
 	data.ModifyPrefixPath("errors_")
+
+	err = data.WriteFile()
+	return err
+}
+
+func GenerateGen() error {
+	gen := internal.NewGenGen()
+
+	data, err := internal.GenGenerator.Generate(internal.OutputLocFlag, "gen", gen)
+	if err != nil {
+		return err
+	}
+
+	data.ModifyPrefixPath("gen_")
 
 	err = data.WriteFile()
 	return err
