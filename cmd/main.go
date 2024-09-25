@@ -69,6 +69,16 @@ func main() {
 		Logger.Fatalf("Error generating ast: %v", err)
 	}
 
+	err = GenerateError()
+	if err != nil {
+		Logger.Fatalf("Error generating errors: %v", err)
+	}
+
+	err = GenerateParsing()
+	if err != nil {
+		Logger.Fatalf("Error generating parsing: %v", err)
+	}
+
 	// cmd := exec.Command("go", "generate", "./...")
 	// err = cmd.Run()
 	// if err != nil {
@@ -163,4 +173,32 @@ func GenerateAst(tk_symbols []*kdd.Node) error {
 	}
 
 	return nil
+}
+
+func GenerateParsing() error {
+	gen := internal.NewParsingGen()
+
+	data, err := internal.ParsingGenerator.Generate(internal.OutputLocFlag, "parsing", gen)
+	if err != nil {
+		return err
+	}
+
+	data.ModifyPrefixPath("parsing_")
+
+	err = data.WriteFile()
+	return err
+}
+
+func GenerateError() error {
+	gen := internal.NewErrorGen()
+
+	data, err := internal.ErrorGenerator.Generate(internal.OutputLocFlag, "error", gen)
+	if err != nil {
+		return err
+	}
+
+	data.ModifyPrefixPath("errors_")
+
+	err = data.WriteFile()
+	return err
 }
