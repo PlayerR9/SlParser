@@ -119,16 +119,16 @@ func GenerateTokens(tk_symbols []*kdd.Node, rules []*internal.Rule) error {
 }
 
 func GenerateLexer() error {
-	gd := &internal.LexerGen{}
+	gen := internal.NewLexerGen()
 
-	gen, err := internal.LexerGenerator.Generate(internal.OutputLocFlag, "lexer", gd)
+	lexer_gen, err := internal.LexerGenerator.Generate(internal.OutputLocFlag, "lexer", gen)
 	if err != nil {
 		return err
 	}
 
-	gen.ModifyPrefixPath("lexer_", "internal")
+	lexer_gen.ModifyPrefixPath("lexer_", "internal")
 
-	err = gen.WriteFile()
+	err = lexer_gen.WriteFile()
 	if err != nil {
 		return err
 	}
@@ -137,9 +137,9 @@ func GenerateLexer() error {
 }
 
 func GenerateNode() error {
-	nd := &internal.NodeData{}
+	gen := internal.NewNodeGen()
 
-	node_gen, err := internal.NodeGenerator.Generate(internal.OutputLocFlag, "node", nd)
+	node_gen, err := internal.NodeGenerator.Generate(internal.OutputLocFlag, "node", gen)
 	if err != nil {
 		return err
 	}

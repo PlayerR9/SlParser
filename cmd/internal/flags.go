@@ -8,7 +8,10 @@ import (
 )
 
 var (
+	// OutputLocFlag is the output location flag.
 	OutputLocFlag *generator.OutputLocVal
+
+	// InputFileFlag is the flag used to specify the input file.
 	InputFileFlag *string
 )
 
@@ -18,6 +21,10 @@ func init() {
 	InputFileFlag = flag.String("input", "", "The input file to parse. This flag is required.")
 }
 
+// ParseFlags parses the command line flags.
+//
+// Returns:
+//   - error: if an error occurred.
 func ParseFlags() error {
 	generator.ParseFlags()
 
