@@ -36,31 +36,31 @@ func NewNodeInfo(type_ TokenType) *NodeInfo {
 	}
 }
 
-type Info struct {
+type InfoTable struct {
 	table map[*kdd.Node]*NodeInfo
 }
 
-func NewInfo() *Info {
-	return &Info{
+func NewInfoTable() *InfoTable {
+	return &InfoTable{
 		table: make(map[*kdd.Node]*NodeInfo),
 	}
 }
 
-func (info *Info) AddInfo(node *kdd.Node, node_info *NodeInfo) {
-	if info == nil || node == nil {
+func (table *InfoTable) AddInfo(node *kdd.Node, info *NodeInfo) {
+	if table == nil || node == nil {
 		return
 	}
 
-	gers.AssertNotNil(info.table, "info.table")
+	gers.AssertNotNil(table.table, "info.table")
 
-	if node_info == nil {
-		delete(info.table, node)
+	if info == nil {
+		delete(table.table, node)
 	} else {
-		info.table[node] = node_info
+		table.table[node] = info
 	}
 }
 
-func make_info_rec(root *kdd.Node, info *Info) {
+func make_info_rec(root *kdd.Node, info *InfoTable) {
 	gers.AssertNotNil(root, "root")
 	gers.AssertNotNil(info, "info")
 
@@ -99,13 +99,13 @@ func make_info_rec(root *kdd.Node, info *Info) {
 	}
 }
 
-func MakeInfo(root *kdd.Node) (*Info, error) {
+func MakeInfo(root *kdd.Node) (*InfoTable, error) {
 	err := kdd.CheckAST(root)
 	if err != nil {
 		return nil, err
 	}
 
-	info := NewInfo()
+	info := NewInfoTable()
 
 	make_info_rec(root, info)
 
