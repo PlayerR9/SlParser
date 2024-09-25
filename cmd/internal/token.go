@@ -10,9 +10,10 @@ import (
 type TokenType int
 
 const (
-	ExtraTk       TokenType = iota // Et
-	TerminalTk                     // Tt
-	NonterminalTk                  // Nt
+	InvalidTk     TokenType = iota - 1 // Invalid
+	ExtraTk                            // Et
+	TerminalTk                         // Tt
+	NonterminalTk                      // Nt
 )
 
 type Token struct {

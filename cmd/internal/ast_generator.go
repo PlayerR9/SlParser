@@ -94,7 +94,7 @@ const (
 	/*InvalidNode represents an invalid node.
 	Node[InvalidNode]
 	*/
-	InvalidNode NodeType = iota -1{{ range $index, $value := .Ast }}
+	InvalidNode NodeType = iota - 1 // Invalid {{ range $index, $value := .Ast }}
 
 	/*{{ $value }}Node is [...].
 	Node[{{ $value }}Node]

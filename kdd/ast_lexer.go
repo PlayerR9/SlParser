@@ -17,7 +17,7 @@ const (
 	/*InvalidNode represents an invalid node.
 	Node[InvalidNode]
 	*/
-	InvalidNode NodeType = iota - 1
+	InvalidNode NodeType = iota - 1 // Invalid
 
 	/*RhsNode represents the terminal symbol.
 	Node[RhsNode (<id>)]
