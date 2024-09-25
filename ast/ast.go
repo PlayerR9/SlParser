@@ -1,17 +1,30 @@
 package ast
 
 import (
+	"github.com/PlayerR9/SlParser/ast/internal"
 	gr "github.com/PlayerR9/SlParser/grammar"
 	gcers "github.com/PlayerR9/go-errors"
 )
 
+// ToAstFunc is a function that converts a token to an ast node.
+//
+// Parameters:
+//   - tree: The parse tree to convert. Assumed to be non-nil.
+//
+// Returns:
+//   - N: The ast node.
+//   - error: if an error occurred.
 type ToAstFunc[N interface {
 	AddChildren(children []N)
-}, T gr.TokenTyper] func(tk *gr.ParseTree[T]) (N, error)
+
+	internal.Noder
+}, T gr.TokenTyper] func(tree *gr.ParseTree[T]) (N, error)
 
 // AstMaker is an ast maker.
 type AstMaker[N interface {
 	AddChildren(children []N)
+
+	internal.Noder
 }, T gr.TokenTyper] struct {
 	// table is the ast table.
 	table map[T]ToAstFunc[N, T]

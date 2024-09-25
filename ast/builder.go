@@ -1,18 +1,29 @@
 package ast
 
 import (
+	"github.com/PlayerR9/SlParser/ast/internal"
 	gr "github.com/PlayerR9/SlParser/grammar"
 )
 
+// Builder is a builder for an ast.
 type Builder[N interface {
 	AddChildren(children []N)
+
+	internal.Noder
 }, T gr.TokenTyper] struct {
+	// table is the table of the builder.
 	table map[T]ToAstFunc[N, T]
 	// make_fake_node func(root *gr.ParseTree[T]) N
 }
 
+// NewBuilder creates a builder for an ast.
+//
+// Returns:
+//   - Builder: The builder.
 func NewBuilder[N interface {
 	AddChildren(children []N)
+
+	internal.Noder
 }, T gr.TokenTyper]() Builder[N, T] {
 	return Builder[N, T]{
 		table: make(map[T]ToAstFunc[N, T]),
@@ -80,6 +91,13 @@ func (am Builder[N]) Convert(root *gr.Token[T]) (N, error) {
 	am.table[type_] = fn
 } */
 
+// Register registers a new ast function.
+//
+// Parameters:
+//   - type_: The type of the token.
+//   - fn: The ast function.
+//
+// Does nothing if the receiver or 'fn' are nil.
 func (am *Builder[N, T]) Register(type_ T, fn ToAstFunc[N, T]) {
 	if am == nil || fn == nil {
 		return
@@ -88,6 +106,10 @@ func (am *Builder[N, T]) Register(type_ T, fn ToAstFunc[N, T]) {
 	am.table[type_] = fn
 }
 
+// Build builds the ast maker.
+//
+// Returns:
+//   - AstMaker: the ast maker. Never returns nil.
 func (am Builder[N, T]) Build() *AstMaker[N, T] {
 	var table map[T]ToAstFunc[N, T]
 
@@ -106,6 +128,7 @@ func (am Builder[N, T]) Build() *AstMaker[N, T] {
 	}
 }
 
+// Reset resets the builder; making it reusable.
 func (am *Builder[N, T]) Reset() {
 	if am == nil {
 		return

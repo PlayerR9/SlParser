@@ -100,7 +100,7 @@ func make_info_rec(root *kdd.Node, info *InfoTable) {
 }
 
 func MakeInfo(root *kdd.Node) (*InfoTable, error) {
-	err := kdd.CheckAST(root)
+	err := kdd.CheckAST(root, -1)
 	if err != nil {
 		return nil, err
 	}

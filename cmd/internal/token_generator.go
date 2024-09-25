@@ -47,9 +47,9 @@ func NewTokenGen(tokens []*kdd.Node) (*TokenGen, error) {
 	}
 
 	for i, tk := range tokens {
-		err := kdd.CheckNode(tk)
+		err := kdd.CheckAST(tk, 1)
 		if err != nil {
-			return nil, fmt.Errorf("token at index %d: %w", i, err)
+			return nil, fmt.Errorf("invalid token at index %d: %w", i, err)
 		}
 	}
 

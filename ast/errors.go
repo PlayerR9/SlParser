@@ -1,6 +1,7 @@
 package ast
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -12,24 +13,48 @@ import (
 
 //go:generate stringer -type=ErrorCode
 
+// ErrorCode is the error code of an error.
 type ErrorCode int
 
 const (
+	// UnregisteredType occurs when a type is not registered.
 	UnregisteredType ErrorCode = iota
+
+	// BadSyntaxTree occurs when a syntax tree is invalid.
 	BadSyntaxTree
 )
 
+// Int implements the error.ErrorCoder interface.
 func (e ErrorCode) Int() int {
 	return int(e)
 }
 
+// NewUnregisteredType creates a new UnregisteredType error.
+//
+// Parameters:
+//   - type_: The type that is not registered.
+//   - in: The input that caused the error.
+//
+// Returns:
+//   - *gcers.Err: The error. Never returns nil.
 func NewUnregisteredType[T gr.TokenTyper](type_ T, in string) *gcers.Err {
-	err := gcers.New(UnregisteredType, "type "+type_.String()+"is not registered")
+	msg := fmt.Sprintf("type %q is not registered", type_.String())
+
+	err := gcers.New(UnregisteredType, msg)
 	err.AddFrame("", in)
 
 	return err
 }
 
+// NewBadSyntaxTree creates a new BadSyntaxTree error.
+//
+// Parameters:
+//   - at: The position of the token.
+//   - type_: The type of the token.
+//   - got: The unexpected value.
+//
+// Returns:
+//   - *gcers.Err: The error. Never returns nil.
 func NewBadSyntaxTree[T gr.TokenTyper](at int, type_ T, got string) *gcers.Err {
 	if got != "" {
 		got = strconv.Quote(got)

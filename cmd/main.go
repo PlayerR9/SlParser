@@ -69,10 +69,10 @@ func main() {
 		Logger.Fatalf("Error generating ast: %v", err)
 	}
 
-	err = GenerateError()
-	if err != nil {
-		Logger.Fatalf("Error generating errors: %v", err)
-	}
+	/* 	err = GenerateError()
+	   	if err != nil {
+	   		Logger.Fatalf("Error generating errors: %v", err)
+	   	} */
 
 	err = GenerateParsing()
 	if err != nil {
@@ -194,6 +194,7 @@ func GenerateParsing() error {
 	return err
 }
 
+/*
 func GenerateError() error {
 	gen := internal.NewErrorGen()
 
@@ -206,7 +207,7 @@ func GenerateError() error {
 
 	err = data.WriteFile()
 	return err
-}
+} */
 
 func GenerateGen() error {
 	gen := internal.NewGenGen()

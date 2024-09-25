@@ -36,7 +36,7 @@ func (g *ASTGen) SetPackageName(pkg_name string) {
 //   - error: if an error occurred.
 func NewASTGen(nodes []*kdd.Node) (*ASTGen, error) {
 	for i, tk := range nodes {
-		err := kdd.CheckNode(tk)
+		err := kdd.CheckAST(tk, 1)
 		if err != nil {
 			return nil, fmt.Errorf("invalid token at index %d: %w", i, err)
 		}

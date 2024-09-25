@@ -18,6 +18,11 @@ type Node struct {
 	IsTerminal bool
 }
 
+// IsNil implements the ast.Noder interface.
+func (n *Node) IsNil() bool {
+	return n == nil
+}
+
 // IsLeaf implements the tree.Noder interface.
 func (n Node) IsLeaf() bool {
 	return n.FirstChild == nil
