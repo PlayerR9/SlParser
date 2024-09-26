@@ -13,6 +13,93 @@ import (
 	gers "github.com/PlayerR9/go-errors"
 )
 
+// replace_underscore replaces underscores with underscores.
+//
+// This function skips underscores and uppercase the following letter. Furthermore
+// any other letter is lowercased. Finally, the first letter is always uppercase.
+//
+// Parameters:
+//   - chars: The characters to replace.
+//
+// Returns:
+//   - string: The replaced string.
+//
+// Assertions:
+//   - len(chars) > 0
+func replace_underscore(chars []rune) string {
+	gers.Assert(len(chars) > 0, "chars must not be empty")
+
+	var builder strings.Builder
+
+	capitalize_next := true
+
+	for i := 0; i < len(chars); i++ {
+		c := chars[i]
+
+		if c == '_' {
+			capitalize_next = true
+		} else if capitalize_next {
+			builder.WriteRune(unicode.ToUpper(c))
+			capitalize_next = false
+		} else {
+			builder.WriteRune(unicode.ToLower(c))
+		}
+	}
+
+	return builder.String()
+}
+
+// MakeLiteral makes a literal according to the type and its data.
+//
+// Parameters:
+//   - type_: The type of the literal.
+//   - data: The data of the literal.
+//
+// Returns:
+//   - string: The literal.
+//   - error: The error.
+//
+// Errors:
+//   - errors.ErrInvalidUTF8Encoding: If the data is not properly encoded in UTF-8.
+//   - error.Err (with code InvalidParameter): If the data is an empty string.
+//   - any other error if the data does not starts with a letter nor the type_ is not one of the
+//     supported types (that are, TerminalTk, NonterminalTk, ExtraTk).
+func MakeLiteral(type_ TokenType, data string) (string, error) {
+	if data == "" {
+		return "", gers.NewErrInvalidParameter("data must not be an empty string")
+	}
+
+	chars, err := gcch.StringToUtf8(data)
+	if err != nil {
+		return "", err
+	}
+
+	if !unicode.IsLetter(chars[0]) {
+		return "", errors.New("symbol must start with a letter")
+	}
+
+	if unicode.IsLower(chars[0]) {
+		chars[0] = unicode.ToUpper(chars[0])
+	}
+
+	data = replace_underscore(chars)
+
+	switch type_ {
+	case TerminalTk:
+		data = "Tt" + data
+	case NonterminalTk:
+		data = "Nt" + data
+	case ExtraTk:
+		data = "Et" + data
+	default:
+		return "", fmt.Errorf("type (%v) is not supported", type_)
+	}
+
+	return data, nil
+}
+
+//////////////////////////////////////////////////////////////////
+
 // TypeOf returns the type of a kdd.Node.
 //
 // Parameters:
@@ -115,29 +202,6 @@ func CandidatesForAst(tokens []*kdd.Node) ([]string, error) {
 	}
 
 	return candidates, nil
-}
-
-/////////////////////////
-
-func replace_underscore(chars []rune) string {
-	var builder strings.Builder
-
-	capitalize_next := true
-
-	for i := 0; i < len(chars); i++ {
-		c := chars[i]
-
-		if c == '_' {
-			capitalize_next = true
-		} else if capitalize_next {
-			builder.WriteRune(unicode.ToUpper(c))
-			capitalize_next = false
-		} else {
-			builder.WriteRune(unicode.ToLower(c))
-		}
-	}
-
-	return builder.String()
 }
 
 func MakeToken(symbol []byte) (*Token, error) {

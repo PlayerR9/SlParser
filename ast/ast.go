@@ -1,7 +1,6 @@
 package ast
 
 import (
-	"github.com/PlayerR9/SlParser/ast/internal"
 	gr "github.com/PlayerR9/SlParser/grammar"
 	gcers "github.com/PlayerR9/go-errors"
 )
@@ -17,14 +16,14 @@ import (
 type ToAstFunc[N interface {
 	AddChildren(children []N)
 
-	internal.Noder
+	Noder
 }, T gr.TokenTyper] func(tree *gr.ParseTree[T]) (N, error)
 
 // AstMaker is an ast maker.
 type AstMaker[N interface {
 	AddChildren(children []N)
 
-	internal.Noder
+	Noder
 }, T gr.TokenTyper] struct {
 	// table is the ast table.
 	table map[T]ToAstFunc[N, T]

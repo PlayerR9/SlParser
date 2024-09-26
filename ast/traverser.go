@@ -5,7 +5,6 @@ import (
 	"iter"
 	"slices"
 
-	"github.com/PlayerR9/SlParser/ast/internal"
 	gerr "github.com/PlayerR9/go-errors/error"
 )
 
@@ -13,11 +12,11 @@ import (
 type Traversor[N interface {
 	Child() iter.Seq[N]
 
-	internal.Noder
+	Noder
 }, I interface {
 	NextInfos() []I
 
-	internal.Infoer[N]
+	Infoer[N]
 }] struct {
 	// InitFn is the function that initializes the info.
 	//

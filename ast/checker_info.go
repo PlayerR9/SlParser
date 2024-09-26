@@ -1,4 +1,4 @@
-package internal
+package ast
 
 import (
 	"iter"
@@ -10,7 +10,7 @@ type CheckerInfo[N interface {
 
 	Noder
 }] struct {
-	*_Info[N]
+	*Info[N]
 
 	// depth is the depth of the node.
 	depth int
@@ -21,12 +21,12 @@ func (ci *CheckerInfo[N]) Init(node N, frames []string) {
 		return
 	}
 
-	if ci._Info == nil {
-		var new_info _Info[N]
-		ci._Info = &new_info
+	if ci.Info == nil {
+		var new_info Info[N]
+		ci.Info = &new_info
 	}
 
-	ci._Info.Init(node, frames)
+	ci.Info.Init(node, frames)
 }
 
 // NewCheckerInfo creates a new CheckerInfo.
@@ -65,13 +65,13 @@ func (ci *CheckerInfo[N]) NextInfos() []*CheckerInfo[N] {
 		new_depth = ci.depth - 1
 	}
 
-	new_frames := ci.AppendFrame(ci.node.String())
+	new_frames := ci.AppendFrame()
 
 	var children []*CheckerInfo[N]
 
 	for child := range ci.node.Child() {
 		sub_info := NewCheckerInfo[N](new_depth)
-		sub_info._Info.Init(child, new_frames)
+		sub_info.Info.Init(child, new_frames)
 
 		children = append(children, &sub_info)
 	}

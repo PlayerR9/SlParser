@@ -3,7 +3,6 @@ package ast
 import (
 	"iter"
 
-	"github.com/PlayerR9/SlParser/ast/internal"
 	gers "github.com/PlayerR9/go-errors"
 )
 
@@ -25,7 +24,7 @@ import (
 type CheckASTWithLimit[N interface {
 	Child() iter.Seq[N]
 
-	internal.Noder
+	Noder
 }] func(node N, limit int) error
 
 // CheckNodeFn is a function that checks if the given node is valid.
@@ -38,7 +37,7 @@ type CheckASTWithLimit[N interface {
 type CheckNodeFn[N interface {
 	Child() iter.Seq[N]
 
-	internal.Noder
+	Noder
 }] func(node N) error
 
 // MakeCheckFn is a function that creates a CheckASTWithLimit function
@@ -54,7 +53,7 @@ type CheckNodeFn[N interface {
 func MakeCheckFn[N interface {
 	Child() iter.Seq[N]
 
-	internal.Noder
+	Noder
 }](check_fn CheckNodeFn[N]) CheckASTWithLimit[N] {
 	if check_fn == nil {
 		return func(node N, limit int) error {
@@ -62,9 +61,9 @@ func MakeCheckFn[N interface {
 		}
 	}
 
-	trav := Traversor[N, *internal.CheckerInfo[N]]{
+	trav := Traversor[N, *CheckerInfo[N]]{
 		InitFn: nil,
-		DoFn: func(node N, info *internal.CheckerInfo[N]) error {
+		DoFn: func(node N, info *CheckerInfo[N]) error {
 			gers.AssertNotNil(info, "info")
 
 			return check_fn(node)
@@ -72,8 +71,8 @@ func MakeCheckFn[N interface {
 	}
 
 	return func(node N, limit int) error {
-		trav.InitFn = func() *internal.CheckerInfo[N] {
-			info := internal.NewCheckerInfo[N](limit)
+		trav.InitFn = func() *CheckerInfo[N] {
+			info := NewCheckerInfo[N](limit)
 			return &info
 		}
 		return trav.ReverseDFS(node)

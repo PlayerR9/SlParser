@@ -5,7 +5,6 @@ import (
 	"iter"
 	"slices"
 
-	"github.com/PlayerR9/SlParser/ast/internal"
 	gers "github.com/PlayerR9/go-errors"
 	gerr "github.com/PlayerR9/go-errors/error"
 )
@@ -34,11 +33,11 @@ func init() {
 type NewInfoFn[N interface {
 	Child() iter.Seq[N]
 
-	internal.Noder
+	Noder
 }, I interface {
 	NextInfos() []I
 
-	internal.Infoer[N]
+	Infoer[N]
 }] func(node N) (I, error)
 
 // InfoTableOfFn is a function that creates an info table for a node.
@@ -52,11 +51,11 @@ type NewInfoFn[N interface {
 type InfoTableOfFn[N interface {
 	Child() iter.Seq[N]
 
-	internal.Noder
+	Noder
 }, I interface {
 	NextInfos() []I
 
-	internal.Infoer[N]
+	Infoer[N]
 }] func(root N) (map[N]I, error)
 
 // MakeInfoTable is a function that creates an info table for a node.
@@ -73,11 +72,11 @@ type InfoTableOfFn[N interface {
 func MakeInfoTable[N interface {
 	Child() iter.Seq[N]
 
-	internal.Noder
+	Noder
 }, I interface {
 	NextInfos() []I
 
-	internal.Infoer[N]
+	Infoer[N]
 }](fn NewInfoFn[N, I]) InfoTableOfFn[N, I] {
 	if fn == nil {
 		return func(root N) (map[N]I, error) {

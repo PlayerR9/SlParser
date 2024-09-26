@@ -1,7 +1,6 @@
 package ast
 
 import (
-	"github.com/PlayerR9/SlParser/ast/internal"
 	gr "github.com/PlayerR9/SlParser/grammar"
 	gcers "github.com/PlayerR9/go-errors"
 )
@@ -88,7 +87,7 @@ func CheckType[T gr.TokenTyper](children []*gr.ParseTree[T], at int, type_ T) er
 type LhsDoFunc[N interface {
 	AddChildren(children []N)
 
-	internal.Noder
+	Noder
 }, T gr.TokenTyper] func(children []*gr.ParseTree[T]) (N, error)
 
 // LhsToAst is a function that converts a token to an ast node.
@@ -109,7 +108,7 @@ type LhsDoFunc[N interface {
 func LhsToAst[N interface {
 	AddChildren(children []N)
 
-	internal.Noder
+	Noder
 }, T gr.TokenTyper](at int, children []*gr.ParseTree[T], lhs T, do LhsDoFunc[N, T]) ([]N, error) {
 	if do == nil {
 		return nil, gcers.NewErrNilParameter("do")

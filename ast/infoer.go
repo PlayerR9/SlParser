@@ -1,6 +1,8 @@
-package internal
+package ast
 
-import "iter"
+import (
+	"iter"
+)
 
 // Infoer is an interface for info about a node.
 type Infoer[N interface {
@@ -45,8 +47,8 @@ type Infoer[N interface {
 	See()
 }
 
-// _Info is the internal implementation of Infoer.
-type _Info[N interface {
+// Info is the internal implementation of Infoer.
+type Info[N interface {
 	Child() iter.Seq[N]
 
 	Noder
@@ -62,17 +64,17 @@ type _Info[N interface {
 }
 
 // IsNil implements the Infoer interface.
-func (info _Info[N]) IsNil() bool {
+func (info Info[N]) IsNil() bool {
 	return info.node.IsNil()
 }
 
 // Node implements the Infoer interface.
-func (info _Info[N]) Node() N {
+func (info Info[N]) Node() N {
 	return info.node
 }
 
 // Frame implements the Infoer interface.
-func (info _Info[N]) Frame() iter.Seq[string] {
+func (info Info[N]) Frame() iter.Seq[string] {
 	return func(yield func(string) bool) {
 		for _, frame := range info.frames {
 			if !yield(frame) {
@@ -83,7 +85,7 @@ func (info _Info[N]) Frame() iter.Seq[string] {
 }
 
 // Init implements the Infoer interface.
-func (info *_Info[N]) Init(node N, frames []string) {
+func (info *Info[N]) Init(node N, frames []string) {
 	if info == nil {
 		return
 	}
@@ -93,14 +95,40 @@ func (info *_Info[N]) Init(node N, frames []string) {
 	info.is_seen = false
 }
 
+// IsSeen implements the Infoer interface.
+func (info Info[N]) IsSeen() bool {
+	return info.is_seen
+}
+
+// See implements the Infoer interface.
+func (info *Info[N]) See() {
+	if info == nil {
+		return
+	}
+
+	info.is_seen = true
+}
+
+func NewInfo[N interface {
+	Child() iter.Seq[N]
+
+	Noder
+}]() *Info[N] {
+	return &Info[N]{}
+}
+
 // AppendFrame appends a frame to the frames of the Info.
-//
-// Parameters:
-//   - frame: The frame to append.
 //
 // Returns:
 //   - []string: The new frames.
-func (info _Info[N]) AppendFrame(frame string) []string {
+func (info Info[N]) AppendFrame() []string {
+	node := info.node
+	if node.IsNil() {
+		return nil
+	}
+
+	frame := node.String()
+
 	if len(info.frames) == 0 {
 		return []string{frame}
 	}
@@ -111,35 +139,21 @@ func (info _Info[N]) AppendFrame(frame string) []string {
 	return append(new_frames, frame)
 }
 
-// IsSeen implements the Infoer interface.
-func (info _Info[N]) IsSeen() bool {
-	return info.is_seen
-}
-
-// See implements the Infoer interface.
-func (info *_Info[N]) See() {
-	if info == nil {
-		return
-	}
-
-	info.is_seen = true
-}
-
 // NextInfos returns the children of the node.
 //
 // Returns:
 //   - []*_Info: The children of the node.
-func (info *_Info[N]) NextInfos() []*_Info[N] {
+func (info *Info[N]) NextInfos() []*Info[N] {
 	if info == nil {
 		return nil
 	}
 
-	var children []*_Info[N]
+	var children []*Info[N]
 
-	new_frames := info.AppendFrame(info.node.String())
+	new_frames := info.AppendFrame()
 
 	for child := range info.node.Child() {
-		var new_info _Info[N]
+		var new_info Info[N]
 
 		new_info.Init(child, new_frames)
 
@@ -147,4 +161,8 @@ func (info *_Info[N]) NextInfos() []*_Info[N] {
 	}
 
 	return children
+}
+
+func (info Info[N]) Child() iter.Seq[N] {
+	return info.node.Child()
 }

@@ -1,4 +1,4 @@
-package internal
+package ast
 
 // Noder is an interface for nodes in the AST
 type Noder interface {

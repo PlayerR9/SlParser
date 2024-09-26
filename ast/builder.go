@@ -1,7 +1,6 @@
 package ast
 
 import (
-	"github.com/PlayerR9/SlParser/ast/internal"
 	gr "github.com/PlayerR9/SlParser/grammar"
 )
 
@@ -9,7 +8,7 @@ import (
 type Builder[N interface {
 	AddChildren(children []N)
 
-	internal.Noder
+	Noder
 }, T gr.TokenTyper] struct {
 	// table is the table of the builder.
 	table map[T]ToAstFunc[N, T]
@@ -23,7 +22,7 @@ type Builder[N interface {
 func NewBuilder[N interface {
 	AddChildren(children []N)
 
-	internal.Noder
+	Noder
 }, T gr.TokenTyper]() Builder[N, T] {
 	return Builder[N, T]{
 		table: make(map[T]ToAstFunc[N, T]),
