@@ -6,7 +6,6 @@ import (
 
 	gr "github.com/PlayerR9/SlParser/grammar"
 	"github.com/PlayerR9/SlParser/parser/internal"
-	bck "github.com/PlayerR9/go-commons/backup"
 	gcslc "github.com/PlayerR9/go-commons/slices"
 	gers "github.com/PlayerR9/go-errors"
 )
@@ -169,15 +168,6 @@ func Build[T gr.TokenTyper](is *ItemSet[T]) *Parser[T] {
 			p.table[lhs] = fn
 		}
 	}
-
-	fn := func() *ActiveParser[T] {
-		ap, err := NewActiveParser(p)
-		gers.AssertErr(err, "NewActiveParser(p)")
-
-		return ap
-	}
-
-	p.seq = bck.Subject(fn)
 
 	return p
 }

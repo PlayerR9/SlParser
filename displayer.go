@@ -2,7 +2,6 @@ package SlParser
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 
@@ -142,10 +141,19 @@ func (d Displayer) write_error(w io.Writer) error {
 	builder.WriteString(" column of the ")
 	builder.WriteString(humanize.Ordinal(d.y + 1))
 	builder.WriteString(" line:\n\t")
-	builder.WriteString(d.err.Error())
+
+	err := gers.DisplayError(&builder, d.err)
+	if err != nil {
+		return err
+	}
+
 	builder.WriteRune('\n')
 
-	err := gcby.Write(w, builder.Bytes())
+	err = gcby.Write(w, builder.Bytes())
+	if err != nil {
+		return err
+	}
+
 	return err
 }
 
@@ -169,21 +177,18 @@ func DisplayErr(w io.Writer, data []byte, err error) (int, error) {
 		return 0, nil
 	}
 
-	data_err := []byte(err.Error())
-	var lexing_err *gerr.Err
-
-	ok := errors.As(err, &lexing_err)
+	e, ok := err.(*gerr.Err)
 	if !ok {
-		err := gcby.Write(w, data_err)
+		err := gcby.Write(w, data)
 		return 0, err
 	}
 
-	pos, err := gers.Value[lxr.ErrorCode, int](lexing_err, "pos")
+	pos, err := gers.Value[lxr.ErrorCode, int](e, "pos")
 	if err != nil {
 		return 0, err
 	}
 
-	d := NewDisplayer(lexing_err, data, pos)
+	d := NewDisplayer(e, data, pos)
 	err = d.write_source(w)
 	if err != nil {
 		return 0, fmt.Errorf("could not write source: %w", err)
@@ -194,5 +199,5 @@ func DisplayErr(w io.Writer, data []byte, err error) (int, error) {
 		return 0, fmt.Errorf("could not write error: %w", err)
 	}
 
-	return lexing_err.Code.Int(), nil
+	return e.Code.Int(), nil
 }

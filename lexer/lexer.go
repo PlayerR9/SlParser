@@ -5,7 +5,8 @@ import (
 	"io"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
-	gcers "github.com/PlayerR9/go-errors/error"
+	gers "github.com/PlayerR9/go-errors"
+	gerr "github.com/PlayerR9/go-errors/error"
 )
 
 // RuneStreamer is a rune streamer.
@@ -26,6 +27,17 @@ type RuneStreamer interface {
 	// Returns:
 	//   - error: if an error occurred.
 	UnreadRune() error
+
+	// PeekRune returns the current character without consuming it.
+	//
+	// Returns:
+	//   - rune: the current character.
+	//   - error: if an error occurred.
+	//
+	// Errors:
+	//   - io.EOF: if the end of the stream is reached.
+	//   - any other error if the stream could not be read.
+	PeekRune() (rune, error)
 }
 
 var (
@@ -112,6 +124,31 @@ func (l *Lexer[T]) UnreadRune() error {
 	l.state.RemoveChar()
 
 	return nil
+}
+
+// PeekRune implements RuneStreamer interface.
+func (l *Lexer[T]) PeekRune() (rune, error) {
+	if l == nil || l.input_stream == nil {
+		return 0, io.EOF
+	}
+
+	c, _, err := l.input_stream.ReadRune()
+	if err == nil {
+		l.state.UpdateLastErr(nil)
+
+		err := l.input_stream.UnreadRune()
+		gers.AssertErr(err, "l.input_stream.UnreadRune()")
+
+		return c, nil
+	}
+
+	if err != io.EOF {
+		err = NewErrInvalidInputStream(err)
+	}
+
+	l.state.UpdateLastErr(err)
+
+	return 0, err
 }
 
 // SetInputStream sets the input stream.
@@ -334,11 +371,11 @@ func (l *Lexer[T]) Reset() {
 //
 // Returns:
 //   - *Err: the last error. Never returns nil.
-func (l Lexer[T]) make_error() *gcers.Err {
+func (l Lexer[T]) make_error() *gerr.Err {
 	pos := l.next_pos
 
 	if l.state.last_char_read == nil {
-		err := gcers.New(InvalidInputStream, l.state.last_err.Error())
+		err := gerr.NewFromError(InvalidInputStream, l.state.last_err)
 		err.AddSuggestion("Input is most likely not a valid input for the current lexer.")
 		err.AddFrame("lexer.Lexer[T]")
 
@@ -351,7 +388,7 @@ func (l Lexer[T]) make_error() *gcers.Err {
 
 	_, ok := l.table[last_read]
 	if !ok && l.def_fn == nil {
-		err := gcers.New(UnrecognizedChar, l.state.last_err.Error())
+		err := gerr.NewFromError(UnrecognizedChar, l.state.last_err)
 
 		err.AddSuggestion(
 			"Input provided cannot be lexed by the current lexer. You may want to check for typos in the input.",
@@ -365,7 +402,8 @@ func (l Lexer[T]) make_error() *gcers.Err {
 		return err
 	}
 
-	err := gcers.New(BadWord, l.state.last_err.Error())
+	err := gerr.NewFromError(BadWord, l.state.last_err)
+
 	err.AddSuggestion("You may want to check for typos in the input.")
 
 	err.AddContext("pos", pos)

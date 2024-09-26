@@ -4,11 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
 	"github.com/PlayerR9/SlParser/parser/internal"
 	bck "github.com/PlayerR9/go-commons/backup"
-	gcers "github.com/PlayerR9/go-errors"
+	gers "github.com/PlayerR9/go-errors"
 )
 
 // ActiveParser is a parser.
@@ -28,7 +29,7 @@ type ActiveParser[T gr.TokenTyper] struct {
 
 func NewActiveParser[T gr.TokenTyper](global *Parser[T]) (*ActiveParser[T], error) {
 	if global == nil {
-		return nil, gcers.NewErrNilParameter("global")
+		return nil, gers.NewErrNilParameter("global")
 	}
 
 	tokens := make([]*gr.Token[T], len(global.tokens))
@@ -45,8 +46,8 @@ func NewActiveParser[T gr.TokenTyper](global *Parser[T]) (*ActiveParser[T], erro
 }
 
 func (ap *ActiveParser[T]) Align(history *bck.History[*internal.Item[T]]) bool {
-	gcers.AssertNotNil(ap, "ap")
-	gcers.AssertNotNil(history, "history")
+	gers.AssertNotNil(ap, "ap")
+	gers.AssertNotNil(history, "history")
 
 	ap.shift()
 	if ap.HasError() {
@@ -84,7 +85,7 @@ func (p ActiveParser[T]) Pop() (*gr.ParseTree[T], bool) {
 
 // shift is a helper function that shifts a token.
 func (ap *ActiveParser[T]) shift() {
-	gcers.AssertNotNil(ap, "ap")
+	gers.AssertNotNil(ap, "ap")
 
 	if len(ap.tokens) == 0 {
 		ap.err = io.EOF
@@ -96,7 +97,7 @@ func (ap *ActiveParser[T]) shift() {
 	ap.tokens = ap.tokens[1:]
 
 	tree, err := gr.NewTree(tk)
-	gcers.AssertErr(err, "grammar.NewTree(tk)")
+	gers.AssertErr(err, "grammar.NewTree(tk)")
 
 	ap.stack.Push(tree)
 }
@@ -106,8 +107,8 @@ func (ap *ActiveParser[T]) shift() {
 // Parameters:
 //   - it: the item to reduce. Assumed to be non-nil.
 func (ap *ActiveParser[T]) reduce(it *internal.Item[T]) {
-	gcers.AssertNotNil(ap, "ap")
-	gcers.AssertNotNil(it, "it")
+	gers.AssertNotNil(ap, "ap")
+	gers.AssertNotNil(it, "it")
 
 	var prev *T
 
@@ -135,7 +136,7 @@ func (ap *ActiveParser[T]) reduce(it *internal.Item[T]) {
 	lhs := it.Lhs()
 
 	tree, err := gr.Combine(lhs, popped)
-	gcers.AssertErr(err, "grammar.Combine(%s, popped)", lhs.String())
+	gers.AssertErr(err, "grammar.Combine(%s, popped)", lhs.String())
 
 	ap.stack.Push(tree)
 }
@@ -174,7 +175,7 @@ func (ap *ActiveParser[T]) ApplyEvent(item *internal.Item[T]) bool {
 }
 
 func (ap *ActiveParser[T]) DetermineNextEvents() []*internal.Item[T] {
-	gcers.AssertNotNil(ap, "ap")
+	gers.AssertNotNil(ap, "ap")
 
 	defer ap.stack.Refuse()
 
@@ -207,6 +208,27 @@ func (ap *ActiveParser[T]) DetermineNextEvents() []*internal.Item[T] {
 
 		return nil
 	}
+
+	// Sort the events from the longest to the shortest.
+	slices.SortFunc(events, func(a, b *internal.Item[T]) int {
+		if a.Act == internal.ActAccept {
+			if b.Act == internal.ActAccept {
+				return b.Pos - a.Pos
+			}
+
+			return -1
+		} else if b.Act == internal.ActAccept {
+			return 1
+		}
+
+		if a.Act == internal.ActShift {
+			return -1
+		} else if b.Act == internal.ActShift {
+			return 1
+		}
+
+		return b.Pos - a.Pos
+	})
 
 	return events
 }

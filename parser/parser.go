@@ -4,6 +4,8 @@ import (
 	"iter"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
+	bck "github.com/PlayerR9/go-commons/backup"
+	gers "github.com/PlayerR9/go-errors"
 )
 
 // Parser is a parser.
@@ -13,9 +15,6 @@ type Parser[T gr.TokenTyper] struct {
 
 	// table is the parser table.
 	table map[T]ParseFn[T]
-
-	// seq is the parser sequence.
-	seq iter.Seq[*ActiveParser[T]]
 
 	// next is the next function.
 	next func() (*ActiveParser[T], bool)
@@ -42,10 +41,7 @@ func (p *Parser[T]) SetTokens(tokens []*gr.Token[T]) {
 
 		p.next = nil
 		p.stop = nil
-
 	}
-
-	p.next, p.stop = iter.Pull(p.seq)
 }
 
 // Parse parses the list of tokens. Successive calls to this function
@@ -58,8 +54,20 @@ func (p *Parser[T]) SetTokens(tokens []*gr.Token[T]) {
 //   - *ActiveParser[T]: the active parser. Nil the parser has done.
 //   - error: if an error occurred.
 func (p *Parser[T]) Parse() ([]*gr.ParseTree[T], error) {
-	if p == nil || p.next == nil {
+	if p == nil {
 		return nil, nil
+	}
+
+	if p.next == nil {
+		fn := func() *ActiveParser[T] {
+			ap, err := NewActiveParser(p)
+			gers.AssertErr(err, "NewActiveParser(p)")
+
+			return ap
+		}
+
+		seq := bck.Subject(fn)
+		p.next, p.stop = iter.Pull(seq)
 	}
 
 	ap, ok := p.next()

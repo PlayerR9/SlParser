@@ -2,7 +2,10 @@ package lexer
 
 import (
 	"fmt"
+	"io"
 	"unicode"
+
+	gers "github.com/PlayerR9/go-errors"
 )
 
 // GroupFn is a function that checks if a character belongs to a group.
@@ -22,14 +25,6 @@ var (
 	// GroupWsNl is the group of whitespace characters that includes newlines.
 	// (i.e. ' ', '\t', '\n', '\r')
 	GroupWsNl GroupFn
-
-	// GroupUpper is the group of uppercase characters.
-	// (i.e. 'A', 'B', 'C', ...)
-	GroupUpper GroupFn
-
-	// GroupLower is the group of lowercase characters.
-	// (i.e. 'a', 'b', 'c', ...)
-	GroupLower GroupFn
 )
 
 func init() {
@@ -40,10 +35,114 @@ func init() {
 	GroupWsNl = func(char rune) bool {
 		return char == ' ' || char == '\t' || char == '\n' || char == '\r'
 	}
+}
 
-	GroupUpper = unicode.IsUpper
+// FragUppercase is a fragment that checks if the current character is uppercase.
+//
+// Parameters:
+//   - stream: the rune streamer.
+//
+// Returns:
+//   - error: if an error occurred.
+func FragUppercase(stream RuneStreamer) error {
+	gers.AssertNotNil(stream, "stream")
 
-	GroupLower = unicode.IsLower
+	char, err := stream.NextRune()
+	if err == io.EOF {
+		return NotFound
+	} else if err != nil {
+		return err
+	}
+
+	if unicode.IsUpper(char) {
+		return nil
+	}
+
+	err = stream.UnreadRune()
+	gers.AssertErr(err, "stream.UnreadRune()")
+
+	return NotFound
+}
+
+// FragLowercase is a fragment that checks if the current character is lowercase.
+//
+// Parameters:
+//   - stream: the rune streamer.
+//
+// Returns:
+//   - error: if an error occurred.
+func FragLowercase(stream RuneStreamer) error {
+	gers.AssertNotNil(stream, "stream")
+
+	char, err := stream.NextRune()
+	if err == io.EOF {
+		return NotFound
+	} else if err != nil {
+		return err
+	}
+
+	if unicode.IsLower(char) {
+		return nil
+	}
+
+	err = stream.UnreadRune()
+	gers.AssertErr(err, "stream.UnreadRune()")
+
+	return NotFound
+}
+
+// FragLetter is a fragment that checks if the current character is a letter.
+//
+// Parameters:
+//   - stream: the rune streamer.
+//
+// Returns:
+//   - error: if an error occurred.
+func FragLetter(stream RuneStreamer) error {
+	gers.AssertNotNil(stream, "stream")
+
+	char, err := stream.NextRune()
+	if err == io.EOF {
+		return NotFound
+	} else if err != nil {
+		return err
+	}
+
+	if unicode.IsLetter(char) {
+		return nil
+	}
+
+	err = stream.UnreadRune()
+	gers.AssertErr(err, "stream.UnreadRune()")
+
+	return NotFound
+}
+
+// FragDigit is a fragment that checks if the current character is a digit.
+//
+// Parameters:
+//   - stream: the rune streamer.
+//
+// Returns:
+//   - error: if an error occurred.
+func FragDigit(stream RuneStreamer) error {
+	gers.AssertNotNil(stream, "stream")
+
+	char, err := stream.NextRune()
+	if err == io.EOF {
+		return NotFound
+	} else if err != nil {
+		return err
+	}
+
+	if unicode.IsDigit(char) {
+		return nil
+	}
+
+	err = stream.UnreadRune()
+	gers.AssertErr(err, "stream.UnreadRune()")
+
+	return NotFound
 }
 
 func MakeGroup(from, to rune) (GroupFn, error) {

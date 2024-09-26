@@ -85,6 +85,11 @@ func MakeInfoTable[N interface {
 	}
 
 	return func(root N) (map[N]I, error) {
+		if root.IsNil() {
+			err := gers.NewErrNilParameter("root")
+			return nil, err
+		}
+
 		table := make(map[N]I)
 
 		root_info := *new(I)

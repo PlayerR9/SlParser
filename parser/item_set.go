@@ -5,7 +5,6 @@ import (
 
 	gr "github.com/PlayerR9/SlParser/grammar"
 	"github.com/PlayerR9/SlParser/parser/internal"
-	bck "github.com/PlayerR9/go-commons/backup"
 	gcslc "github.com/PlayerR9/go-commons/slices"
 	gcers "github.com/PlayerR9/go-errors"
 	gcmap "github.com/PlayerR9/go-sets"
@@ -275,15 +274,6 @@ func (is *ItemSet[T]) determine_expecteds() {
 //   - Parser: the parser. Never returns nil.
 func (b ItemSet[T]) Build() *Parser[T] {
 	p := &Parser[T]{}
-
-	fn := func() *ActiveParser[T] {
-		ap, err := NewActiveParser(p)
-		gcers.AssertErr(err, "NewActiveParser(p)")
-
-		return ap
-	}
-
-	p.seq = bck.Subject(fn)
 
 	return p
 }
