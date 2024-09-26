@@ -13,6 +13,7 @@ import (
 	internal "github.com/PlayerR9/SlParser/kdd/internal"
 	"github.com/PlayerR9/SlParser/lexer"
 	"github.com/PlayerR9/SlParser/parser"
+	gers "github.com/PlayerR9/go-errors"
 )
 
 // DebugMode is the debug mode.
@@ -193,11 +194,11 @@ func (p Parsing) Full(data []byte) (*Node, error) {
 		}
 	}
 
-	exit_code, err := sl.DisplayErr(os.Stdout, data, err)
 	if err != nil {
-		panic(err)
-	} else if exit_code != 0 {
-		return nil, err
+		exit_code, err := sl.DisplayErr(os.Stdout, data, err)
+		gers.AssertErr(err, "DisplayErr(os.Stdout, data, err)")
+
+		os.Exit(exit_code + 1)
 	}
 
 	defer p.parser.Reset()

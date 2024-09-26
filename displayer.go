@@ -3,50 +3,75 @@ package SlParser
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 
 	lxr "github.com/PlayerR9/SlParser/lexer"
+	fch "github.com/PlayerR9/go-commons/Formatting/runes"
 	gcby "github.com/PlayerR9/go-commons/bytes"
-	gcers "github.com/PlayerR9/go-errors"
-	gcerr "github.com/PlayerR9/go-errors/error"
+	gers "github.com/PlayerR9/go-errors"
+	gerr "github.com/PlayerR9/go-errors/error"
 	"github.com/dustin/go-humanize"
 )
 
-// Display is a function that displays the given data.
-//
-// Parameters:
-//   - data: The data.
-//   - pos: The position.
-//
-// Returns:
-//   - []byte: The displayed data.
-func Display(data []byte, pos int) []byte {
+type Displayer struct {
+	err  *gerr.Err
+	data []byte
+	pos  int
+	x    int
+	y    int
+}
+
+func NewDisplayer(err *gerr.Err, data []byte, pos int) *Displayer {
+	var x, y int
+
+	for i := 0; i < pos-1; i++ {
+		if data[i] == '\n' {
+			x = 0
+			y++
+		} else {
+			x++
+		}
+	}
+
+	return &Displayer{
+		err:  err,
+		data: data,
+		pos:  pos,
+		x:    x,
+		y:    y,
+	}
+}
+
+func (d *Displayer) init_source() {
+	if d == nil {
+		return
+	}
+
 	var before, faulty_line, after []byte
 
-	last_idx := gcby.ReverseSearch(data, pos, []byte{'\n'})
+	last_idx := ReverseSearch(d.data, d.pos, []byte{'\n'})
 	if last_idx < 0 {
-		faulty_line = make([]byte, len(data[:pos]))
-		copy(faulty_line, data[:pos])
+		faulty_line = make([]byte, len(d.data[:d.pos]))
+		copy(faulty_line, d.data[:d.pos])
 
 		last_idx = 0
 	} else {
-		before = make([]byte, last_idx)
-		copy(before, data[:last_idx])
+		before = make([]byte, last_idx-1)
+		copy(before, d.data[:last_idx-1])
 
-		last_idx++
-
-		faulty_line = make([]byte, pos-last_idx)
-		copy(faulty_line, data[last_idx:pos])
+		faulty_line = make([]byte, d.pos-last_idx+1)
+		copy(faulty_line, d.data[last_idx:d.pos+1])
 	}
 
-	first_idx := gcby.ForwardSearch(data, pos, []byte{'\n'})
+	first_idx := ForwardSearch(d.data, d.pos, []byte("\n"))
 	if first_idx < 0 {
-		faulty_line = append(faulty_line, data[pos:]...)
+		faulty_line = append(faulty_line, d.data[d.pos:]...)
 	} else {
-		after = make([]byte, len(data)-first_idx)
-		copy(after, data[first_idx:])
+		after = make([]byte, len(d.data)-first_idx)
+		copy(after, d.data[first_idx:])
 
-		faulty_line = append(faulty_line, data[pos:first_idx]...)
+		faulty_line = append(faulty_line, d.data[d.pos:first_idx]...)
 	}
 
 	var builder bytes.Buffer
@@ -59,7 +84,7 @@ func Display(data []byte, pos int) []byte {
 	builder.Write(faulty_line)
 	builder.WriteRune('\n')
 
-	for i := 0; i < pos-last_idx-1; i++ {
+	for i := 0; i < d.pos-last_idx-1; i++ {
 		if faulty_line[i] == '\t' {
 			builder.WriteRune('\t')
 		} else {
@@ -70,36 +95,61 @@ func Display(data []byte, pos int) []byte {
 	builder.WriteRune('^')
 
 	if after != nil {
-		builder.WriteRune('\n')
+		if !bytes.HasPrefix(after, []byte("\n")) {
+			builder.WriteRune('\n')
+		}
+
 		builder.Write(after)
 	}
 
-	return builder.Bytes()
+	d.data = builder.Bytes()
 }
 
-// GetCoords is a function that returns the coordinates of the given position.
-//
-// Parameters:
-//   - data: the data.
-//   - pos: the position.
-//
-// Returns:
-//   - int: the x coordinate.
-//   - int: the y coordinate.
-func GetCoords(data []byte, pos int) (int, int) {
-	var x, y int
-
-	for i := 0; i < pos-1; i++ {
-		if data[i] == '\n' {
-			x = 0
-			y++
-		} else {
-			x++
-		}
+func (d *Displayer) write_source(w io.Writer) error {
+	if d == nil || w == nil {
+		return nil
 	}
 
-	return x + 1, y + 1
+	d.init_source()
+
+	style := fch.NewBoxStyle(fch.BtNormal, true, [4]int{0, 1, 0, 1})
+
+	var table fch.RuneTable
+
+	lines := bytes.Split(d.data, []byte("\n"))
+
+	err := table.FromBytes(lines)
+	gers.AssertErr(err, "fch.FromBytes(lines)")
+
+	err = style.Apply(&table)
+	if err != nil {
+		return err
+	}
+
+	err = gcby.Write(w, table.Byte())
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
+
+func (d Displayer) write_error(w io.Writer) error {
+	var builder bytes.Buffer
+
+	builder.WriteString("\n\nError at ")
+	builder.WriteString(humanize.Ordinal(d.x + 1))
+	builder.WriteString(" column of the ")
+	builder.WriteString(humanize.Ordinal(d.y + 1))
+	builder.WriteString(" line:\n\t")
+	builder.WriteString(d.err.Error())
+	builder.WriteRune('\n')
+
+	err := gcby.Write(w, builder.Bytes())
+	return err
+}
+
+///////////////////////////////////
 
 // DisplayErr is a function that displays the error in the given writer
 // if it is not nil.
@@ -120,7 +170,7 @@ func DisplayErr(w io.Writer, data []byte, err error) (int, error) {
 	}
 
 	data_err := []byte(err.Error())
-	var lexing_err *gcerr.Err
+	var lexing_err *gerr.Err
 
 	ok := errors.As(err, &lexing_err)
 	if !ok {
@@ -128,39 +178,20 @@ func DisplayErr(w io.Writer, data []byte, err error) (int, error) {
 		return 0, err
 	}
 
-	pos, err := gcers.Value[lxr.ErrorCode, int](lexing_err, "pos")
+	pos, err := gers.Value[lxr.ErrorCode, int](lexing_err, "pos")
 	if err != nil {
 		return 0, err
 	}
 
-	display_data := Display(data, pos)
-
-	err = gcby.Write(w, display_data)
+	d := NewDisplayer(lexing_err, data, pos)
+	err = d.write_source(w)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("could not write source: %w", err)
 	}
 
-	x_coord, y_coord := GetCoords(data, pos)
-
-	var builder bytes.Buffer
-
-	builder.WriteString("\n\nError at ")
-	builder.WriteString(humanize.Ordinal(x_coord))
-	builder.WriteString(" column of the ")
-	builder.WriteString(humanize.Ordinal(y_coord))
-	builder.WriteString(" line:\n\t")
-	builder.WriteString(lexing_err.Error())
-	builder.WriteString(".\n\nHints:\n")
-
-	for _, suggestion := range lexing_err.Suggestions {
-		builder.WriteRune('\t')
-		builder.WriteString(suggestion)
-		builder.WriteRune('\n')
-	}
-
-	err = gcby.Write(w, builder.Bytes())
+	err = d.write_error(w)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("could not write error: %w", err)
 	}
 
 	return lexing_err.Code.Int(), nil

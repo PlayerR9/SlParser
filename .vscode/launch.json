@@ -10,7 +10,7 @@
          "request": "launch",
          "mode": "debug",
          "program": "${file}",
-         "args": ["-i=test/grammar.g4", "-o=test/grammar.go", "-e=a"]
+         "args": ["-input=input.txt", "-o=test/parser.go"]
       },
    ]
 }

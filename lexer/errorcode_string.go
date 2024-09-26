@@ -11,11 +11,12 @@ func _() {
 	_ = x[UnrecognizedChar-0]
 	_ = x[InvalidInputStream-1]
 	_ = x[BadWord-2]
+	_ = x[BadGroup-3]
 }
 
-const _ErrorCode_name = "UnrecognizedCharInvalidInputStreamBadWord"
+const _ErrorCode_name = "UnrecognizedCharInvalidInputStreamBadWordBadGroup"
 
-var _ErrorCode_index = [...]uint8{0, 16, 34, 41}
+var _ErrorCode_index = [...]uint8{0, 16, 34, 41, 49}
 
 func (i ErrorCode) String() string {
 	if i < 0 || i >= ErrorCode(len(_ErrorCode_index)-1) {

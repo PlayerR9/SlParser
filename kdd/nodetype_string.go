@@ -14,9 +14,9 @@ func _() {
 	_ = x[SourceNode-2]
 }
 
-const _NodeType_name = "InvalidNodeRhsRuleSource"
+const _NodeType_name = "InvalidRhsRuleSource"
 
-var _NodeType_index = [...]uint8{0, 11, 14, 18, 24}
+var _NodeType_index = [...]uint8{0, 7, 10, 14, 20}
 
 func (i NodeType) String() string {
 	i -= -1

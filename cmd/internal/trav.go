@@ -7,27 +7,6 @@ import (
 	gers "github.com/PlayerR9/go-errors"
 )
 
-func extract_symbols_rec(root *kdd.Node, seen map[string]struct{}, symbols []*kdd.Node) []*kdd.Node {
-	gers.AssertNotNil(root, "root")
-	gers.AssertNotNil(seen, "seen")
-
-	if root.Type == kdd.RhsNode {
-		_, ok := seen[root.Data]
-		if !ok {
-			symbols = append(symbols, root)
-			seen[root.Data] = struct{}{}
-		}
-
-		return symbols
-	}
-
-	for c := root.FirstChild; c != nil; c = c.NextSibling {
-		symbols = extract_symbols_rec(c, seen, symbols)
-	}
-
-	return symbols
-}
-
 func ExtractRules(root *kdd.Node) ([]*Rule, error) {
 	if root == nil {
 		return nil, nil
