@@ -133,7 +133,7 @@ func MakeInfoTable[N interface {
 		outer_err := gerr.New(BadSyntaxTree, inner_err.Error())
 
 		for frame := range last_top.Frame() {
-			outer_err.AddFrame("", frame)
+			outer_err.AddFrame(frame)
 		}
 
 		return nil, outer_err

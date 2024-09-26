@@ -41,7 +41,7 @@ func NewUnregisteredType[T gr.TokenTyper](type_ T, in string) *gcers.Err {
 	msg := fmt.Sprintf("type %q is not registered", type_.String())
 
 	err := gcers.New(UnregisteredType, msg)
-	err.AddFrame("", in)
+	err.AddFrame(in)
 
 	return err
 }
@@ -63,7 +63,7 @@ func NewBadSyntaxTree[T gr.TokenTyper](at int, type_ T, got string) *gcers.Err {
 	msg := gcstr.ExpectedValue("type", gcstr.Quote(type_), got)
 
 	err := gcers.New(BadSyntaxTree, msg)
-	err.AddFrame("", humanize.Ordinal(at+1)+" child")
+	err.AddFrame(humanize.Ordinal(at+1) + " child")
 
 	return err
 }

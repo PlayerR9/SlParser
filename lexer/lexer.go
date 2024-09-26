@@ -340,7 +340,7 @@ func (l Lexer[T]) make_error() *gcers.Err {
 	if l.state.last_char_read == nil {
 		err := gcers.New(InvalidInputStream, l.state.last_err.Error())
 		err.AddSuggestion("Input is most likely not a valid input for the current lexer.")
-		err.AddFrame("lexer", "Lexer[T]")
+		err.AddFrame("lexer.Lexer[T]")
 
 		err.AddContext("pos", pos)
 

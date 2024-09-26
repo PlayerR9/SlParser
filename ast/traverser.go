@@ -99,7 +99,7 @@ func (t Traversor[N, I]) MakeReverseDFS() func(root N) error {
 			outer_err := gerr.New(BadSyntaxTree, inner_err.Error())
 
 			for frame := range last_top.Frame() {
-				outer_err.AddFrame("", frame)
+				outer_err.AddFrame(frame)
 			}
 
 			return outer_err
@@ -148,7 +148,7 @@ func (t Traversor[N, I]) MakeReverseDFS() func(root N) error {
 			outer_err := gerr.New(BadSyntaxTree, inner_err.Error())
 
 			for frame := range last_top.Frame() {
-				outer_err.AddFrame("", frame)
+				outer_err.AddFrame(frame)
 			}
 
 			return outer_err
@@ -226,7 +226,7 @@ func (t Traversor[N, I]) ReverseDFS(root N) error {
 	outer_err := gerr.New(BadSyntaxTree, inner_err.Error())
 
 	for frame := range last_top.Frame() {
-		outer_err.AddFrame("", frame)
+		outer_err.AddFrame(frame)
 	}
 
 	return outer_err
