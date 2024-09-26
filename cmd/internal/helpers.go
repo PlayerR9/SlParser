@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"slices"
@@ -98,157 +97,201 @@ func MakeLiteral(type_ TokenType, data string) (string, error) {
 	return data, nil
 }
 
-//////////////////////////////////////////////////////////////////
-
-// TypeOf returns the type of a kdd.Node.
+// CandidatesForAst returns the candidates for the AST. (i.e., the list of all
+// literals such that they are marked as candidates).
 //
 // Parameters:
-//   - n: The node.
+//   - table: The info table.
 //
 // Returns:
-//   - TokenType: The type of the node.
-//   - error: An error if the node is nil or not a RHS node.
-func TypeOf(n *kdd.Node) (TokenType, error) {
-	if n == nil {
-		return ExtraTk, errors.New("node must not be nil")
+//   - []string: The candidates.
+//
+// The returned slice is sorted in ascending order and contains no duplicates.
+func CandidatesForAst(table map[*kdd.Node]*Info) []string {
+	if len(table) == 0 {
+		return nil
 	}
 
-	if n.Type != kdd.RhsNode {
-		return ExtraTk, fmt.Errorf("node must be a RHS node, got %s instead", n.Type.String())
+	var candidates []string
+
+	for _, info := range table {
+		gers.AssertNotNil(info, "info")
+
+		if !info.IsCandidate {
+			continue
+		}
+
+		pos, ok := slices.BinarySearch(candidates, info.Literal)
+		if !ok {
+			candidates = slices.Insert(candidates, pos, info.Literal)
+		}
 	}
 
-	if !n.IsTerminal {
-		return NonterminalTk, nil
-	}
-
-	if n.Data == "EOF" {
-		return ExtraTk, nil
-	}
-
-	return TerminalTk, nil
+	return candidates
 }
 
-func CheckEofExists(tokens []*kdd.Node) bool {
-	if len(tokens) == 0 {
+// sort sorts the given slice of Info objects in ascending order.
+//
+// The slice is first divided into three buckets: ExtraTk, TerminalTk, and
+// NonterminalTk. Each bucket is then sorted in ascending order using the
+// Literals of the Info objects. Finally, the buckets are concatenated in the
+// order given above and the sorted slice is returned.
+//
+// Does nothing if the slice is empty. Plus, the slice is sorted in place.
+//
+// Parameters:
+//   - infos: The slice of Info objects to be sorted.
+//
+// Returns:
+//   - error: nil on success, otherwise an error.
+func sort(infos []*Info) error {
+	if len(infos) == 0 {
+		return nil
+	}
+
+	// 1. Make buckets for each type.
+	buckets := make(map[TokenType][]*Info, 3)
+	buckets[ExtraTk] = make([]*Info, 0)
+	buckets[TerminalTk] = make([]*Info, 0)
+	buckets[NonterminalTk] = make([]*Info, 0)
+
+	// 2. Divide the infos into buckets.
+	for _, info := range infos {
+		gers.AssertNotNil(info, "node")
+
+		prev, ok := buckets[info.Type]
+		if !ok {
+			return fmt.Errorf("bucket %q not found", info.Type.String())
+		}
+
+		buckets[info.Type] = append(prev, info)
+	}
+
+	// 3. Sort the buckets.
+	for type_, bucket := range buckets {
+		slices.SortStableFunc(bucket, func(a, b *Info) int {
+			return strings.Compare(a.Literal, b.Literal)
+		})
+
+		buckets[type_] = bucket
+	}
+
+	// 4. Concatenate the buckets.
+	i := 0
+
+	tks := buckets[ExtraTk]
+	for _, tk := range tks {
+		infos[i] = tk
+		i++
+	}
+
+	tks = buckets[TerminalTk]
+	for _, tk := range tks {
+		infos[i] = tk
+		i++
+	}
+
+	tks = buckets[NonterminalTk]
+	for _, tk := range tks {
+		infos[i] = tk
+		i++
+	}
+
+	return nil
+}
+
+// LinearizeTable linearizes the given table into a list without duplicates.
+//
+// Does nothing if the table is empty.
+//
+// Parameters:
+//   - table: The table to linearize.
+//
+// Returns:
+//   - []*Info: The linearized list.
+func LinearizeTable(table map[*kdd.Node]*Info) []*Info {
+	if len(table) == 0 {
+		return nil
+	}
+
+	// 1. Transform the map into a list without duplicates.
+	list := make([]*Info, 0, len(table))
+
+	for _, info := range table {
+		gers.AssertNotNil(info, "info")
+
+		ok := slices.ContainsFunc(list, info.Equals)
+		if !ok {
+			list = append(list, info)
+		}
+	}
+
+	list = list[:len(list):len(list)]
+
+	// 2. Sort the list in ascending order using bucket sort.
+	err := sort(list)
+	gers.AssertErr(err, "sort(list)")
+
+	return list
+}
+
+// FindLastTerminal finds the last terminal in the given list.
+//
+// This function assumes that the list is sorted in ascending order.
+// Make sure to call LinearizeTable first.
+//
+// Parameters:
+//   - infos: The list to search.
+//
+// Returns:
+//   - *Info: The last terminal node, or nil if not found.
+func FindLastTerminal(infos []*Info) *Info {
+	if len(infos) == 0 {
+		return nil
+	}
+
+	idx := -1
+
+	for i := 0; i < len(infos) && idx == -1; i++ {
+		gers.AssertNotNil(infos[i], "tokens[i]")
+
+		info := infos[i]
+		if info.Type == NonterminalTk {
+			idx = i
+		}
+	}
+
+	if idx == -1 {
+		return infos[len(infos)-1]
+	} else if idx == 0 {
+		return nil
+	}
+
+	return infos[idx-1]
+}
+
+// CheckEofExists checks if EOF exists in the given list.
+//
+// Parameters:
+//   - infos: The list of info objects.
+//
+// Returns:
+//   - bool: True if EOF exists in the list. False otherwise.
+func CheckEofExists(infos []*Info) bool {
+	if len(infos) == 0 {
 		return false
 	}
 
-	for _, tk := range tokens {
-		gers.AssertNotNil(tk, "tk")
+	for _, info := range infos {
+		gers.AssertNotNil(info, "tk")
 
-		if tk.Type == kdd.RhsNode && tk.Data == "EOF" {
+		node := info.Node()
+		gers.AssertNotNil(node, "node")
+
+		if node.Data == "EOF" {
 			return true
 		}
 	}
 
 	return false
 }
-
-func FindLastTerminal(tokens []*kdd.Node) (*kdd.Node, error) {
-	if len(tokens) == 0 {
-		return nil, nil
-	}
-
-	idx := -1
-
-	for i := 0; i < len(tokens) && idx == -1; i++ {
-		gers.AssertNotNil(tokens[i], "tokens[i]")
-
-		type_, err := TypeOf(tokens[i])
-		if err != nil {
-			return nil, fmt.Errorf("at index %d: %w", i, err)
-		}
-
-		if type_ == NonterminalTk {
-			idx = i
-		}
-	}
-
-	if idx == -1 {
-		return tokens[len(tokens)-1], nil
-	} else if idx == 0 {
-		return nil, nil
-	}
-
-	return tokens[idx-1], nil
-}
-
-func CandidatesForAst(tokens []*kdd.Node) ([]string, error) {
-	if len(tokens) == 0 {
-		return nil, nil
-	}
-
-	var candidates []string
-
-	for i, tk := range tokens {
-		if tk == nil {
-			continue
-		}
-
-		type_, err := TypeOf(tk)
-		if err != nil {
-			return nil, fmt.Errorf("at index %d: %w", i, err)
-		}
-
-		ok := IsCandidateForAst(type_, tk.Data)
-		if !ok {
-			continue
-		}
-
-		pos, ok := slices.BinarySearch(candidates, tk.Data)
-		if !ok {
-			candidates = slices.Insert(candidates, pos, tk.Data)
-		}
-	}
-
-	return candidates, nil
-}
-
-func MakeToken(symbol []byte) (*Token, error) {
-	if len(symbol) == 0 {
-		return nil, errors.New("symbol must not be empty")
-	}
-
-	if bytes.Equal(symbol, []byte("EOF")) {
-		tk := NewToken(ExtraTk, "EOF")
-		return tk, nil
-	}
-
-	chars, err := gcch.BytesToUtf8(symbol)
-	if err != nil {
-		return nil, err
-	}
-
-	if !unicode.IsLetter(chars[0]) {
-		return nil, errors.New("symbol must start with a letter")
-	}
-
-	var type_ TokenType
-
-	if unicode.IsUpper(chars[0]) {
-		type_ = TerminalTk
-	} else {
-		type_ = NonterminalTk
-		chars[0] = unicode.ToUpper(chars[0])
-	}
-
-	tk := NewToken(type_, replace_underscore(chars))
-	return tk, nil
-}
-
-/* func unique(tokens []string) []string {
-	for i := 0; i < len(tokens)-1; i++ {
-		top := i + 1
-
-		for j := i + 1; j < len(tokens); j++ {
-			if tokens[j] != tokens[i] {
-				tokens[top] = tokens[j]
-				top++
-			}
-		}
-
-		tokens = tokens[:top:top]
-	}
-
-	return tokens
-} */

@@ -1,8 +1,6 @@
 package internal
 
 import (
-	"fmt"
-
 	kdd "github.com/PlayerR9/SlParser/kdd"
 	gers "github.com/PlayerR9/go-errors"
 	"github.com/PlayerR9/go-generator"
@@ -32,26 +30,15 @@ func (g *ASTGen) SetPackageName(pkg_name string) {
 //   - nodes: The list of tokens.
 //
 // Returns:
-//   - *ASTGen: the ASTGen.
-//   - error: if an error occurred.
-func NewASTGen(nodes []*kdd.Node) (*ASTGen, error) {
-	for i, tk := range nodes {
-		err := kdd.CheckAST(tk, 1)
-		if err != nil {
-			return nil, fmt.Errorf("invalid token at index %d: %w", i, err)
-		}
-	}
-
-	candidates, err := CandidatesForAst(nodes)
-	if err != nil {
-		return nil, err
-	}
+//   - *ASTGen: the ASTGen. Never returns nil.
+func NewASTGen(table map[*kdd.Node]*Info) *ASTGen {
+	candidates := CandidatesForAst(table)
 
 	gen := &ASTGen{
 		Ast: candidates,
 	}
 
-	return gen, nil
+	return gen
 }
 
 var (

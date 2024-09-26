@@ -42,14 +42,19 @@ func main() {
 		Logger.Fatalf("Error parsing file: %v", err)
 	}
 
-	tk_symbols := internal.ExtractSymbols(root)
+	table, err := internal.InfoTableOf(root)
+	if err != nil {
+		Logger.Fatalf("Error extracting AST information")
+	}
+
+	infos := internal.LinearizeTable(table)
 
 	rules, err := internal.ExtractRules(root)
 	if err != nil {
 		Logger.Fatalf("Error extracting rules: %v", err)
 	}
 
-	err = GenerateTokens(tk_symbols, rules)
+	err = GenerateTokens(infos, rules)
 	if err != nil {
 		Logger.Fatalf("Error generating tokens: %v", err)
 	}
@@ -64,7 +69,7 @@ func main() {
 		Logger.Fatalf("Error generating node: %v", err)
 	}
 
-	err = GenerateAst(tk_symbols)
+	err = GenerateAst(table)
 	if err != nil {
 		Logger.Fatalf("Error generating ast: %v", err)
 	}
@@ -93,7 +98,15 @@ func main() {
 	Logger.Println("Successfully generated parser. Make sure to run go generate ./...")
 }
 
-func GenerateTokens(tk_symbols []*kdd.Node, rules []*internal.Rule) error {
+func GenerateTokens(tk_symbols []*internal.Info, rules []*internal.Rule) error {
+	// WARNING: The CheckEofExists() function makes a fundamentally wrong and/or
+	// too restrictive assumption about the EOF symbol.
+	//
+	// That's because a valid parsing may not contain an EOF symbol. Yet, this derives
+	// from how the github.com/PlayerR9/SlParser/parser package is implemented.
+	//
+	// If that ever changes, this function will need to be updated.
+
 	ok := internal.CheckEofExists(tk_symbols)
 	if !ok {
 		return errors.New("missing EOF")
@@ -159,11 +172,8 @@ func GenerateNode() error {
 	return nil
 }
 
-func GenerateAst(tk_symbols []*kdd.Node) error {
-	gen, err := internal.NewASTGen(tk_symbols)
-	if err != nil {
-		return err
-	}
+func GenerateAst(table map[*kdd.Node]*internal.Info) error {
+	gen := internal.NewASTGen(table)
 
 	ast_gen, err := internal.ASTGenerator.Generate(internal.OutputLocFlag, "ast", gen)
 	if err != nil {

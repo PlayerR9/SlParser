@@ -1,3 +1,3 @@
 package internal
 
-//go:generate stringer -type=TokenType -linecomment
+//go:generate stringer -type=TokenType

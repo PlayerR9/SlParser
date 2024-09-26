@@ -2,9 +2,7 @@ package internal
 
 import (
 	"errors"
-	"fmt"
 
-	kdd "github.com/PlayerR9/SlParser/kdd"
 	gcers "github.com/PlayerR9/go-errors"
 	"github.com/PlayerR9/go-generator"
 )
@@ -41,16 +39,9 @@ func (gd *TokenGen) SetPackageName(pkg_name string) {
 // Returns:
 //   - *TokenGen: The token generator.
 //   - error: An error if any.
-func NewTokenGen(tokens []*kdd.Node) (*TokenGen, error) {
+func NewTokenGen(tokens []*Info) (*TokenGen, error) {
 	if len(tokens) == 0 {
 		return nil, gcers.NewErrInvalidParameter("tokens must not be empty")
-	}
-
-	for i, tk := range tokens {
-		err := kdd.CheckAST(tk, 1)
-		if err != nil {
-			return nil, fmt.Errorf("invalid token at index %d: %w", i, err)
-		}
 	}
 
 	var symbols []string
@@ -60,19 +51,17 @@ func NewTokenGen(tokens []*kdd.Node) (*TokenGen, error) {
 	for _, tk := range tokens {
 		gcers.AssertNotNil(tk, "tk")
 
-		symbols = append(symbols, tk.Data)
+		symbols = append(symbols, tk.Literal)
 	}
 
-	lt, err := FindLastTerminal(tokens)
-	if err != nil {
-		return nil, err
-	} else if lt == nil {
-		return nil, errors.New("missing terminal")
+	lt := FindLastTerminal(tokens)
+	if lt == nil {
+		return nil, errors.New("no terminal found")
 	}
 
 	gd := &TokenGen{
 		Symbols:      symbols,
-		LastTerminal: lt.Data,
+		LastTerminal: lt.Literal,
 	}
 
 	return gd, nil
