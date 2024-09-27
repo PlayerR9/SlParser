@@ -5,6 +5,7 @@ import (
 	"iter"
 	"slices"
 
+	gers "github.com/PlayerR9/go-errors"
 	gerr "github.com/PlayerR9/go-errors/error"
 )
 
@@ -14,15 +15,21 @@ type Traversor[N interface {
 
 	Noder
 }, I interface {
-	NextInfos() []I
+	NextInfos() ([]I, error)
 
 	Infoer[N]
 }] struct {
 	// InitFn is the function that initializes the info.
 	//
+	// Parameters:
+	//   - node: The node the info is about.
+	//   - frames: The frames of the node. Used for stack traces.
+	//
 	// Returns:
 	//   - I: The info.
-	InitFn func() I
+	//   - error: The error that might occur during the initialization, such as
+	//   the node being nil.
+	InitFn func(node N, frames []string) (I, error)
 
 	// DoFn is the function that does the traversal.
 	//
@@ -46,136 +53,9 @@ type Traversor[N interface {
 //
 // Returns:
 //   - error: The error that might occur during the traversal.
-func (t Traversor[N, I]) MakeReverseDFS() func(root N) error {
-	var root_inf I
-
-	if t.InitFn == nil {
-		root_inf = *new(I)
-	} else {
-		root_inf = t.InitFn()
-	}
-
-	var fn func(root N) error
-
-	if t.DoFn == nil {
-		fn = func(root N) error {
-			root_inf.Init(root, nil)
-
-			stack := []I{root_inf}
-
-			var inner_err error
-			var last_top I
-
-			for len(stack) > 0 && inner_err == nil {
-				top := stack[len(stack)-1]
-				last_top = top
-
-				if top.IsNil() {
-					inner_err = errors.New("node found to be nil")
-					continue
-				}
-
-				if top.IsSeen() {
-					stack = stack[:len(stack)-1]
-					continue
-				}
-
-				// Add its children to the stack.
-
-				children := top.NextInfos()
-				if len(children) > 0 {
-					slices.Reverse(children)
-
-					stack = append(stack, children...)
-				}
-
-				top.See()
-			}
-
-			if inner_err == nil {
-				return nil
-			}
-
-			outer_err := gerr.New(BadSyntaxTree, inner_err.Error())
-
-			for frame := range last_top.Frame() {
-				outer_err.AddFrame(frame)
-			}
-
-			return outer_err
-		}
-	} else {
-		fn = func(root N) error {
-			root_inf.Init(root, nil)
-
-			stack := []I{root_inf}
-
-			var inner_err error
-			var last_top I
-
-			for len(stack) > 0 && inner_err == nil {
-				top := stack[len(stack)-1]
-				last_top = top
-
-				if top.IsNil() {
-					inner_err = errors.New("node found to be nil")
-					continue
-				}
-
-				if top.IsSeen() {
-					stack = stack[:len(stack)-1]
-
-					inner_err = t.DoFn(top.Node(), last_top)
-					continue
-				}
-
-				// Add its children to the stack.
-
-				children := top.NextInfos()
-				if len(children) > 0 {
-					slices.Reverse(children)
-
-					stack = append(stack, children...)
-				}
-
-				top.See()
-			}
-
-			if inner_err == nil {
-				return nil
-			}
-
-			outer_err := gerr.New(BadSyntaxTree, inner_err.Error())
-
-			for frame := range last_top.Frame() {
-				outer_err.AddFrame(frame)
-			}
-
-			return outer_err
-		}
-	}
-
-	return fn
-}
-
-// ReverseDFS is a function that traverses the ast in reverse depth first order.
-//
-// This means that the children are traversed before the parent; effectively making
-// it a traversal that starts from the left-most leaf and goes to the right-most;
-// and then from the right-most parent to the left-most parent.
-//
-// Parameters:
-//   - root: The root node of the tree.
-//
-// Returns:
-//   - error: The error that might occur during the traversal.
 func (t Traversor[N, I]) ReverseDFS(root N) error {
-	var root_inf I
-
-	if t.InitFn == nil {
-		root_inf = *new(I)
-	} else {
-		root_inf = t.InitFn()
+	if root.IsNil() {
+		return gers.NewErrNilParameter("root")
 	}
 
 	if t.DoFn == nil {
@@ -184,7 +64,10 @@ func (t Traversor[N, I]) ReverseDFS(root N) error {
 		}
 	}
 
-	root_inf.Init(root, nil)
+	root_inf, err := t.InitFn(root, nil)
+	if err != nil {
+		return err
+	}
 
 	stack := []I{root_inf}
 
@@ -209,7 +92,12 @@ func (t Traversor[N, I]) ReverseDFS(root N) error {
 
 		// Add its children to the stack.
 
-		children := top.NextInfos()
+		children, err := top.NextInfos()
+		if err != nil {
+			inner_err = err
+			continue
+		}
+
 		if len(children) > 0 {
 			slices.Reverse(children)
 

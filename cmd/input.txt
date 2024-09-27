@@ -1,5 +1,4 @@
-source : rule EOF ;
-source : rule source1 EOF ;
+source : source1 EOF ;
 
 source1 : rule ;
 source1 : rule NEWLINE source1 ;

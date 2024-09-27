@@ -42,6 +42,31 @@ type Info struct {
 	*ast.Info[*kdd.Node]
 }
 
+// IsNil checks whether the info is nil.
+//
+// Returns:
+//   - bool: true if the info is nil, false otherwise.
+func (info *Info) IsNil() bool {
+	return info == nil
+}
+
+// Init initializes the info.
+//
+// Parameters:
+//   - node: The node the info is about.
+//   - frames: The frames of the node. Used for stack traces.
+//
+// If length of frames is 0, then it is the first call to Init.
+func (info *Info) Init(node *kdd.Node, frames []string) error {
+	if info == nil {
+		return errors.New("receiver is nil")
+	}
+
+	info.Info.Init(node, frames)
+
+	return nil
+}
+
 /* // NewInfo creates a new info.
 //
 // Returns:
@@ -77,9 +102,9 @@ func (info Info) Equals(other *Info) bool {
 //   - []*Info: The information of the next nodes. No nil nodes are returned.
 //
 // As with NewInfo, the info is initialized with the invalid token type.
-func (info *Info) NextInfos() []*Info {
+func (info *Info) NextInfos() ([]*Info, error) {
 	if info == nil {
-		return nil
+		return nil, errors.New("receiver is nil")
 	}
 
 	new_frames := info.AppendFrame()
@@ -87,17 +112,37 @@ func (info *Info) NextInfos() []*Info {
 	var nexts []*Info
 
 	for child := range info.Info.Child() {
-		next := &Info{
-			Type: InvalidTk,
-			Info: ast.NewInfo[*kdd.Node](),
+		if child.IsNil() {
+			return nil, errors.New("found a nil child")
 		}
 
-		next.Init(child, new_frames)
+		next, err := NewInfo(child, new_frames)
+		if err != nil {
+			return nil, err
+		}
 
 		nexts = append(nexts, next)
 	}
 
-	return nexts
+	return nexts, nil
+}
+
+func NewInfo(node *kdd.Node, frames []string) (*Info, error) {
+	if node == nil {
+		return nil, gers.NewErrNilParameter("node")
+	}
+
+	info, err := ast.NewInfo(node, frames)
+	if err != nil {
+		return nil, err
+	}
+
+	next := &Info{
+		Type: InvalidTk,
+		Info: info,
+	}
+
+	return next, nil
 }
 
 var (
@@ -109,7 +154,7 @@ var (
 	// Returns:
 	//   - map[*kdd.Node]*Info: The info table.
 	//   - error: An error if the info table could not be created.
-	InfoTableOf ast.InfoTableOfFn[*kdd.Node, *Info]
+	InfoTableOf *ast.InfoTableMaker[*kdd.Node, *Info]
 )
 
 func init() {
@@ -153,15 +198,36 @@ func init() {
 		literal, err := MakeLiteral(type_, node.Data)
 		gers.AssertErr(err, "MakeLiteral(%s, %q)", type_.String(), node.Data)
 
+		sub_info := gers.AssertNew(ast.NewInfo(node, []string{literal}))
+
 		info := &Info{
 			Type:        type_,
 			Literal:     literal,
 			IsCandidate: is_candidate,
-			Info:        ast.NewInfo[*kdd.Node](),
+			Info:        sub_info,
 		}
 
 		return info, nil
 	}
 
-	InfoTableOf = ast.MakeInfoTable(fn)
+	init_fn := func(node *kdd.Node, _ []string) (*Info, error) {
+		if node == nil {
+			return nil, gers.NewErrNilParameter("node")
+		}
+
+		sub_info, err := ast.NewInfo(node, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		return &Info{
+			Type: InvalidTk,
+			Info: sub_info,
+		}, nil
+	}
+
+	InfoTableOf = &ast.InfoTableMaker[*kdd.Node, *Info]{
+		InitFn:     init_fn,
+		MakeInfoFn: fn,
+	}
 }

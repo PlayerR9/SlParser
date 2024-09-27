@@ -42,9 +42,9 @@ func main() {
 		Logger.Fatalf("Error parsing file: %v", err)
 	}
 
-	table, err := internal.InfoTableOf(root)
+	table, err := internal.InfoTableOf.Apply(root)
 	if err != nil {
-		Logger.Fatalf("Error extracting AST information")
+		Logger.Fatalf("Error creating info table: %v", err)
 	}
 
 	infos := internal.LinearizeTable(table)
@@ -203,21 +203,6 @@ func GenerateParsing() error {
 	return err
 }
 
-/*
-func GenerateError() error {
-	gen := internal.NewErrorGen()
-
-	data, err := internal.ErrorGenerator.Generate(internal.OutputLocFlag, "error", gen)
-	if err != nil {
-		return err
-	}
-
-	data.ModifyPrefixPath("errors_")
-
-	err = data.WriteFile()
-	return err
-} */
-
 func GenerateGen() error {
 	gen := internal.NewGenGen()
 
@@ -231,3 +216,19 @@ func GenerateGen() error {
 	err = data.WriteFile()
 	return err
 }
+
+/*
+func GenerateError() error {
+	gen := internal.NewErrorGen()
+
+	data, err := internal.ErrorGenerator.Generate(internal.OutputLocFlag, "error", gen)
+	if err != nil {
+		return err
+	}
+
+	data.ModifyPrefixPath("errors_")
+
+	err = data.WriteFile()
+	return err
+}
+*/

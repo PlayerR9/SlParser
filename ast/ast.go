@@ -2,7 +2,7 @@ package ast
 
 import (
 	gr "github.com/PlayerR9/SlParser/grammar"
-	gcers "github.com/PlayerR9/go-errors"
+	gers "github.com/PlayerR9/go-errors"
 )
 
 // ToAstFunc is a function that converts a token to an ast node.
@@ -42,7 +42,7 @@ type AstMaker[N interface {
 //   - error: if an error occurred.
 func (am AstMaker[N, T]) Convert(root *gr.ParseTree[T]) (N, error) {
 	if root == nil {
-		return *new(N), gcers.NewErrNilParameter("root")
+		return *new(N), gers.NewErrNilParameter("root")
 	}
 
 	type_ := root.Type()

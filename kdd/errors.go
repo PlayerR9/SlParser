@@ -1,7 +1,6 @@
 package kdd
 
-//go:generate stringer -type=ErrorCode
-
+// ErrorCode is the error code of an error.
 type ErrorCode int
 
 const (

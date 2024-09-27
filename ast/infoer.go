@@ -1,7 +1,10 @@
 package ast
 
 import (
+	"errors"
 	"iter"
+
+	gers "github.com/PlayerR9/go-errors"
 )
 
 // Infoer is an interface for info about a node.
@@ -10,15 +13,6 @@ type Infoer[N interface {
 
 	Noder
 }] interface {
-	// Init initializes the info.
-	//
-	// Parameters:
-	//   - node: The node the info is about.
-	//   - frames: The frames of the node. Used for stack traces.
-	//
-	// If length of frames is 0, then it is the first call to Init.
-	Init(node N, frames []string)
-
 	// IsNil checks whether the node the info is about is nil.
 	//
 	// Returns:
@@ -64,8 +58,8 @@ type Info[N interface {
 }
 
 // IsNil implements the Infoer interface.
-func (info Info[N]) IsNil() bool {
-	return info.node.IsNil()
+func (info *Info[N]) IsNil() bool {
+	return info == nil
 }
 
 // Node implements the Infoer interface.
@@ -85,14 +79,20 @@ func (info Info[N]) Frame() iter.Seq[string] {
 }
 
 // Init implements the Infoer interface.
-func (info *Info[N]) Init(node N, frames []string) {
+func (info *Info[N]) Init(node N, frames []string) error {
 	if info == nil {
-		return
+		return errors.New("receiver is nil")
+	}
+
+	if node.IsNil() {
+		return gers.NewErrNilParameter("node")
 	}
 
 	info.node = node
 	info.frames = frames
 	info.is_seen = false
+
+	return nil
 }
 
 // IsSeen implements the Infoer interface.
@@ -109,12 +109,33 @@ func (info *Info[N]) See() {
 	info.is_seen = true
 }
 
+// NewInfo creates a new info.
+//
+// Parameters:
+//   - node: The node the info is about.
+//   - frames: The frames of the node. Used for stack traces.
+//
+// Returns:
+//   - *Info: The new info.
+//   - error: An error of type error.Err with the code errors.BadParameter if the node is nil.
+//
+// The info is initialized as not seen. Call See to set it as seen.
 func NewInfo[N interface {
 	Child() iter.Seq[N]
 
 	Noder
-}]() *Info[N] {
-	return &Info[N]{}
+}](node N, frames []string) (*Info[N], error) {
+	if node.IsNil() {
+		return nil, gers.NewErrNilParameter("node")
+	}
+
+	info := &Info[N]{
+		node:    node,
+		frames:  frames,
+		is_seen: false,
+	}
+
+	return info, nil
 }
 
 // AppendFrame appends a frame to the frames of the Info.
@@ -124,7 +145,7 @@ func NewInfo[N interface {
 func (info Info[N]) AppendFrame() []string {
 	node := info.node
 	if node.IsNil() {
-		return nil
+		panic(gers.NewErrAssertFail("node is nil"))
 	}
 
 	frame := node.String()
@@ -153,11 +174,8 @@ func (info *Info[N]) NextInfos() []*Info[N] {
 	new_frames := info.AppendFrame()
 
 	for child := range info.node.Child() {
-		var new_info Info[N]
-
-		new_info.Init(child, new_frames)
-
-		children = append(children, &new_info)
+		new_info := gers.AssertNew(NewInfo[N](child, new_frames))
+		children = append(children, new_info)
 	}
 
 	return children

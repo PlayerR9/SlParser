@@ -71,9 +71,17 @@ func MakeCheckFn[N interface {
 	}
 
 	return func(node N, limit int) error {
-		trav.InitFn = func() *CheckerInfo[N] {
-			info := NewCheckerInfo[N](limit)
-			return &info
+		trav.InitFn = func(node N, frames []string) (*CheckerInfo[N], error) {
+			if node.IsNil() {
+				return nil, gers.NewErrNilParameter("node")
+			}
+
+			info, err := NewCheckerInfo(node, frames, limit)
+			if err != nil {
+				return nil, err
+			}
+
+			return info, nil
 		}
 		return trav.ReverseDFS(node)
 	}

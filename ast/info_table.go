@@ -2,6 +2,7 @@ package ast
 
 import (
 	"errors"
+	"fmt"
 	"iter"
 	"slices"
 
@@ -35,7 +36,7 @@ type NewInfoFn[N interface {
 
 	Noder
 }, I interface {
-	NextInfos() []I
+	NextInfos() ([]I, error)
 
 	Infoer[N]
 }] func(node N) (I, error)
@@ -53,94 +54,92 @@ type InfoTableOfFn[N interface {
 
 	Noder
 }, I interface {
-	NextInfos() []I
+	NextInfos() ([]I, error)
 
 	Infoer[N]
 }] func(root N) (map[N]I, error)
 
-// MakeInfoTable is a function that creates an info table for a node.
-//
-// Parameters:
-//   - fn: The new info function.
-//
-// Returns:
-//   - InfoTableOfFn: The info table function.
-//
-// Whenever the info function returns nil, the corresponding node will be removed from the table.
-//
-// If 'fn' is nil, then the function returns a function that returns an error.
-func MakeInfoTable[N interface {
+type InfoTableMaker[N interface {
 	Child() iter.Seq[N]
 
 	Noder
 }, I interface {
-	NextInfos() []I
+	NextInfos() ([]I, error)
 
 	Infoer[N]
-}](fn NewInfoFn[N, I]) InfoTableOfFn[N, I] {
-	if fn == nil {
-		return func(root N) (map[N]I, error) {
-			return nil, gers.NewErrNilParameter("fn")
+}] struct {
+	InitFn     func(node N, frames []string) (I, error)
+	MakeInfoFn func(node N) (I, error)
+}
+
+func (itm InfoTableMaker[N, I]) Apply(root N) (map[N]I, error) {
+	if root.IsNil() {
+		err := gers.NewErrNilParameter("root")
+		return nil, err
+	}
+
+	table := make(map[N]I)
+
+	root_info, err := itm.InitFn(root, nil)
+	if err != nil {
+		return nil, err
+	} else if root_info.IsNil() {
+		return nil, fmt.Errorf("root info is nil")
+	}
+
+	stack := []I{root_info}
+
+	var inner_err error
+	var last_top I
+
+	for len(stack) > 0 && inner_err == nil {
+		top := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		last_top = top
+
+		if top.IsNil() {
+			inner_err = errors.New("found info to be nil")
+			continue
+		}
+
+		node := top.Node()
+		if node.IsNil() {
+			inner_err = errors.New("found node to be nil")
+			continue
+		}
+
+		info, err := itm.MakeInfoFn(node)
+		if err == nil {
+			table[node] = info
+		} else if err != IgnoreInfo {
+			inner_err = err
+			continue
+		}
+
+		nexts, err := top.NextInfos()
+		if err != nil {
+			inner_err = err
+			continue
+		}
+
+		if len(nexts) > 0 {
+			slices.Reverse(nexts)
+			stack = append(stack, nexts...)
 		}
 	}
 
-	return func(root N) (map[N]I, error) {
-		if root.IsNil() {
-			err := gers.NewErrNilParameter("root")
-			return nil, err
-		}
-
-		table := make(map[N]I)
-
-		root_info := *new(I)
-		root_info.Init(root, nil)
-
-		stack := []I{root_info}
-
-		var inner_err error
-		var last_top I
-
-		for len(stack) > 0 && inner_err == nil {
-			top := stack[len(stack)-1]
-			stack = stack[:len(stack)-1]
-
-			last_top = top
-
-			if top.IsNil() {
-				inner_err = errors.New("found node to be nil")
-				continue
-			}
-
-			node := top.Node()
-
-			info, err := fn(node)
-			if err == nil {
-				table[node] = info
-			} else if err != IgnoreInfo {
-				inner_err = err
-				continue
-			}
-
-			nexts := top.NextInfos()
-
-			if len(nexts) > 0 {
-				slices.Reverse(nexts)
-				stack = append(stack, nexts...)
-			}
-		}
-
-		if inner_err == nil {
-			return table, nil
-		}
-
-		gers.AssertNotNil(last_top, "last_top")
-
-		outer_err := gerr.New(BadSyntaxTree, inner_err.Error())
-
-		for frame := range last_top.Frame() {
-			outer_err.AddFrame(frame)
-		}
-
-		return nil, outer_err
+	if inner_err == nil {
+		return table, nil
 	}
+
+	gers.AssertNotNil(last_top, "last_top")
+
+	outer_err := gerr.New(BadSyntaxTree, inner_err.Error())
+
+	for frame := range last_top.Frame() {
+		outer_err.AddFrame(frame)
+	}
+
+	return nil, outer_err
 }

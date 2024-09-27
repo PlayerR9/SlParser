@@ -9,8 +9,7 @@ import (
 	gers "github.com/PlayerR9/go-errors"
 )
 
-//go:generate stringer -type=NodeType -linecomment
-
+// NodeType is the type of a node.
 type NodeType int
 
 const (
@@ -100,7 +99,10 @@ func init() {
 		children := tk.GetChildren()
 
 		// rule : LOWERCASE_ID COLON rule1 SEMICOLON ;
-		ast.CheckType(children, 0, internal.TtLowercaseId)
+		err := ast.CheckType(children, 0, internal.TtLowercaseId)
+		if err != nil {
+			return nil, err
+		}
 
 		lhs := NewNode(children[0].Pos(), RhsNode, children[0].Data())
 		lhs.IsTerminal = true
@@ -108,8 +110,15 @@ func init() {
 		node := NewNode(tk.Pos(), RuleNode, "")
 		node.AddChild(lhs)
 
-		ast.CheckType(children, 1, internal.TtColon)
-		ast.CheckType(children, 3, internal.TtSemicolon)
+		err = ast.CheckType(children, 1, internal.TtColon)
+		if err != nil {
+			return nil, err
+		}
+
+		err = ast.CheckType(children, 3, internal.TtSemicolon)
+		if err != nil {
+			return nil, err
+		}
 
 		sub_children, err := ast.LhsToAst(2, children, internal.NtRule1, rule1)
 		if err != nil {
@@ -139,9 +148,10 @@ func init() {
 		case 2:
 			// source1 : rule NEWLINE source1 ;
 
-			ast.CheckType(children, 1, internal.TtNewline)
-
-			var err error
+			err := ast.CheckType(children, 1, internal.TtNewline)
+			if err != nil {
+				return nil, err
+			}
 
 			node, err = ast_maker.Convert(children[0])
 			if err != nil {
@@ -158,47 +168,24 @@ func init() {
 
 	builder.Register(internal.NtSource, func(tk *grammar.ParseTree[internal.TokenType]) (*Node, error) {
 		children := tk.GetChildren()
-
-		var node *Node
-
-		switch len(children) {
-		case 2:
-			// source : rule EOF ;
-
-			ast.CheckType(children, 1, internal.EtEOF)
-
-			sub_node, err := ast_maker.Convert(children[0])
-			if err != nil {
-				return nil, err
-			}
-
-			node = NewNode(tk.Pos(), SourceNode, "")
-			node.AddChild(sub_node)
-		case 4:
-			// source : rule NEWLINE source1 EOF ;
-
-			ast.CheckType(children, 1, internal.TtNewline)
-			ast.CheckType(children, 3, internal.EtEOF)
-
-			sub_node, err := ast_maker.Convert(children[0])
-			if err != nil {
-				return nil, err
-			} else if sub_node.Type != RuleNode {
-				return nil, fmt.Errorf("expected RuleNode, got %s instead", sub_node.Type.String())
-			}
-
-			node = NewNode(tk.Pos(), SourceNode, "")
-			node.AddChild(sub_node)
-
-			tmp, err := ast.LhsToAst(2, children, internal.NtSource1, source1)
-			if err != nil {
-				return nil, err
-			}
-
-			node.AddChildren(tmp)
-		default:
-			return nil, fmt.Errorf("expected 2 or 4 children, got %d instead", len(children))
+		if len(children) != 2 {
+			return nil, fmt.Errorf("expected two children, got %d instead", len(children))
 		}
+
+		err := ast.CheckType(children, 1, internal.EtEOF)
+		if err != nil {
+			return nil, err
+		}
+
+		// source : source1 EOF ;
+
+		tmp, err := ast.LhsToAst(0, children, internal.NtSource1, source1)
+		if err != nil {
+			return nil, err
+		}
+
+		node := NewNode(tk.Pos(), SourceNode, "")
+		node.AddChildren(tmp)
 
 		return node, nil
 	})
