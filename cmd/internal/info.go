@@ -51,23 +51,6 @@ func (info *Info) IsNil() bool {
 	return info == nil
 }
 
-// Init initializes the info.
-//
-// Parameters:
-//   - node: The node the info is about.
-//   - frames: The frames of the node. Used for stack traces.
-//
-// If length of frames is 0, then it is the first call to Init.
-func (info *Info) Init(node *kdd.Node, frames []string) error {
-	if info == nil {
-		return errors.New("receiver is nil")
-	}
-
-	info.Info.Init(node, frames)
-
-	return nil
-}
-
 /* // NewInfo creates a new info.
 //
 // Returns:

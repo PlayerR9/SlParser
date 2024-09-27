@@ -5,39 +5,6 @@ import (
 	gcers "github.com/PlayerR9/go-errors"
 )
 
-/* // TransformFakeNode transforms a node into a fake AST node.
-//
-// Parameters:
-//   - tk: the token to transform.
-//
-// Returns:
-//   - *Node: the transformed node.
-//
-// This function transforms a node into a fake AST node. It does this by creating a new node with the correct type and data,
-// and then setting the children of the new node to be the transformed children of the fake node.
-func TransformFakeNode[N interface {
-	AddChildren(children []N)
-}, T gr.TokenTyper](tk *gr.ParseTree[T], fn func(tk *gr.ParseTree[T]) N) N {
-	if tk == nil {
-		return *new(N)
-	}
-
-	node := fn(tk)
-
-	// node := NewNode(FakeNode, tk.Type.String()+" : "+tk.Data)
-
-	var subnodes []N
-
-	for child := range tk.Child() {
-		n := TransformFakeNode[N](child, fn)
-		subnodes = append(subnodes, n)
-	}
-
-	node.AddChildren(subnodes)
-
-	return node
-} */
-
 // CheckType is a helper function that checks the type of the token at the given
 // position.
 //

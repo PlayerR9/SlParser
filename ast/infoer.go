@@ -1,7 +1,6 @@
 package ast
 
 import (
-	"errors"
 	"iter"
 
 	gers "github.com/PlayerR9/go-errors"
@@ -78,23 +77,6 @@ func (info Info[N]) Frame() iter.Seq[string] {
 	}
 }
 
-// Init implements the Infoer interface.
-func (info *Info[N]) Init(node N, frames []string) error {
-	if info == nil {
-		return errors.New("receiver is nil")
-	}
-
-	if node.IsNil() {
-		return gers.NewErrNilParameter("node")
-	}
-
-	info.node = node
-	info.frames = frames
-	info.is_seen = false
-
-	return nil
-}
-
 // IsSeen implements the Infoer interface.
 func (info Info[N]) IsSeen() bool {
 	return info.is_seen
@@ -163,24 +145,43 @@ func (info Info[N]) AppendFrame() []string {
 // NextInfos returns the children of the node.
 //
 // Returns:
-//   - []*_Info: The children of the node.
-func (info *Info[N]) NextInfos() []*Info[N] {
-	if info == nil {
-		return nil
-	}
-
+//   - []*Info: The children of the node.
+//   - error: An error of type error.Err with the code errors.BadParameter if the node is nil.
+func (info Info[N]) NextInfos() ([]*Info[N], error) {
 	var children []*Info[N]
 
 	new_frames := info.AppendFrame()
 
+	i := 0
 	for child := range info.node.Child() {
-		new_info := gers.AssertNew(NewInfo[N](child, new_frames))
+		if child.IsNil() {
+			err := gers.NewErrAssertFail("child found to be nil")
+			err.AddContext("idx", i)
+
+			return nil, err
+		}
+
+		new_info := &Info[N]{
+			node:    child,
+			frames:  new_frames,
+			is_seen: false,
+		}
+
 		children = append(children, new_info)
+		i++
 	}
 
-	return children
+	return children, nil
 }
 
+// Child returns an iterator that yields the children of the node.
+//
+// Returns:
+//   - iter.Seq[N]: The iterator. Never returns nil.
 func (info Info[N]) Child() iter.Seq[N] {
+	if info.node.IsNil() {
+		return func(yield func(N) bool) {}
+	}
+
 	return info.node.Child()
 }

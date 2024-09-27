@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/PlayerR9/SlParser/cmd/internal"
 	kdd "github.com/PlayerR9/SlParser/kdd"
@@ -19,7 +20,7 @@ func init() {
 }
 
 func main() {
-	err := internal.ParseFlags()
+	dir, err := internal.ParseFlags()
 	if err != nil {
 		generator.PrintFlags()
 
@@ -54,37 +55,32 @@ func main() {
 
 	infos := internal.LinearizeTable(table)
 
-	err = GenerateTokens(infos, rules)
+	err = GenerateTokens(dir, infos, rules)
 	if err != nil {
 		Logger.Fatalf("Error generating tokens: %v", err)
 	}
 
-	err = GenerateLexer()
+	err = GenerateLexer(dir)
 	if err != nil {
 		Logger.Fatalf("Error generating lexer: %v", err)
 	}
 
-	err = GenerateNode()
+	err = GenerateNode(dir)
 	if err != nil {
 		Logger.Fatalf("Error generating node: %v", err)
 	}
 
-	err = GenerateAst(table)
+	err = GenerateAst(dir, table)
 	if err != nil {
 		Logger.Fatalf("Error generating ast: %v", err)
 	}
 
-	/* 	err = GenerateError()
-	   	if err != nil {
-	   		Logger.Fatalf("Error generating errors: %v", err)
-	   	} */
-
-	err = GenerateParsing()
+	err = GenerateParsing(dir)
 	if err != nil {
 		Logger.Fatalf("Error generating parsing: %v", err)
 	}
 
-	err = GenerateGen()
+	err = GenerateGen(dir)
 	if err != nil {
 		Logger.Fatalf("Error generating gen: %v", err)
 	}
@@ -105,7 +101,7 @@ func main() {
 // from how the github.com/PlayerR9/SlParser/parser package is implemented.
 //
 // If that ever changes, this function will need to be updated.
-func GenerateTokens(tk_symbols []*internal.Info, rules []*internal.Rule) error {
+func GenerateTokens(dir string, tk_symbols []*internal.Info, rules []*internal.Rule) error {
 	ok := internal.CheckEofExists(tk_symbols)
 	if !ok {
 		return errors.New("missing EOF")
@@ -120,12 +116,12 @@ func GenerateTokens(tk_symbols []*internal.Info, rules []*internal.Rule) error {
 		gd.Rules = append(gd.Rules, rule.String())
 	}
 
-	gen, err := internal.TokenGenerator.Generate(internal.OutputLocFlag, "lexer", gd)
+	loc := filepath.Join(dir, "token.go")
+
+	gen, err := internal.TokenGenerator.GenerateWithLoc(loc, gd)
 	if err != nil {
 		return err
 	}
-
-	gen.ModifyPrefixPath("token_")
 
 	err = gen.WriteFile()
 	if err != nil {
@@ -135,35 +131,17 @@ func GenerateTokens(tk_symbols []*internal.Info, rules []*internal.Rule) error {
 	return nil
 }
 
-func GenerateLexer() error {
-	gen := internal.NewLexerGen()
+func GenerateLexer(dir string) error {
+	lexer_gen := internal.NewLexerGen()
 
-	lexer_gen, err := internal.LexerGenerator.Generate(internal.OutputLocFlag, "lexer", gen)
+	loc := filepath.Join(dir, "lexer.go")
+
+	gen, err := internal.LexerGenerator.GenerateWithLoc(loc, lexer_gen)
 	if err != nil {
 		return err
 	}
 
-	lexer_gen.ModifyPrefixPath("lexer_")
-
-	err = lexer_gen.WriteFile()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func GenerateNode() error {
-	gen := internal.NewNodeGen()
-
-	node_gen, err := internal.NodeGenerator.Generate(internal.OutputLocFlag, "node", gen)
-	if err != nil {
-		return err
-	}
-
-	node_gen.ModifyPrefixPath("node_")
-
-	err = node_gen.WriteFile()
+	err = gen.WriteFile()
 	if err != nil {
 		return err
 	}
@@ -171,15 +149,33 @@ func GenerateNode() error {
 	return nil
 }
 
-func GenerateAst(table map[*kdd.Node]*internal.Info) error {
+func GenerateNode(dir string) error {
+	node_gen := internal.NewNodeGen()
+
+	loc := filepath.Join(dir, "node.go")
+
+	gen, err := internal.NodeGenerator.GenerateWithLoc(loc, node_gen)
+	if err != nil {
+		return err
+	}
+
+	err = gen.WriteFile()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GenerateAst(dir string, table map[*kdd.Node]*internal.Info) error {
 	gen := internal.NewASTGen(table)
 
-	ast_gen, err := internal.ASTGenerator.Generate(internal.OutputLocFlag, "ast", gen)
+	loc := filepath.Join(dir, "ast.go")
+
+	ast_gen, err := internal.ASTGenerator.GenerateWithLoc(loc, gen)
 	if err != nil {
 		return err
 	}
-
-	ast_gen.ModifyPrefixPath("ast_")
 
 	err = ast_gen.WriteFile()
 	if err != nil {
@@ -189,46 +185,30 @@ func GenerateAst(table map[*kdd.Node]*internal.Info) error {
 	return nil
 }
 
-func GenerateParsing() error {
+func GenerateParsing(dir string) error {
 	gen := internal.NewParsingGen()
 
-	data, err := internal.ParsingGenerator.Generate(internal.OutputLocFlag, "parsing", gen)
+	loc := filepath.Join(dir, "parsing.go")
+
+	data, err := internal.ParsingGenerator.GenerateWithLoc(loc, gen)
 	if err != nil {
 		return err
 	}
-
-	data.ModifyPrefixPath("parsing_")
 
 	err = data.WriteFile()
 	return err
 }
 
-func GenerateGen() error {
+func GenerateGen(dir string) error {
 	gen := internal.NewGenGen()
 
-	data, err := internal.GenGenerator.Generate(internal.OutputLocFlag, "gen", gen)
+	loc := filepath.Join(dir, "generate.go")
+
+	data, err := internal.GenGenerator.GenerateWithLoc(loc, gen)
 	if err != nil {
 		return err
 	}
 
-	data.ModifyPrefixPath("gen_")
-
 	err = data.WriteFile()
 	return err
 }
-
-/*
-func GenerateError() error {
-	gen := internal.NewErrorGen()
-
-	data, err := internal.ErrorGenerator.Generate(internal.OutputLocFlag, "error", gen)
-	if err != nil {
-		return err
-	}
-
-	data.ModifyPrefixPath("errors_")
-
-	err = data.WriteFile()
-	return err
-}
-*/

@@ -61,19 +61,7 @@ func init() {
 		type_ := children[0].Type()
 		gers.AssertNotNil(type_, "type_")
 
-		var is_terminal bool
-
-		switch type_ {
-		case TtUppercaseId:
-			is_terminal = true
-		case TtLowercaseId:
-			is_terminal = true
-		default:
-			return nil, fmt.Errorf("expected UPPERCASE_ID or LOWERCASE_ID, got %s instead", type_.String())
-		}
-
 		node := NewNode(tk.Pos(), RhsNode, children[0].Data())
-		node.IsTerminal = is_terminal
 		return node, nil
 	}
 
@@ -104,7 +92,6 @@ func init() {
 		}
 
 		lhs := NewNode(children[0].Pos(), RhsNode, children[0].Data())
-		lhs.IsTerminal = true
 
 		node := NewNode(tk.Pos(), RuleNode, "")
 		node.AddChild(lhs)

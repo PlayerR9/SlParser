@@ -27,7 +27,7 @@ func (g *ASTGen) SetPackageName(pkg_name string) {
 // NewASTGen creates a new ASTGen with the given tokens.
 //
 // Parameters:
-//   - nodes: The list of tokens.
+//   - table: The information about the AST.
 //
 // Returns:
 //   - *ASTGen: the ASTGen. Never returns nil.

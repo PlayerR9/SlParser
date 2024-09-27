@@ -14,8 +14,6 @@ type Node struct {
 	Data                                                    string
 	Type                                                    NodeType
 	Pos                                                     int
-
-	IsTerminal bool
 }
 
 // IsNil implements the ast.Noder interface.

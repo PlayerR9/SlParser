@@ -36,11 +36,6 @@ func init() {
 		case SourceNode:
 			// 1. All children must be rule nodes.
 			// 2. At least one children is expected.
-			// 3. Must not flagged as terminal.
-
-			if node.IsTerminal {
-				return fmt.Errorf("source node must not be flagged as terminal")
-			}
 
 			if node.FirstChild == nil {
 				return fmt.Errorf("at least one rule is expected")
@@ -58,11 +53,6 @@ func init() {
 		case RuleNode:
 			// 1. All children must be rhs nodes.
 			// 2. At least two children are expected.
-			// 3. Must not flagged as terminal.
-
-			if node.IsTerminal {
-				return fmt.Errorf("rule node must not be flagged as terminal")
-			}
 
 			if node.FirstChild == nil {
 				return fmt.Errorf("missing LHS node")
