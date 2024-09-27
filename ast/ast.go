@@ -1,6 +1,8 @@
 package ast
 
 import (
+	"fmt"
+
 	gr "github.com/PlayerR9/SlParser/grammar"
 	gers "github.com/PlayerR9/go-errors"
 )
@@ -24,12 +26,23 @@ type AstMaker[N interface {
 	AddChildren(children []N)
 
 	Noder
-}, T gr.TokenTyper] struct {
-	// table is the ast table.
-	table map[T]ToAstFunc[N, T]
+}, T gr.TokenTyper] map[T]ToAstFunc[N, T]
 
-	// make_fake_node is the function that makes the fake node.
-	// make_fake_node func(root *gr.ParseTree[T]) N
+// FnOf is a function that gets the ast function of a type.
+//
+// Parameters:
+//   - type_: The type of the token.
+//
+// Returns:
+//   - ToAstFunc[N, T]: The ast function.
+//   - bool: true if the ast function was found, false otherwise.
+func (am AstMaker[N, T]) FnOf(type_ T) (ToAstFunc[N, T], bool) {
+	if len(am) == 0 {
+		return nil, false
+	}
+
+	fn, ok := am[type_]
+	return fn, ok
 }
 
 // Convert is a function that converts a token to an ast node.
@@ -41,25 +54,28 @@ type AstMaker[N interface {
 //   - N: The ast node.
 //   - error: if an error occurred.
 func (am AstMaker[N, T]) Convert(root *gr.ParseTree[T]) (N, error) {
+	zero := *new(N)
+
 	if root == nil {
-		return *new(N), gers.NewErrNilParameter("root")
+		return zero, gers.NewErrNilParameter("root")
 	}
 
 	type_ := root.Type()
 
-	var node N
-	var err error
-
-	fn, ok := am.table[type_]
-	if !ok {
-		err = NewUnregisteredType(type_, type_.String())
-	} else {
-		node, err = fn(root)
+	fn, ok := am.FnOf(type_)
+	if !ok || fn == nil {
+		err := NewUnregisteredType(type_, type_.String())
+		return zero, err
 	}
 
-	return node, err
+	node, err := fn(root)
+	if err != nil {
+		return zero, err
+	}
+
+	if node.IsNil() {
+		return zero, fmt.Errorf("the returned node must not be nil")
+	}
+
+	return node, nil
 }
-
-/* func MakeAst(am AstMaker, tk *gr.Token[T]) (*Node, error) {
-
-} */

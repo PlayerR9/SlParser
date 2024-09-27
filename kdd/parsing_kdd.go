@@ -10,7 +10,6 @@ import (
 
 	sl "github.com/PlayerR9/SlParser"
 	"github.com/PlayerR9/SlParser/ast"
-	internal "github.com/PlayerR9/SlParser/kdd/internal"
 	"github.com/PlayerR9/SlParser/lexer"
 	"github.com/PlayerR9/SlParser/parser"
 	gers "github.com/PlayerR9/go-errors"
@@ -45,13 +44,13 @@ type Parsing struct {
 	debugger *log.Logger
 
 	// lexer is the lexer.
-	lexer *lexer.Lexer[internal.TokenType]
+	lexer *lexer.Lexer[TokenType]
 
 	// parser is the parser.
-	parser *parser.Parser[internal.TokenType]
+	parser *parser.Parser[TokenType]
 
 	// ast is the AST maker.
-	ast *ast.AstMaker[*Node, internal.TokenType]
+	ast ast.AstMaker[*Node, TokenType]
 }
 
 // NewParser creates a new parser.
@@ -62,8 +61,8 @@ func NewParser() *Parsing {
 	return &Parsing{
 		debug_mode: ShowNone,
 		debugger:   log.New(os.Stdout, "[PARSER]: ", log.LstdFlags),
-		lexer:      internal.Lexer,
-		parser:     internal.Parser,
+		lexer:      Lexer,
+		parser:     Parser,
 		ast:        ast_maker,
 	}
 }

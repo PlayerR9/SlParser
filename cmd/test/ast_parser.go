@@ -2,21 +2,13 @@
 package test
 
 import (
-	"bytes"
 	"errors"
-	"fmt"
-	"io"
-	"iter"
-	"log"
-	"os"
 
-	sl "github.com/PlayerR9/SlParser"
 	"github.com/PlayerR9/SlParser/ast"
 	"github.com/PlayerR9/SlParser/grammar"
-	"github.com/PlayerR9/SlParser/lexer"
-	"github.com/PlayerR9/SlParser/parser"
 )
 
+// NodeType is the type of a node.
 type NodeType int
 
 const (
@@ -42,15 +34,15 @@ const (
 )
 
 var (
-	ast_maker *ast.AstMaker[*Node, internal.TokenType]
+	ast_maker ast.AstMaker[*Node, TokenType]
 )
 	
 func init() {
-	builder := ast.NewBuilder[*Node, internal.TokenType]()
+	ast_maker = make(ast.AstMaker[*Node, TokenType])
 
 	// TODO: Add here your own custom rules...
 	
-	builder.Register(internal.NtNtRhs, func(tk *grammar.ParseTree[internal.TokenType]) (*Node, error) {
+	ast_maker[NtRhs] = func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
 		children := tk.GetChildren()
 		if len(children) == 0 {
 			return nil, errors.New("expected at least one child")
@@ -60,8 +52,8 @@ func init() {
 
 		node := NewNode(tk.Pos(), NtRhsNode, "")
 		return node, nil
-	})
-	builder.Register(internal.NtNtRule, func(tk *grammar.ParseTree[internal.TokenType]) (*Node, error) {
+	}
+	ast_maker[NtRule] = func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
 		children := tk.GetChildren()
 		if len(children) == 0 {
 			return nil, errors.New("expected at least one child")
@@ -71,8 +63,8 @@ func init() {
 
 		node := NewNode(tk.Pos(), NtRuleNode, "")
 		return node, nil
-	})
-	builder.Register(internal.NtNtSource, func(tk *grammar.ParseTree[internal.TokenType]) (*Node, error) {
+	}
+	ast_maker[NtSource] = func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
 		children := tk.GetChildren()
 		if len(children) == 0 {
 			return nil, errors.New("expected at least one child")
@@ -82,7 +74,5 @@ func init() {
 
 		node := NewNode(tk.Pos(), NtSourceNode, "")
 		return node, nil
-	})
-
-	ast_maker = builder.Build()
+	}
 }

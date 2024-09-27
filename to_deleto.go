@@ -6,6 +6,8 @@ import (
 	"slices"
 )
 
+//////////////////////////////////////////////////////////////////
+
 // TODO: Delete this once go-commons is updated.
 
 // ReverseSearch searches for the last occurrence of a byte in a byte slice.

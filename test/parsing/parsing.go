@@ -50,7 +50,7 @@ type Parsing struct {
 	parser *prx.Parser[internal.TokenType]
 
 	// ast is the AST maker.
-	ast *ast.AstMaker[*Node, internal.TokenType]
+	ast ast.AstMaker[*Node, internal.TokenType]
 }
 
 // NewParser creates a new parser.

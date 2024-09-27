@@ -2,6 +2,7 @@ package internal
 
 import (
 	"errors"
+	"fmt"
 	"unicode"
 	"unicode/utf8"
 
@@ -195,8 +196,13 @@ func init() {
 		}
 
 		// 3. Determine the literal of the node.
-		literal, err := MakeLiteral(type_, node.Data)
-		gers.AssertErr(err, "MakeLiteral(%s, %q)", type_.String(), node.Data)
+		literal, err := make_literal(type_, node.Data)
+		if err != nil {
+			err.AddContext("node", node)
+			err.AddFrame(fmt.Sprintf("make_literal(%s, %q)", type_.String(), node.Data))
+
+			return nil, err
+		}
 
 		sub_info := gers.AssertNew(ast.NewInfo(node, []string{literal}))
 

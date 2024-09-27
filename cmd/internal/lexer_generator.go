@@ -6,12 +6,21 @@ import (
 )
 
 // LexerGen is a generator for the lexer.
-type LexerGen struct{}
+type LexerGen struct {
+	// PackageName is the name of the package.
+	PackageName string
+}
 
 // SetPackageName implements the generator.PackageNameSetter interface.
 //
 // This function is a no-op.
-func (gd *LexerGen) SetPackageName(pkg_name string) {}
+func (gd *LexerGen) SetPackageName(pkg_name string) {
+	if gd == nil {
+		return
+	}
+
+	gd.PackageName = pkg_name
+}
 
 // NewLexerGen creates a new lexer generator.
 //
@@ -35,7 +44,7 @@ func init() {
 
 // lexer_templ is the template for the lexer.
 var lexer_templ string = `
-package internal
+package {{ .PackageName }}
 
 import (
 	"github.com/PlayerR9/SlParser/lexer"

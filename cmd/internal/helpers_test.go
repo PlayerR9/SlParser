@@ -9,7 +9,7 @@ func TestMakeLiteral(t *testing.T) {
 		Expected string = "TtNewLine"
 	)
 
-	literal, err := MakeLiteral(TerminalTk, "NEW_LINE")
+	literal, err := make_literal(TerminalTk, "NEW_LINE")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

@@ -47,12 +47,12 @@ func main() {
 		Logger.Fatalf("Error creating info table: %v", err)
 	}
 
-	infos := internal.LinearizeTable(table)
-
-	rules, err := internal.ExtractRules(root)
+	rules, err := internal.ExtractRules(table, root)
 	if err != nil {
 		Logger.Fatalf("Error extracting rules: %v", err)
 	}
+
+	infos := internal.LinearizeTable(table)
 
 	err = GenerateTokens(infos, rules)
 	if err != nil {
@@ -125,7 +125,7 @@ func GenerateTokens(tk_symbols []*internal.Info, rules []*internal.Rule) error {
 		return err
 	}
 
-	gen.ModifyPrefixPath("token_", "internal")
+	gen.ModifyPrefixPath("token_")
 
 	err = gen.WriteFile()
 	if err != nil {
@@ -143,7 +143,7 @@ func GenerateLexer() error {
 		return err
 	}
 
-	lexer_gen.ModifyPrefixPath("lexer_", "internal")
+	lexer_gen.ModifyPrefixPath("lexer_")
 
 	err = lexer_gen.WriteFile()
 	if err != nil {

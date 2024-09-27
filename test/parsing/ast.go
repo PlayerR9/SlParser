@@ -32,13 +32,13 @@ const (
 )
 
 var (
-	ast_maker *ast.AstMaker[*Node, internal.TokenType]
+	ast_maker ast.AstMaker[*Node, internal.TokenType]
 )
 
 func init() {
-	builder := ast.NewBuilder[*Node, internal.TokenType]()
+	ast_maker = make(ast.AstMaker[*Node, internal.TokenType])
 
-	builder.Register(internal.NtSource, func(tk *gr.ParseTree[internal.TokenType]) (*Node, error) {
+	ast_maker[internal.NtSource] = func(tk *gr.ParseTree[internal.TokenType]) (*Node, error) {
 		// Token[T][79:NttSource]
 		//  ├── Token[T][79:TttNewline]
 		//  ├── Token[T][80:NttSource1]
@@ -105,9 +105,9 @@ func init() {
 		node.AddChildren(subnodes)
 
 		return node, nil
-	})
+	}
 
-	builder.Register(internal.NtStatement, func(tk *gr.ParseTree[internal.TokenType]) (*Node, error) {
+	ast_maker[internal.NtStatement] = func(tk *gr.ParseTree[internal.TokenType]) (*Node, error) {
 		// Token[T][80:NttStatement]
 		//  └── Token[T][80:TttListComprehension ("sq = [x * x for x in range(10)]")]
 
@@ -125,9 +125,9 @@ func init() {
 		}
 
 		return node, nil
-	})
+	}
 
-	builder.Register(internal.TtListComprehension, func(tk *gr.ParseTree[internal.TokenType]) (*Node, error) {
+	ast_maker[internal.TtListComprehension] = func(tk *gr.ParseTree[internal.TokenType]) (*Node, error) {
 		// Token[T][80:TttListComprehension ("sq = [x * x for x in range(10)]")]
 
 		children := tk.GetChildren()
@@ -138,9 +138,9 @@ func init() {
 		node := NewNode(tk.Pos(), ListComprehensionNode, tk.Data())
 
 		return node, nil
-	})
+	}
 
-	builder.Register(internal.TtPrintStmt, func(tk *gr.ParseTree[internal.TokenType]) (*Node, error) {
+	ast_maker[internal.TtPrintStmt] = func(tk *gr.ParseTree[internal.TokenType]) (*Node, error) {
 		// Token[T][112:TttPrintStmt ("sq")]
 
 		children := tk.GetChildren()
@@ -151,7 +151,5 @@ func init() {
 		node := NewNode(tk.Pos(), PrintStmtNode, tk.Data())
 
 		return node, nil
-	})
-
-	ast_maker = builder.Build()
+	}
 }

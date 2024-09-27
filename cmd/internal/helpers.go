@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -10,6 +9,7 @@ import (
 	kdd "github.com/PlayerR9/SlParser/kdd"
 	gcch "github.com/PlayerR9/go-commons/runes"
 	gers "github.com/PlayerR9/go-errors"
+	gerr "github.com/PlayerR9/go-errors/error"
 )
 
 // replace_underscore replaces underscores with underscores.
@@ -48,7 +48,7 @@ func replace_underscore(chars []rune) string {
 	return builder.String()
 }
 
-// MakeLiteral makes a literal according to the type and its data.
+// make_literal makes a literal according to the type and its data.
 //
 // Parameters:
 //   - type_: The type of the literal.
@@ -63,18 +63,21 @@ func replace_underscore(chars []rune) string {
 //   - error.Err (with code InvalidParameter): If the data is an empty string.
 //   - any other error if the data does not starts with a letter nor the type_ is not one of the
 //     supported types (that are, TerminalTk, NonterminalTk, ExtraTk).
-func MakeLiteral(type_ TokenType, data string) (string, error) {
+func make_literal(type_ TokenType, data string) (string, *gerr.Err) {
 	if data == "" {
-		return "", gers.NewErrInvalidParameter("data must not be an empty string")
+		err := gerr.New(gers.BadParameter, "data must not be an empty string")
+		return "", err
 	}
 
 	chars, err := gcch.StringToUtf8(data)
 	if err != nil {
+		err := gerr.NewFromError(gers.BadParameter, err)
 		return "", err
 	}
 
 	if !unicode.IsLetter(chars[0]) {
-		return "", errors.New("symbol must start with a letter")
+		err := gerr.New(gers.BadParameter, "data must start with a letter")
+		return "", err
 	}
 
 	if unicode.IsLower(chars[0]) {
@@ -91,7 +94,8 @@ func MakeLiteral(type_ TokenType, data string) (string, error) {
 	case ExtraTk:
 		data = "Et" + data
 	default:
-		return "", fmt.Errorf("type (%v) is not supported", type_)
+		err := gerr.New(gers.BadParameter, fmt.Sprintf("type (%v) is not supported", type_))
+		return "", err
 	}
 
 	return data, nil

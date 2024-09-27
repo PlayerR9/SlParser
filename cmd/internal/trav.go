@@ -7,7 +7,7 @@ import (
 	gers "github.com/PlayerR9/go-errors"
 )
 
-func ExtractRules(root *kdd.Node) ([]*Rule, error) {
+func ExtractRules(infos map[*kdd.Node]*Info, root *kdd.Node) ([]*Rule, error) {
 	if root == nil {
 		return nil, nil
 	}
@@ -23,32 +23,29 @@ func ExtractRules(root *kdd.Node) ([]*Rule, error) {
 			return nil, fmt.Errorf("expected RuleNode, got %s instead", c.Type.String())
 		}
 
-		var rhss []string
-
 		children := c.GetChildren()
 		if len(children) < 2 {
 			return nil, fmt.Errorf("expected at least two children, got %d instead", len(children))
 		}
 
-		lhs := children[0].Data
-		type_ := children[0].Type
+		var ids []string
 
-		if type_ != kdd.RhsNode {
-			return nil, fmt.Errorf("lhs expected to be RHS, got %s instead", type_.String())
-		}
-
-		for i := 1; i < len(children); i++ {
-			data := children[i].Data
-			type_ := children[i].Type
-
-			if type_ != kdd.RhsNode {
-				return nil, fmt.Errorf("lhs expected to be RHS, got %s instead", type_.String())
+		for _, child := range children {
+			info, ok := infos[child]
+			if !ok || info == nil {
+				return nil, fmt.Errorf("expected Info, got %s instead", child.Type.String())
 			}
 
-			rhss = append(rhss, data)
+			type_ := child.Type
+
+			if type_ != kdd.RhsNode {
+				return nil, fmt.Errorf("id expected to be RHS, got %s instead", type_.String())
+			}
+
+			ids = append(ids, info.Literal)
 		}
 
-		rule, err := NewRule(lhs, rhss)
+		rule, err := NewRule(ids[0], ids[1:])
 		gers.AssertErr(err, "NewRule(lhs, rhss)")
 		gers.AssertNotNil(rule, "rule")
 

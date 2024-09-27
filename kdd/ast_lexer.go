@@ -5,7 +5,6 @@ import (
 
 	"github.com/PlayerR9/SlParser/ast"
 	"github.com/PlayerR9/SlParser/grammar"
-	internal "github.com/PlayerR9/SlParser/kdd/internal"
 	gers "github.com/PlayerR9/go-errors"
 )
 
@@ -42,17 +41,17 @@ const (
 // rule : LOWERCASE_ID COLON rhs+ SEMICOLON ;
 
 var (
-	ast_maker *ast.AstMaker[*Node, internal.TokenType]
+	ast_maker ast.AstMaker[*Node, TokenType]
 )
 
 func init() {
-	builder := ast.NewBuilder[*Node, internal.TokenType]()
+	ast_maker = make(ast.AstMaker[*Node, TokenType])
 
 	// TODO: Add here your own custom rules...
 
 	// rhs : UPPERCASE_ID ;
 	// rhs : LOWERCASE_ID ;
-	builder.Register(internal.NtRhs, func(tk *grammar.ParseTree[internal.TokenType]) (*Node, error) {
+	ast_maker[NtRhs] = func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
 		children := tk.GetChildren()
 
 		if len(children) != 1 {
@@ -65,9 +64,9 @@ func init() {
 		var is_terminal bool
 
 		switch type_ {
-		case internal.TtUppercaseId:
+		case TtUppercaseId:
 			is_terminal = true
-		case internal.TtLowercaseId:
+		case TtLowercaseId:
 			is_terminal = true
 		default:
 			return nil, fmt.Errorf("expected UPPERCASE_ID or LOWERCASE_ID, got %s instead", type_.String())
@@ -76,11 +75,11 @@ func init() {
 		node := NewNode(tk.Pos(), RhsNode, children[0].Data())
 		node.IsTerminal = is_terminal
 		return node, nil
-	})
+	}
 
 	// rule1 : rhs ;
 	// rule1 : rhs rule1 ;
-	rule1 := func(children []*grammar.ParseTree[internal.TokenType]) (*Node, error) {
+	rule1 := func(children []*grammar.ParseTree[TokenType]) (*Node, error) {
 		if len(children) != 1 {
 			return nil, fmt.Errorf("expected one child, got %d instead", len(children))
 		}
@@ -95,11 +94,11 @@ func init() {
 		return node, nil
 	}
 
-	builder.Register(internal.NtRule, func(tk *grammar.ParseTree[internal.TokenType]) (*Node, error) {
+	ast_maker[NtRule] = func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
 		children := tk.GetChildren()
 
 		// rule : LOWERCASE_ID COLON rule1 SEMICOLON ;
-		err := ast.CheckType(children, 0, internal.TtLowercaseId)
+		err := ast.CheckType(children, 0, TtLowercaseId)
 		if err != nil {
 			return nil, err
 		}
@@ -110,17 +109,17 @@ func init() {
 		node := NewNode(tk.Pos(), RuleNode, "")
 		node.AddChild(lhs)
 
-		err = ast.CheckType(children, 1, internal.TtColon)
+		err = ast.CheckType(children, 1, TtColon)
 		if err != nil {
 			return nil, err
 		}
 
-		err = ast.CheckType(children, 3, internal.TtSemicolon)
+		err = ast.CheckType(children, 3, TtSemicolon)
 		if err != nil {
 			return nil, err
 		}
 
-		sub_children, err := ast.LhsToAst(2, children, internal.NtRule1, rule1)
+		sub_children, err := ast.LhsToAst(2, children, NtRule1, rule1)
 		if err != nil {
 			return nil, err
 		}
@@ -128,9 +127,9 @@ func init() {
 		node.AddChildren(sub_children)
 
 		return node, nil
-	})
+	}
 
-	source1 := func(children []*grammar.ParseTree[internal.TokenType]) (*Node, error) {
+	source1 := func(children []*grammar.ParseTree[TokenType]) (*Node, error) {
 		var node *Node
 
 		switch len(children) {
@@ -148,7 +147,7 @@ func init() {
 		case 2:
 			// source1 : rule NEWLINE source1 ;
 
-			err := ast.CheckType(children, 1, internal.TtNewline)
+			err := ast.CheckType(children, 1, TtNewline)
 			if err != nil {
 				return nil, err
 			}
@@ -166,20 +165,20 @@ func init() {
 		return node, nil
 	}
 
-	builder.Register(internal.NtSource, func(tk *grammar.ParseTree[internal.TokenType]) (*Node, error) {
+	ast_maker[NtSource] = func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
 		children := tk.GetChildren()
 		if len(children) != 2 {
 			return nil, fmt.Errorf("expected two children, got %d instead", len(children))
 		}
 
-		err := ast.CheckType(children, 1, internal.EtEOF)
+		err := ast.CheckType(children, 1, EtEOF)
 		if err != nil {
 			return nil, err
 		}
 
 		// source : source1 EOF ;
 
-		tmp, err := ast.LhsToAst(0, children, internal.NtSource1, source1)
+		tmp, err := ast.LhsToAst(0, children, NtSource1, source1)
 		if err != nil {
 			return nil, err
 		}
@@ -188,7 +187,5 @@ func init() {
 		node.AddChildren(tmp)
 
 		return node, nil
-	})
-
-	ast_maker = builder.Build()
+	}
 }

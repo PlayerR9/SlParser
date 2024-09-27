@@ -30,7 +30,9 @@ func NewRule(lhs string, rhss []string) (*Rule, error) {
 		return nil, fmt.Errorf("expected at least one rhss")
 	}
 
-	return &Rule{
+	rule := &Rule{
 		Elems: append([]string{lhs}, rhss...),
-	}, nil
+	}
+
+	return rule, nil
 }

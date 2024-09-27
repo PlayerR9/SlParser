@@ -1,5 +1,5 @@
 
-package internal
+package test
 
 import (
 	"github.com/PlayerR9/SlParser/lexer"
