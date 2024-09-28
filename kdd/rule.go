@@ -8,7 +8,6 @@ import (
 	"github.com/PlayerR9/SlParser/grammar"
 	"github.com/PlayerR9/go-commons/strings"
 	gcstr "github.com/PlayerR9/go-commons/strings"
-	gers "github.com/PlayerR9/go-errors"
 )
 
 var (
@@ -100,20 +99,14 @@ func (r Rule) CheckExpected(at int, got_type NodeType) error {
 	return grammar.NewBadParseTree(msg)
 }
 
-func (r Rule) ApplyField(tk *grammar.ParseTree[TokenType]) error {
-	if tk == nil {
-		return gers.NewErrNilParameter("tk")
-	}
-
-	children := tk.GetChildren()
-
+func (r Rule) ApplyField(children []*grammar.ParseTree[TokenType]) ([]*Node, error) {
 	var sub_nodes []*Node
 
 	for i, field := range r.Fields {
 		if field.IsTerminal() {
 			err := ast.CheckType(children, i, field)
 			if err != nil {
-				return err
+				return sub_nodes, err
 			}
 
 			continue
@@ -122,7 +115,7 @@ func (r Rule) ApplyField(tk *grammar.ParseTree[TokenType]) error {
 		if field.IsLhsRule() {
 			rules, ok := GetRule(field)
 			if !ok || len(rules) == 0 {
-				return fmt.Errorf("no rules for %q", field.String())
+				return sub_nodes, fmt.Errorf("no rules for %q", field.String())
 			} else if len(rules) > 1 {
 				panic(fmt.Errorf("multiple rules for %q; case not yet implemented", field.String()))
 			}
@@ -136,17 +129,17 @@ func (r Rule) ApplyField(tk *grammar.ParseTree[TokenType]) error {
 		} else {
 			node, err := ast_maker.Convert(children[i])
 			if err != nil {
-				return err
+				return sub_nodes, err
 			}
 
 			err = r.CheckExpected(i, node.Type)
 			if err != nil {
-				return err
+				return sub_nodes, err
 			}
 
 			sub_nodes = append(sub_nodes, node)
 		}
 	}
 
-	return nil
+	return sub_nodes, nil
 }

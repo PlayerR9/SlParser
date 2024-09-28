@@ -68,18 +68,17 @@ func init() {
 	// rule1 : rhs ;
 	// rule1 : rhs rule1 ;
 	rule1 := func(children []*grammar.ParseTree[TokenType]) (*Node, error) {
-		if len(children) != 1 {
-			return nil, fmt.Errorf("expected one child, got %d instead", len(children))
-		}
+		rule := gers.AssertNew(
+			NewRule(NtRule1, true, NtRhs),
+		)
+		rule.AddExpected(0, RhsNode)
 
-		node, err := ast_maker.Convert(children[0])
+		sub_nodes, err := rule.ApplyField(children)
 		if err != nil {
 			return nil, err
-		} else if node.Type != RhsNode {
-			return nil, fmt.Errorf("expected RhsNode, got %s instead", node.Type.String())
 		}
 
-		return node, nil
+		return sub_nodes[0], nil
 	}
 
 	ast_maker[NtRule] = func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
@@ -127,28 +126,24 @@ func init() {
 			rule := gers.AssertNew(NewRule(NtSource1, true, NtRule))
 			rule.AddExpected(0, RuleNode)
 
-			var err error
-
-			node, err = ast_maker.Convert(children[0])
+			sub_rules, err := rule.ApplyField(children)
 			if err != nil {
 				return nil, err
-			} else if node.Type != RuleNode {
-				return nil, fmt.Errorf("expected RuleNode, got %s instead", node.Type.String())
 			}
+
+			node = sub_rules[0]
 		case 2:
 			// source1 : rule NEWLINE source1 ;
 
-			err := ast.CheckType(children, 1, TtNewline)
+			rule := gers.AssertNew(NewRule(NtSource1, true, NtRule, TtNewline))
+			rule.AddExpected(0, RuleNode)
+
+			sub_rules, err := rule.ApplyField(children)
 			if err != nil {
 				return nil, err
 			}
 
-			node, err = ast_maker.Convert(children[0])
-			if err != nil {
-				return nil, err
-			} else if node.Type != RuleNode {
-				return nil, fmt.Errorf("expected RuleNode, got %s instead", node.Type.String())
-			}
+			node = sub_rules[0]
 		default:
 			return nil, fmt.Errorf("expected one or two children, got %d instead", len(children))
 		}
