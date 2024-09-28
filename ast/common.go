@@ -49,13 +49,13 @@ func CheckType[T gr.TokenTyper](children []*gr.ParseTree[T], at int, type_ T) er
 //   - children: The list of children.
 //
 // Returns:
-//   - N: The converted node.
+//   - []N: The converted nodes.
 //   - error: if an error occurred.
 type LhsDoFunc[N interface {
 	AddChildren(children []N)
 
 	Noder
-}, T gr.TokenTyper] func(children []*gr.ParseTree[T]) (N, error)
+}, T gr.TokenTyper] func(children []*gr.ParseTree[T]) ([]N, error)
 
 // LhsToAst is a function that converts a token to an ast node.
 //
@@ -89,7 +89,7 @@ func LhsToAst[N interface {
 	root := children[at]
 	var nodes []N
 
-	for root != nil {
+	for root != nil && err == nil {
 		children := root.GetChildren()
 		if len(children) == 0 {
 			break
@@ -97,25 +97,34 @@ func LhsToAst[N interface {
 
 		last_child := children[len(children)-1]
 
-		var node N
-		var err error
+		var sub_nodes []N
 
 		if last_child.Type() == lhs {
-			node, err = do(children[:len(children)-1])
+			sub_nodes, err = do(children[:len(children)-1])
 			root = last_child
 		} else {
-			node, err = do(children)
+			sub_nodes, err = do(children)
 			root = nil
 		}
 
-		if err != nil {
-			return nodes, err
-		}
+		sub_nodes = FilterNonNilNodes(sub_nodes)
+		nodes = append(nodes, sub_nodes...)
+	}
+
+	return nodes, err
+}
+
+func FilterNonNilNodes[N Noder](nodes []N) []N {
+	var top int
+
+	for i := 0; i < len(nodes); i++ {
+		node := nodes[i]
 
 		if !node.IsNil() {
-			nodes = append(nodes, node)
+			nodes[top] = node
+			top++
 		}
 	}
 
-	return nodes, nil
+	return nodes[:top:top]
 }

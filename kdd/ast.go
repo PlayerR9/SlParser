@@ -45,43 +45,67 @@ var (
 )
 
 func init() {
-	ast_maker = make(ast.AstMaker[*Node, TokenType])
+	ast_maker = ast.NewAstMaker[*Node, TokenType]()
 
 	// TODO: Add here your own custom rules...
 
 	// rhs : UPPERCASE_ID ;
 	// rhs : LOWERCASE_ID ;
-	ast_maker[NtRhs] = func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
-		children := tk.GetChildren()
+	ast_maker.AddTransformation(NtRhs, func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
+		gers.AssertNotNil(tk, "tk")
 
-		if len(children) != 1 {
-			return nil, fmt.Errorf("expected one child, got %d instead", len(children))
-		}
-
-		type_ := children[0].Type()
-		gers.AssertNotNil(type_, "type_")
-
-		node := NewNode(RhsNode, children[0].Data())
-		return node, nil
-	}
-
-	// rule1 : rhs ;
-	// rule1 : rhs rule1 ;
-	rule1 := func(children []*grammar.ParseTree[TokenType]) (*Node, error) {
-		rule := gers.AssertNew(
-			NewRule(NtRule1, true, NtRhs),
+		field := gers.AssertNew(
+			NewField(TtUppercaseId, TtLowercaseId),
 		)
-		rule.AddExpected(0, RhsNode)
 
-		sub_nodes, err := rule.ApplyField(children)
+		rule := gers.AssertNew(
+			NewRule(NtRhs, false, field),
+		)
+
+		sub_nodes, err := rule.ApplyField(tk.GetChildren())
 		if err != nil {
 			return nil, err
+		} else if len(sub_nodes) != 1 {
+			return nil, fmt.Errorf("expected one child, got %d instead", len(sub_nodes))
 		}
 
-		return sub_nodes[0], nil
-	}
+		node := NewNode(RhsNode, sub_nodes[0].Data)
+		return node, nil
+	})
 
-	ast_maker[NtRule] = func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
+	ast_maker.AddTransition(NtRule1, func(tree *grammar.ParseTree[TokenType]) ([]*Node, error) {
+		gers.AssertNotNil(tree, "tree")
+
+		children := tree.GetChildren()
+
+		var sub_nodes []*Node
+		var err error
+
+		switch len(children) {
+		case 1:
+			// rule1 : rhs ;
+			rule := gers.AssertNew(
+				NewRule(NtRule1, false, NtRhs),
+			)
+			rule.AddExpected(0, RhsNode)
+
+			sub_nodes, err = rule.ApplyField(children)
+		case 2:
+			// rule1 : rhs rule1 ;
+			rule := gers.AssertNew(
+				NewRule(NtRule1, true, NtRhs, NtRule1),
+			)
+			rule.AddExpected(0, RhsNode)
+
+			sub_nodes, err = rule.ApplyField(children)
+		default:
+			return nil, fmt.Errorf("expected 1 or 2 children, got %d instead", len(children))
+		}
+
+		return sub_nodes, err
+	})
+
+	ast_maker.AddTransformation(NtRule, func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
 		children := tk.GetChildren()
 
 		// rule : LOWERCASE_ID COLON rule1 SEMICOLON ;
@@ -114,9 +138,13 @@ func init() {
 		node.AddChildren(sub_children)
 
 		return node, nil
-	}
+	})
 
-	source1 := func(children []*grammar.ParseTree[TokenType]) (*Node, error) {
+	ast_maker.AddTransition(NtSource1, func(tree *grammar.ParseTree[TokenType]) ([]*Node, error) {
+		gers.AssertNotNil(tree, "tree")
+
+		children := tree.GetChildren()
+
 		var node *Node
 
 		switch len(children) {
@@ -132,10 +160,10 @@ func init() {
 			}
 
 			node = sub_rules[0]
-		case 2:
+		case 3:
 			// source1 : rule NEWLINE source1 ;
 
-			rule := gers.AssertNew(NewRule(NtSource1, true, NtRule, TtNewline))
+			rule := gers.AssertNew(NewRule(NtSource1, true, NtRule, TtNewline, NtSource1))
 			rule.AddExpected(0, RuleNode)
 
 			sub_rules, err := rule.ApplyField(children)
@@ -145,24 +173,26 @@ func init() {
 
 			node = sub_rules[0]
 		default:
-			return nil, fmt.Errorf("expected one or two children, got %d instead", len(children))
+			return nil, fmt.Errorf("expected one or three children, got %d instead", len(children))
 		}
 
-		return node, nil
-	}
+		return []*Node{node}, nil
+	})
 
-	ast_maker[NtSource] = func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
-		children := tk.GetChildren()
-		if len(children) != 2 {
-			return nil, fmt.Errorf("expected two children, got %d instead", len(children))
-		}
-
-		err := ast.CheckType(children, 1, EtEOF)
-		if err != nil {
-			return nil, err
+	ast_maker.AddTransformation(NtSource, func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
+		if tk == nil {
+			return nil, gers.NewErrNilParameter("tk")
 		}
 
 		// source : source1 EOF ;
+		rule := gers.AssertNew(
+			NewRule(NtSource, false, NtSource1, EtEOF),
+		)
+
+		sub_nodes, err := rule.ApplyField(tk.GetChildren())
+		if err != nil {
+			return nil, err
+		}
 
 		tmp, err := ast.LhsToAst(0, children, NtSource1, source1)
 		if err != nil {
@@ -170,8 +200,8 @@ func init() {
 		}
 
 		node := NewNode(SourceNode, "")
-		node.AddChildren(tmp)
+		node.AddChildren(sub_nodes)
 
 		return node, nil
-	}
+	})
 }

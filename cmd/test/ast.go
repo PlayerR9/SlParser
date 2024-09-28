@@ -38,11 +38,11 @@ var (
 )
 
 func init() {
-	ast_maker = make(ast.AstMaker[*Node, TokenType])
+	ast_maker = ast.NewAstMaker[*Node, TokenType]()
 
 	// TODO: Add here your own custom rules...
 
-	ast_maker[NtRhs] = func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
+	ast_maker.AddTransformation(NtRhs, func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
 		children := tk.GetChildren()
 		if len(children) == 0 {
 			return nil, errors.New("expected at least one child")
@@ -52,8 +52,8 @@ func init() {
 
 		node := NewNode(NtRhsNode, "")
 		return node, nil
-	}
-	ast_maker[NtRule] = func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
+	})
+	ast_maker.AddTransformation(NtRule, func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
 		children := tk.GetChildren()
 		if len(children) == 0 {
 			return nil, errors.New("expected at least one child")
@@ -63,8 +63,8 @@ func init() {
 
 		node := NewNode(NtRuleNode, "")
 		return node, nil
-	}
-	ast_maker[NtSource] = func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
+	})
+	ast_maker.AddTransformation(NtSource, func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
 		children := tk.GetChildren()
 		if len(children) == 0 {
 			return nil, errors.New("expected at least one child")
@@ -74,5 +74,5 @@ func init() {
 
 		node := NewNode(NtSourceNode, "")
 		return node, nil
-	}
+	})
 }

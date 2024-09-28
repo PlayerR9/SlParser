@@ -174,11 +174,11 @@ var (
 )
 	
 func init() {
-	ast_maker = make(ast.AstMaker[*Node, TokenType])
+	ast_maker = ast.NewAstMaker[*Node, TokenType]()
 
 	// TODO: Add here your own custom rules...
 	{{ range $index, $value := .NodeTypes }}
-	ast_maker[{{ $value }}] = func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
+	ast_maker.RegisterTransformation({{ $value }}, func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
 		children := tk.GetChildren()
 		if len(children) == 0 {
 			return nil, errors.New("expected at least one child")
@@ -188,7 +188,7 @@ func init() {
 
 		node := NewNode(tk.Pos(), {{ $value }}Node, "")
 		return node, nil
-	}
+	})
 	{{- end }}
 }
 	
