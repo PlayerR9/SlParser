@@ -64,6 +64,15 @@ func (n *Node) IsNil() bool {
 	return n == nil
 }
 
+// SetPosition implements the ast.Noder interface.
+func (n *Node) SetPosition(pos int) {
+	if n == nil {
+		return
+	}
+
+	n.Pos = pos
+}
+
 // IsLeaf implements the tree.Noder interface.
 func (n Node) IsLeaf() bool {
 	return n.FirstChild == nil
@@ -97,19 +106,26 @@ func (n Node) String() string {
 // NewNode creates a new node with the given data.
 //
 // Parameters:
-//   - pos: The position of the node.
 //   - type_: The type of the node.
 //   - data: The data of the node.
 //
 // Returns:
 //   - *Node: A pointer to the newly created node. It is
 //     never nil.
-func NewNode(pos int, type_ NodeType, data string) *Node {
+func NewNode(type_ NodeType, data string) *Node {
 	return &Node{
-		Pos: pos,
+		Pos:  -1,
 		Data: data,
 		Type: type_,
 	}
+}
+
+// GetType returns the type of the node.
+//
+// Returns:
+//   - NodeType: The type of the node.
+func (n Node) GetType() NodeType {
+	return n.Type
 }
 
 // AddChild adds the target child to the node. Because this function clears the parent and sibling

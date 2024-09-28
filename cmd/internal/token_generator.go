@@ -2,6 +2,8 @@ package internal
 
 import (
 	"errors"
+	"slices"
+	"strings"
 
 	gers "github.com/PlayerR9/go-errors"
 	"github.com/PlayerR9/go-generator"
@@ -20,6 +22,9 @@ type TokenGen struct {
 
 	// Rules is the list of rules.
 	Rules []string
+
+	// LhsRules is the list of LHS rules.
+	LhsRules string
 }
 
 // SetPackageName implements the generator.PackageNameSetter interface.
@@ -57,9 +62,36 @@ func NewTokenGen(tokens []*Info) (*TokenGen, error) {
 		return nil, errors.New("no terminal found")
 	}
 
+	var lhs_rules []string
+
+	for _, tk := range tokens {
+		gers.AssertNotNil(tk, "tk")
+
+		if !tk.IsLhsRule {
+			continue
+		}
+
+		pos, ok := slices.BinarySearch(lhs_rules, tk.Literal)
+		if !ok {
+			lhs_rules = slices.Insert(lhs_rules, pos, tk.Literal)
+		}
+	}
+
+	var lhs_rules_str string
+
+	switch len(lhs_rules) {
+	case 0:
+		lhs_rules_str = "false"
+	case 1:
+		lhs_rules_str = "t == " + lhs_rules[0]
+	default:
+		lhs_rules_str = "t == " + strings.Join(lhs_rules, " || t == ")
+	}
+
 	gd := &TokenGen{
 		Symbols:      symbols,
 		LastTerminal: lt.Literal,
+		LhsRules:     lhs_rules_str,
 	}
 
 	return gd, nil
@@ -95,6 +127,10 @@ const (
 
 func (t TokenType) IsTerminal() bool {
 	return t <= {{ .LastTerminal }}
+}
+
+func (t TokenType) IsLhsRule() bool {
+	return {{ .LhsRules }}
 }
 	
 var (

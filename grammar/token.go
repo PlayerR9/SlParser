@@ -25,6 +25,12 @@ type TokenTyper interface {
 	// Returns:
 	//   - bool: true if the token type is terminal, false otherwise.
 	IsTerminal() bool
+
+	// IsLhsRule checks whether the token type is a LHS rule.
+	//
+	// Returns:
+	//   - bool: true if the token type is a LHS rule, false otherwise.
+	IsLhsRule() bool
 }
 
 // Token is a node in a tree.

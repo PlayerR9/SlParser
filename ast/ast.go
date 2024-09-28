@@ -77,5 +77,7 @@ func (am AstMaker[N, T]) Convert(root *gr.ParseTree[T]) (N, error) {
 		return zero, fmt.Errorf("the returned node must not be nil")
 	}
 
+	node.SetPosition(root.Pos())
+
 	return node, nil
 }

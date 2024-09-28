@@ -1,10 +1,22 @@
 package ast
 
 import (
+	"fmt"
 	"iter"
 
 	gers "github.com/PlayerR9/go-errors"
 )
+
+// NodeTyper is an interface representing a node type.
+type NodeTyper interface {
+	~int
+
+	// String returns the string representation of the node type.
+	//
+	// Returns:
+	//   - string: the string representation of the node type.
+	String() string
+}
 
 // CheckASTWithLimit checks if the given ast node is valid, up to a given
 // limit depth. If limit is negative, it will check all the way down to the
@@ -52,37 +64,48 @@ type CheckNodeFn[N interface {
 // If the check_fn is nil, a function that returns an error will be returned.
 func MakeCheckFn[N interface {
 	Child() iter.Seq[N]
+	GetType() T
 
 	Noder
-}](check_fn CheckNodeFn[N]) CheckASTWithLimit[N] {
-	if check_fn == nil {
-		return func(node N, limit int) error {
-			return gers.NewErrInvalidParameter("check_fn")
-		}
-	}
+}, T NodeTyper](table map[T]CheckNodeFn[N]) CheckASTWithLimit[N] {
+	var do_fn func(node N, _ *CheckerInfo[N]) error
 
-	trav := Traversor[N, *CheckerInfo[N]]{
-		InitFn: nil,
-		DoFn: func(node N, info *CheckerInfo[N]) error {
-			gers.AssertNotNil(info, "info")
+	if len(table) == 0 {
+		do_fn = func(node N, _ *CheckerInfo[N]) error {
+			if node.IsNil() {
+				return gers.NewErrNilParameter("node")
+			}
+
+			type_ := node.GetType()
+
+			return fmt.Errorf("unknown node type: %s", type_.String())
+		}
+	} else {
+		do_fn = func(node N, _ *CheckerInfo[N]) error {
+			if node.IsNil() {
+				return gers.NewErrNilParameter("node")
+			}
+
+			type_ := node.GetType()
+
+			check_fn, ok := table[type_]
+			if !ok {
+				return fmt.Errorf("unknown node type: %s", type_.String())
+			}
 
 			return check_fn(node)
-		},
+		}
 	}
 
+	fn := ReverseDFS(do_fn)
+
 	return func(node N, limit int) error {
-		trav.InitFn = func(node N, frames []string) (*CheckerInfo[N], error) {
-			if node.IsNil() {
-				return nil, gers.NewErrNilParameter("node")
-			}
-
-			info, err := NewCheckerInfo(node, frames, limit)
-			if err != nil {
-				return nil, err
-			}
-
-			return info, nil
+		if node.IsNil() {
+			return gers.NewErrNilParameter("node")
 		}
-		return trav.ReverseDFS(node)
+
+		info := gers.AssertNew(NewCheckerInfo(node, nil, limit))
+
+		return fn(info)
 	}
 }

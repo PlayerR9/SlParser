@@ -40,6 +40,9 @@ type Info struct {
 	// IsCandidate indicates whether the node is a candidate for the AST.
 	IsCandidate bool
 
+	// IsLhsRule indicates whether the node is a lhs rule. (i.e., the rule is of the form "lhs -> ... lhs")
+	IsLhsRule bool
+
 	*ast.Info[*kdd.Node]
 }
 
@@ -111,6 +114,17 @@ func (info *Info) NextInfos() ([]*Info, error) {
 	return nexts, nil
 }
 
+// NewInfo creates a new info.
+//
+// Parameters:
+//   - node: The node the info is about.
+//   - frames: The frames of the node. Used for stack traces.
+//
+// Returns:
+//   - *Info: The new info.
+//   - error: An error of type error.Err with the code errors.BadParameter if the node is nil.
+//
+// The info is initialized as not seen. Call See to set it as seen.
 func NewInfo(node *kdd.Node, frames []string) (*Info, error) {
 	if node == nil {
 		return nil, gers.NewErrNilParameter("node")
@@ -122,8 +136,10 @@ func NewInfo(node *kdd.Node, frames []string) (*Info, error) {
 	}
 
 	next := &Info{
-		Type: InvalidTk,
-		Info: info,
+		Type:        InvalidTk,
+		Info:        info,
+		IsCandidate: false,
+		IsLhsRule:   false,
 	}
 
 	return next, nil
@@ -189,11 +205,16 @@ func init() {
 
 		sub_info := gers.AssertNew(ast.NewInfo(node, []string{literal}))
 
+		children := node.GetChildren()
+
+		is_lhs_rule := len(children) > 1 && children[len(children)-1].Data == children[0].Data
+
 		info := &Info{
 			Type:        type_,
 			Literal:     literal,
 			IsCandidate: is_candidate,
 			Info:        sub_info,
+			IsLhsRule:   is_lhs_rule,
 		}
 
 		return info, nil

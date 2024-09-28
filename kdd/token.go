@@ -25,6 +25,10 @@ func (t TokenType) IsTerminal() bool {
 	return t <= TtUppercaseId
 }
 
+func (t TokenType) IsLhsRule() bool {
+	return t == NtRule1 || t == NtSource1
+}
+
 var (
 	Parser *parser.Parser[TokenType]
 )

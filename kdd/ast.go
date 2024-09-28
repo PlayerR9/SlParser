@@ -61,7 +61,7 @@ func init() {
 		type_ := children[0].Type()
 		gers.AssertNotNil(type_, "type_")
 
-		node := NewNode(tk.Pos(), RhsNode, children[0].Data())
+		node := NewNode(RhsNode, children[0].Data())
 		return node, nil
 	}
 
@@ -91,9 +91,10 @@ func init() {
 			return nil, err
 		}
 
-		lhs := NewNode(children[0].Pos(), RhsNode, children[0].Data())
+		lhs := NewNode(RhsNode, children[0].Data())
+		lhs.SetPosition(children[0].Pos())
 
-		node := NewNode(tk.Pos(), RuleNode, "")
+		node := NewNode(RuleNode, "")
 		node.AddChild(lhs)
 
 		err = ast.CheckType(children, 1, TtColon)
@@ -122,6 +123,9 @@ func init() {
 		switch len(children) {
 		case 1:
 			// source1 : rule ;
+
+			rule := gers.AssertNew(NewRule(NtSource1, true, NtRule))
+			rule.AddExpected(0, RuleNode)
 
 			var err error
 
@@ -170,7 +174,7 @@ func init() {
 			return nil, err
 		}
 
-		node := NewNode(tk.Pos(), SourceNode, "")
+		node := NewNode(SourceNode, "")
 		node.AddChildren(tmp)
 
 		return node, nil

@@ -15,7 +15,7 @@ const (
 	/*InvalidNode represents an invalid node.
 	Node[InvalidNode]
 	*/
-	InvalidNode NodeType = iota - 1 // Invalid 
+	InvalidNode NodeType = iota - 1 // Invalid
 
 	/*NtRhsNode is [...].
 	Node[NtRhsNode]
@@ -36,12 +36,12 @@ const (
 var (
 	ast_maker ast.AstMaker[*Node, TokenType]
 )
-	
+
 func init() {
 	ast_maker = make(ast.AstMaker[*Node, TokenType])
 
 	// TODO: Add here your own custom rules...
-	
+
 	ast_maker[NtRhs] = func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
 		children := tk.GetChildren()
 		if len(children) == 0 {
@@ -50,7 +50,7 @@ func init() {
 
 		// TODO: Complete this function...
 
-		node := NewNode(tk.Pos(), NtRhsNode, "")
+		node := NewNode(NtRhsNode, "")
 		return node, nil
 	}
 	ast_maker[NtRule] = func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
@@ -61,7 +61,7 @@ func init() {
 
 		// TODO: Complete this function...
 
-		node := NewNode(tk.Pos(), NtRuleNode, "")
+		node := NewNode(NtRuleNode, "")
 		return node, nil
 	}
 	ast_maker[NtSource] = func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
@@ -72,7 +72,7 @@ func init() {
 
 		// TODO: Complete this function...
 
-		node := NewNode(tk.Pos(), NtSourceNode, "")
+		node := NewNode(NtSourceNode, "")
 		return node, nil
 	}
 }

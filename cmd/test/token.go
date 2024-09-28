@@ -8,7 +8,7 @@ import (
 type TokenType int
 
 const (
-	EtInvalid TokenType = iota -1
+	EtInvalid TokenType = iota - 1
 	EtEof
 	TtColon
 	TtLowercaseId
@@ -25,14 +25,18 @@ const (
 func (t TokenType) IsTerminal() bool {
 	return t <= TtUppercaseId
 }
-	
+
+func (t TokenType) IsLhsRule() bool {
+	return t == NtRule1 || t == NtSource1
+}
+
 var (
 	Parser *parser.Parser[TokenType]
 )
 
 func init() {
 	is := parser.NewItemSet[TokenType]()
-	
+
 	_ = is.AddRule(NtSource, NtSource1, EtEof)
 	_ = is.AddRule(NtSource1, NtRule)
 	_ = is.AddRule(NtSource1, NtRule, TtNewline, NtSource1)
