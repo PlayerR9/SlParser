@@ -84,16 +84,30 @@ func init() {
 		switch len(children) {
 		case 1:
 			// rule1 : rhs ;
+
+			field := gers.AssertNew(
+				NewField(NtRhs),
+			)
+
 			rule := gers.AssertNew(
-				NewRule(NtRule1, false, NtRhs),
+				NewRule(NtRule1, false, field),
 			)
 			rule.AddExpected(0, RhsNode)
 
 			sub_nodes, err = rule.ApplyField(children)
 		case 2:
 			// rule1 : rhs rule1 ;
+
+			field1 := gers.AssertNew(
+				NewField(NtRhs),
+			)
+
+			field2 := gers.AssertNew(
+				NewField(NtRule1),
+			)
+
 			rule := gers.AssertNew(
-				NewRule(NtRule1, true, NtRhs, NtRule1),
+				NewRule(NtRule1, true, field1, field2),
 			)
 			rule.AddExpected(0, RhsNode)
 
@@ -106,6 +120,8 @@ func init() {
 	})
 
 	ast_maker.AddTransformation(NtRule, func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
+		gers.AssertNotNil(tk, "tk")
+
 		children := tk.GetChildren()
 
 		// rule : LOWERCASE_ID COLON rule1 SEMICOLON ;
