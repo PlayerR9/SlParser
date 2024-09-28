@@ -67,7 +67,7 @@ func init() {
 
 	// rule1 : rhs ;
 	// rule1 : rhs rule1 ;
-	rule1 := func(children []*grammar.ParseTree[TokenType]) (*Node, error) {
+	rule1 := func(children []*grammar.ParseTree[TokenType]) ([]*Node, error) {
 		if len(children) != 1 {
 			return nil, fmt.Errorf("expected one child, got %d instead", len(children))
 		}
@@ -79,7 +79,7 @@ func init() {
 			return nil, fmt.Errorf("expected RhsNode, got %s instead", node.Type.String())
 		}
 
-		return node, nil
+		return []*Node{node}, nil
 	}
 
 	ast_maker[NtRule] = func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
@@ -117,7 +117,7 @@ func init() {
 		return node, nil
 	}
 
-	source1 := func(children []*grammar.ParseTree[TokenType]) (*Node, error) {
+	source1 := func(children []*grammar.ParseTree[TokenType]) ([]*Node, error) {
 		var node *Node
 
 		switch len(children) {
@@ -153,7 +153,7 @@ func init() {
 			return nil, fmt.Errorf("expected one or two children, got %d instead", len(children))
 		}
 
-		return node, nil
+		return []*Node{node}, nil
 	}
 
 	ast_maker[NtSource] = func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
