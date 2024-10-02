@@ -22,7 +22,7 @@ import (
 //     'at' is out of range.
 func CheckType[T gr.TokenTyper](children []*gr.ParseTree[T], at int, type_ T) error {
 	if at < 0 {
-		return gcers.NewErrInvalidParameter("at must be non-negative")
+		return gcers.NewErrInvalidParameter("ast.CheckType()", "at must be non-negative")
 	}
 
 	if at >= len(children) {
@@ -78,7 +78,7 @@ func LhsToAst[N interface {
 	Noder
 }, T gr.TokenTyper](at int, children []*gr.ParseTree[T], lhs T, do LhsDoFunc[N, T]) ([]N, error) {
 	if do == nil {
-		return nil, gcers.NewErrNilParameter("do")
+		return nil, gcers.NewErrNilParameter("ast.LhsToAst()", "do")
 	}
 
 	err := CheckType(children, at, lhs)

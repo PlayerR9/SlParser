@@ -32,7 +32,7 @@ func Lex[T gr.TokenTyper](lexer *lxr.Lexer[T], data []byte) ([]*gr.Token[T], err
 		lexer.SetInputStream(&buff)
 		err = lexer.Lex()
 	} else {
-		err = gcers.NewErrNilParameter("lexer")
+		err = gcers.NewErrNilParameter("SlParser.Lex()", "lexer")
 	}
 
 	tokens := lexer.Tokens()
@@ -63,7 +63,7 @@ func LexString[T gr.TokenTyper](lexer *lxr.Lexer[T], str string) ([]*gr.Token[T]
 		lexer.SetInputStream(&buff)
 		err = lexer.Lex()
 	} else {
-		err = gcers.NewErrNilParameter("lexer")
+		err = gcers.NewErrNilParameter("SlParser.LexString()", "lexer")
 	}
 
 	tokens := lexer.Tokens()

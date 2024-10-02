@@ -9,19 +9,19 @@ import (
 	fch "github.com/PlayerR9/go-commons/Formatting/runes"
 	gcby "github.com/PlayerR9/go-commons/bytes"
 	gers "github.com/PlayerR9/go-errors"
-	gerr "github.com/PlayerR9/go-errors/error"
+	"github.com/PlayerR9/go-errors/assert"
 	"github.com/dustin/go-humanize"
 )
 
 type Displayer struct {
-	err  *gerr.Err
+	err  *gers.Err
 	data []byte
 	pos  int
 	x    int
 	y    int
 }
 
-func NewDisplayer(err *gerr.Err, data []byte, pos int) *Displayer {
+func NewDisplayer(err *gers.Err, data []byte, pos int) *Displayer {
 	var x, y int
 
 	for i := 0; i < pos-1; i++ {
@@ -118,7 +118,7 @@ func (d *Displayer) write_source(w io.Writer) error {
 	lines := bytes.Split(d.data, []byte("\n"))
 
 	err := table.FromBytes(lines)
-	gers.AssertErr(err, "fch.FromBytes(lines)")
+	assert.Err(err, "fch.FromBytes(lines)")
 
 	err = style.Apply(&table)
 	if err != nil {
@@ -177,7 +177,7 @@ func DisplayErr(w io.Writer, data []byte, err error) (int, error) {
 		return 0, nil
 	}
 
-	e, ok := err.(*gerr.Err)
+	e, ok := err.(*gers.Err)
 	if !ok {
 		err := gcby.Write(w, data)
 		return 0, err

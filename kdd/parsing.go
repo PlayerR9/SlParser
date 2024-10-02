@@ -12,7 +12,7 @@ import (
 	"github.com/PlayerR9/SlParser/ast"
 	"github.com/PlayerR9/SlParser/lexer"
 	"github.com/PlayerR9/SlParser/parser"
-	gers "github.com/PlayerR9/go-errors"
+	"github.com/PlayerR9/go-errors/assert"
 )
 
 // DebugMode is the debug mode.
@@ -195,7 +195,7 @@ func (p Parsing) Full(data []byte) (*Node, error) {
 
 	if err != nil {
 		exit_code, err := sl.DisplayErr(os.Stdout, data, err)
-		gers.AssertErr(err, "DisplayErr(os.Stdout, data, err)")
+		assert.Err(err, "DisplayErr(os.Stdout, data, err)")
 
 		os.Exit(exit_code + 1)
 	}

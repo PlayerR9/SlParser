@@ -1,7 +1,7 @@
 package internal
 
 import (
-	gers "github.com/PlayerR9/go-errors"
+	"github.com/PlayerR9/go-errors/assert"
 	"github.com/PlayerR9/go-generator"
 )
 
@@ -37,7 +37,7 @@ func init() {
 	var err error
 
 	ParsingGenerator, err = generator.NewCodeGeneratorFromTemplate[*ParsingGen]("parsing", parsing_templ)
-	gers.AssertErr(err, "generator.NewCodeGeneratorFromTemplate[*ParsingGen](%q, templ)", "parsing")
+	assert.Err(err, "generator.NewCodeGeneratorFromTemplate[*ParsingGen](%q, templ)", "parsing")
 }
 
 // parsing_templ is the template of the parsing.

@@ -4,7 +4,7 @@ import (
 	"slices"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
-	gers "github.com/PlayerR9/go-errors"
+	"github.com/PlayerR9/go-errors/assert"
 )
 
 type Stack[T gr.TokenTyper] struct {
@@ -13,7 +13,7 @@ type Stack[T gr.TokenTyper] struct {
 }
 
 func (s *Stack[T]) Pop() (*gr.ParseTree[T], bool) {
-	gers.AssertNotNil(s, "s")
+	assert.NotNil(s, "s")
 
 	if len(s.elems) == 0 {
 		return nil, false
@@ -28,8 +28,8 @@ func (s *Stack[T]) Pop() (*gr.ParseTree[T], bool) {
 }
 
 func (s *Stack[T]) Push(tk *gr.ParseTree[T]) {
-	gers.AssertNotNil(s, "s")
-	gers.AssertNotNil(tk, "tk")
+	assert.NotNil(s, "s")
+	assert.NotNil(tk, "tk")
 
 	s.elems = append(s.elems, tk)
 }
@@ -44,13 +44,13 @@ func (s Stack[T]) Popped() []*gr.ParseTree[T] {
 }
 
 func (s *Stack[T]) Accept() {
-	gers.AssertNotNil(s, "s")
+	assert.NotNil(s, "s")
 
 	s.popped = s.popped[:0]
 }
 
 func (s *Stack[T]) Refuse() {
-	gers.AssertNotNil(s, "s")
+	assert.NotNil(s, "s")
 
 	for len(s.popped) > 0 {
 		top := s.popped[len(s.popped)-1]

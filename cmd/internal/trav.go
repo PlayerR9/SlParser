@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	kdd "github.com/PlayerR9/SlParser/kdd"
-	gers "github.com/PlayerR9/go-errors"
+	"github.com/PlayerR9/go-errors/assert"
 )
 
 func ExtractRules(infos map[*kdd.Node]*Info, root *kdd.Node) ([]*Rule, error) {
@@ -46,8 +46,8 @@ func ExtractRules(infos map[*kdd.Node]*Info, root *kdd.Node) ([]*Rule, error) {
 		}
 
 		rule, err := NewRule(ids[0], ids[1:])
-		gers.AssertErr(err, "NewRule(lhs, rhss)")
-		gers.AssertNotNil(rule, "rule")
+		assert.Err(err, "NewRule(lhs, rhss)")
+		assert.NotNil(rule, "rule")
 
 		rules = append(rules, rule)
 	}

@@ -5,6 +5,7 @@ import (
 	"iter"
 
 	gers "github.com/PlayerR9/go-errors"
+	"github.com/PlayerR9/go-errors/assert"
 )
 
 // CheckerInfo is a struct that contains information about a node.
@@ -26,28 +27,28 @@ func (ci *CheckerInfo[N]) IsNil() bool {
 
 // IsSeen implements the Infoer interface.
 func (ci *CheckerInfo[N]) IsSeen() bool {
-	gers.AssertNotNil(ci.info, "ci.info")
+	assert.NotNil(ci.info, "ci.info")
 
 	return ci.info.IsSeen()
 }
 
 // Node implements the Infoer interface.
 func (ci CheckerInfo[N]) Node() N {
-	gers.AssertNotNil(ci.info, "ci.info")
+	assert.NotNil(ci.info, "ci.info")
 
 	return ci.info.Node()
 }
 
 // See implements the Infoer interface.
 func (ci *CheckerInfo[N]) See() {
-	gers.AssertNotNil(ci.info, "ci.info")
+	assert.NotNil(ci.info, "ci.info")
 
 	ci.info.See()
 }
 
 // Frame implements the Infoer interface.
 func (ci CheckerInfo[N]) Frame() iter.Seq[string] {
-	gers.AssertNotNil(ci.info, "ci.info")
+	assert.NotNil(ci.info, "ci.info")
 
 	return ci.info.Frame()
 }
@@ -67,7 +68,7 @@ func NewCheckerInfo[N interface {
 	Noder
 }](node N, frames []string, depth int) (*CheckerInfo[N], error) {
 	if node.IsNil() {
-		return nil, gers.NewErrNilParameter("node")
+		return nil, gers.NewErrNilParameter("ast.NewCheckerInfo()", "node")
 	}
 
 	sub_info, err := NewInfo(node, frames)
@@ -105,9 +106,7 @@ func (ci *CheckerInfo[N]) NextInfos() ([]*CheckerInfo[N], error) {
 	var children []*CheckerInfo[N]
 
 	for child := range ci.info.Child() {
-		if child.IsNil() {
-			return nil, gers.NewErrAssertFail("child is nil")
-		}
+		assert.Cond(!child.IsNil(), "child must not be nil")
 
 		next, err := NewCheckerInfo(child, new_frames, new_depth)
 		if err != nil {

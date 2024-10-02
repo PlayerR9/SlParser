@@ -2,7 +2,7 @@ package internal
 
 import (
 	kdd "github.com/PlayerR9/SlParser/kdd"
-	gers "github.com/PlayerR9/go-errors"
+	"github.com/PlayerR9/go-errors/assert"
 	"github.com/PlayerR9/go-generator"
 )
 
@@ -136,9 +136,10 @@ var (
 )
 
 func init() {
-	ASTGenerator = gers.AssertNew(
-		generator.NewCodeGeneratorFromTemplate[*ASTGen]("ast", ast_templ),
-	)
+	var err error
+
+	ASTGenerator, err = generator.NewCodeGeneratorFromTemplate[*ASTGen]("ast", ast_templ)
+	assert.Err(err, "could not create AST generator")
 }
 
 // ast_templ is the template for the AST.

@@ -7,7 +7,7 @@ import (
 	"slices"
 
 	gers "github.com/PlayerR9/go-errors"
-	gerr "github.com/PlayerR9/go-errors/error"
+	"github.com/PlayerR9/go-errors/assert"
 )
 
 var (
@@ -74,7 +74,7 @@ type InfoTableMaker[N interface {
 
 func (itm InfoTableMaker[N, I]) Apply(root N) (map[N]I, error) {
 	if root.IsNil() {
-		err := gers.NewErrNilParameter("root")
+		err := gers.NewErrNilParameter("InfoTableMaker.Apply()", "root")
 		return nil, err
 	}
 
@@ -133,9 +133,9 @@ func (itm InfoTableMaker[N, I]) Apply(root N) (map[N]I, error) {
 		return table, nil
 	}
 
-	gers.AssertNotNil(last_top, "last_top")
+	assert.NotNil(last_top, "last_top")
 
-	outer_err := gerr.New(BadSyntaxTree, inner_err.Error())
+	outer_err := gers.New(BadSyntaxTree, inner_err.Error())
 
 	for frame := range last_top.Frame() {
 		outer_err.AddFrame(frame)

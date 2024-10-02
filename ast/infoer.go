@@ -4,6 +4,7 @@ import (
 	"iter"
 
 	gers "github.com/PlayerR9/go-errors"
+	"github.com/PlayerR9/go-errors/assert"
 )
 
 // Infoer is an interface for info about a node.
@@ -108,7 +109,7 @@ func NewInfo[N interface {
 	Noder
 }](node N, frames []string) (*Info[N], error) {
 	if node.IsNil() {
-		return nil, gers.NewErrNilParameter("node")
+		return nil, gers.NewErrNilParameter("ast.NewInfo()", "node")
 	}
 
 	info := &Info[N]{
@@ -126,9 +127,7 @@ func NewInfo[N interface {
 //   - []string: The new frames.
 func (info Info[N]) AppendFrame() []string {
 	node := info.node
-	if node.IsNil() {
-		panic(gers.NewErrAssertFail("node is nil"))
-	}
+	assert.Cond(!node.IsNil(), "node must not be nil")
 
 	frame := node.String()
 
@@ -155,7 +154,7 @@ func (info Info[N]) NextInfos() ([]*Info[N], error) {
 	i := 0
 	for child := range info.node.Child() {
 		if child.IsNil() {
-			err := gers.NewErrAssertFail("child found to be nil")
+			err := gers.New(assert.AssertFail, "child found to be nil")
 			err.AddContext("idx", i)
 
 			return nil, err

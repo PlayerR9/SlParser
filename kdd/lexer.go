@@ -5,7 +5,7 @@ import (
 	"unicode"
 
 	"github.com/PlayerR9/SlParser/lexer"
-	gers "github.com/PlayerR9/go-errors"
+	"github.com/PlayerR9/go-errors/assert"
 )
 
 var (
@@ -28,7 +28,7 @@ func init() {
 
 	// NEWLINE : ('\r'? '\n')+ ;
 	builder.Register('\n', func(stream lexer.RuneStreamer, char rune) (TokenType, error) {
-		gers.AssertNotNil(stream, "stream")
+		assert.NotNil(stream, "stream")
 
 		err := lexer.ApplyMany(stream, lexer.FragNewline)
 
@@ -40,7 +40,7 @@ func init() {
 	})
 
 	builder.Register('\r', func(stream lexer.RuneStreamer, char rune) (TokenType, error) {
-		gers.AssertNotNil(stream, "stream")
+		assert.NotNil(stream, "stream")
 
 		char, err := stream.NextRune()
 		if err == io.EOF {
@@ -64,7 +64,7 @@ func init() {
 
 	// fragment NONLOWER : [A-Z0-9] ;
 	frag_nonlower := func(stream lexer.RuneStreamer) error {
-		gers.AssertNotNil(stream, "stream")
+		assert.NotNil(stream, "stream")
 
 		char, err := stream.NextRune()
 		if err == io.EOF {
@@ -78,14 +78,14 @@ func init() {
 		}
 
 		err = stream.UnreadRune()
-		gers.AssertErr(err, "stream.UnreadRune()")
+		assert.Err(err, "stream.UnreadRune()")
 
 		return lexer.NotFound
 	}
 
 	// UPPERCASE_ID1 : UNDERSCORE NONLOWER+ ;
 	frag_uppercase_id1 := func(stream lexer.RuneStreamer) error {
-		gers.AssertNotNil(stream, "stream")
+		assert.NotNil(stream, "stream")
 
 		char, err := stream.NextRune()
 		if err == io.EOF {
@@ -96,7 +96,7 @@ func init() {
 
 		if char != '_' {
 			err := stream.UnreadRune()
-			gers.AssertErr(err, "stream.UnreadRune()")
+			assert.Err(err, "stream.UnreadRune()")
 
 			return lexer.NotFound
 		}
@@ -113,7 +113,7 @@ func init() {
 
 	// fragment ANY : [A-Za-z0-9] ;
 	frag_any := func(stream lexer.RuneStreamer) error {
-		gers.AssertNotNil(stream, "stream")
+		assert.NotNil(stream, "stream")
 
 		char, err := stream.NextRune()
 		if err == io.EOF {
@@ -127,13 +127,13 @@ func init() {
 		}
 
 		err = stream.UnreadRune()
-		gers.AssertErr(err, "stream.UnreadRune()")
+		assert.Err(err, "stream.UnreadRune()")
 
 		return lexer.NotFound
 	}
 
 	builder.Default(func(stream lexer.RuneStreamer, char rune) (TokenType, error) {
-		gers.AssertNotNil(stream, "stream")
+		assert.NotNil(stream, "stream")
 
 		if !unicode.IsLetter(char) {
 			return EtInvalid, lexer.NewErrBadGroup("letter", &char)
@@ -150,7 +150,7 @@ func init() {
 			}
 		} else {
 			err := stream.UnreadRune() // Push back the 'char' passed as argument.
-			gers.AssertErr(err, "stream.UnreadRune()")
+			assert.Err(err, "stream.UnreadRune()")
 
 			// UPPERCASE_ID : UPPERCASE+ ;
 			// UPPERCASE_ID : UPPERCASE+ UPPERCASE_ID1+ ;

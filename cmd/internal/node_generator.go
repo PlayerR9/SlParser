@@ -1,7 +1,7 @@
 package internal
 
 import (
-	gers "github.com/PlayerR9/go-errors"
+	"github.com/PlayerR9/go-errors/assert"
 	"github.com/PlayerR9/go-generator"
 )
 
@@ -37,7 +37,7 @@ func init() {
 	var err error
 
 	NodeGenerator, err = generator.NewCodeGeneratorFromTemplate[*NodeGen]("node", node_templ)
-	gers.AssertErr(err, "generator.NewCodeGeneratorFromTemplate[*NodeGen](%q, node_templ)", "node")
+	assert.Err(err, "generator.NewCodeGeneratorFromTemplate[*NodeGen](%q, node_templ)", "node")
 }
 
 // node_templ is the template for the node.

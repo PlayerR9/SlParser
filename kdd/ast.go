@@ -6,6 +6,7 @@ import (
 	"github.com/PlayerR9/SlParser/ast"
 	"github.com/PlayerR9/SlParser/grammar"
 	gers "github.com/PlayerR9/go-errors"
+	"github.com/PlayerR9/go-errors/assert"
 )
 
 // NodeType is the type of a node.
@@ -52,13 +53,13 @@ func init() {
 	// rhs : UPPERCASE_ID ;
 	// rhs : LOWERCASE_ID ;
 	ast_maker.AddTransformation(NtRhs, func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
-		gers.AssertNotNil(tk, "tk")
+		assert.NotNil(tk, "tk")
 
-		field := gers.AssertNew(
+		field := assert.New(
 			NewField(TtUppercaseId, TtLowercaseId),
 		)
 
-		rule := gers.AssertNew(
+		rule := assert.New(
 			NewRule(NtRhs, false, field),
 		)
 
@@ -74,7 +75,7 @@ func init() {
 	})
 
 	ast_maker.AddTransition(NtRule1, func(tree *grammar.ParseTree[TokenType]) ([]*Node, error) {
-		gers.AssertNotNil(tree, "tree")
+		assert.NotNil(tree, "tree")
 
 		children := tree.GetChildren()
 
@@ -85,11 +86,11 @@ func init() {
 		case 1:
 			// rule1 : rhs ;
 
-			field := gers.AssertNew(
+			field := assert.New(
 				NewField(NtRhs),
 			)
 
-			rule := gers.AssertNew(
+			rule := assert.New(
 				NewRule(NtRule1, false, field),
 			)
 			rule.AddExpected(0, RhsNode)
@@ -98,15 +99,15 @@ func init() {
 		case 2:
 			// rule1 : rhs rule1 ;
 
-			field1 := gers.AssertNew(
+			field1 := assert.New(
 				NewField(NtRhs),
 			)
 
-			field2 := gers.AssertNew(
+			field2 := assert.New(
 				NewField(NtRule1),
 			)
 
-			rule := gers.AssertNew(
+			rule := assert.New(
 				NewRule(NtRule1, true, field1, field2),
 			)
 			rule.AddExpected(0, RhsNode)
@@ -120,7 +121,7 @@ func init() {
 	})
 
 	ast_maker.AddTransformation(NtRule, func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
-		gers.AssertNotNil(tk, "tk")
+		assert.NotNil(tk, "tk")
 
 		children := tk.GetChildren()
 
@@ -157,7 +158,7 @@ func init() {
 	})
 
 	ast_maker.AddTransition(NtSource1, func(tree *grammar.ParseTree[TokenType]) ([]*Node, error) {
-		gers.AssertNotNil(tree, "tree")
+		assert.NotNil(tree, "tree")
 
 		children := tree.GetChildren()
 
@@ -167,7 +168,7 @@ func init() {
 		case 1:
 			// source1 : rule ;
 
-			rule := gers.AssertNew(NewRule(NtSource1, true, NtRule))
+			rule := assert.New(NewRule(NtSource1, true, NtRule))
 			rule.AddExpected(0, RuleNode)
 
 			sub_rules, err := rule.ApplyField(children)
@@ -179,7 +180,7 @@ func init() {
 		case 3:
 			// source1 : rule NEWLINE source1 ;
 
-			rule := gers.AssertNew(NewRule(NtSource1, true, NtRule, TtNewline, NtSource1))
+			rule := assert.New(NewRule(NtSource1, true, NtRule, TtNewline, NtSource1))
 			rule.AddExpected(0, RuleNode)
 
 			sub_rules, err := rule.ApplyField(children)
@@ -197,11 +198,11 @@ func init() {
 
 	ast_maker.AddTransformation(NtSource, func(tk *grammar.ParseTree[TokenType]) (*Node, error) {
 		if tk == nil {
-			return nil, gers.NewErrNilParameter("tk")
+			return nil, gers.NewErrNilParameter("ast_maker.AddTransformation()", "tk")
 		}
 
 		// source : source1 EOF ;
-		rule := gers.AssertNew(
+		rule := assert.New(
 			NewRule(NtSource, false, NtSource1, EtEOF),
 		)
 

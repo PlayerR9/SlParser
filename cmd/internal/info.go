@@ -9,6 +9,7 @@ import (
 	"github.com/PlayerR9/SlParser/ast"
 	kdd "github.com/PlayerR9/SlParser/kdd"
 	gers "github.com/PlayerR9/go-errors"
+	"github.com/PlayerR9/go-errors/assert"
 )
 
 // TokenType is the type of a token.
@@ -127,7 +128,7 @@ func (info *Info) NextInfos() ([]*Info, error) {
 // The info is initialized as not seen. Call See to set it as seen.
 func NewInfo(node *kdd.Node, frames []string) (*Info, error) {
 	if node == nil {
-		return nil, gers.NewErrNilParameter("node")
+		return nil, gers.NewErrNilParameter("internal.NewInfo()", "node")
 	}
 
 	info, err := ast.NewInfo(node, frames)
@@ -159,7 +160,7 @@ var (
 
 func init() {
 	fn := func(node *kdd.Node) (*Info, error) {
-		gers.AssertNotNil(node, "node")
+		assert.NotNil(node, "node")
 
 		if node.Type != kdd.RhsNode {
 			return nil, ast.IgnoreInfo
@@ -203,7 +204,7 @@ func init() {
 			return nil, err
 		}
 
-		sub_info := gers.AssertNew(ast.NewInfo(node, []string{literal}))
+		sub_info := assert.New(ast.NewInfo(node, []string{literal}))
 
 		children := node.GetChildren()
 
@@ -222,7 +223,7 @@ func init() {
 
 	init_fn := func(node *kdd.Node, _ []string) (*Info, error) {
 		if node == nil {
-			return nil, gers.NewErrNilParameter("node")
+			return nil, gers.NewErrNilParameter("internal.InitFn()", "node")
 		}
 
 		sub_info, err := ast.NewInfo(node, nil)

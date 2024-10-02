@@ -5,7 +5,7 @@ import (
 	"io"
 	"unicode"
 
-	gers "github.com/PlayerR9/go-errors"
+	"github.com/PlayerR9/go-errors/assert"
 )
 
 // GroupFn is a function that checks if a character belongs to a group.
@@ -45,7 +45,7 @@ func init() {
 // Returns:
 //   - error: if an error occurred.
 func FragUppercase(stream RuneStreamer) error {
-	gers.AssertNotNil(stream, "stream")
+	assert.NotNil(stream, "stream")
 
 	char, err := stream.NextRune()
 	if err == io.EOF {
@@ -59,7 +59,7 @@ func FragUppercase(stream RuneStreamer) error {
 	}
 
 	err = stream.UnreadRune()
-	gers.AssertErr(err, "stream.UnreadRune()")
+	assert.Err(err, "stream.UnreadRune()")
 
 	return NotFound
 }
@@ -72,7 +72,7 @@ func FragUppercase(stream RuneStreamer) error {
 // Returns:
 //   - error: if an error occurred.
 func FragLowercase(stream RuneStreamer) error {
-	gers.AssertNotNil(stream, "stream")
+	assert.NotNil(stream, "stream")
 
 	char, err := stream.NextRune()
 	if err == io.EOF {
@@ -86,7 +86,7 @@ func FragLowercase(stream RuneStreamer) error {
 	}
 
 	err = stream.UnreadRune()
-	gers.AssertErr(err, "stream.UnreadRune()")
+	assert.Err(err, "stream.UnreadRune()")
 
 	return NotFound
 }
@@ -99,7 +99,7 @@ func FragLowercase(stream RuneStreamer) error {
 // Returns:
 //   - error: if an error occurred.
 func FragLetter(stream RuneStreamer) error {
-	gers.AssertNotNil(stream, "stream")
+	assert.NotNil(stream, "stream")
 
 	char, err := stream.NextRune()
 	if err == io.EOF {
@@ -113,7 +113,7 @@ func FragLetter(stream RuneStreamer) error {
 	}
 
 	err = stream.UnreadRune()
-	gers.AssertErr(err, "stream.UnreadRune()")
+	assert.Err(err, "stream.UnreadRune()")
 
 	return NotFound
 }
@@ -126,7 +126,7 @@ func FragLetter(stream RuneStreamer) error {
 // Returns:
 //   - error: if an error occurred.
 func FragDigit(stream RuneStreamer) error {
-	gers.AssertNotNil(stream, "stream")
+	assert.NotNil(stream, "stream")
 
 	char, err := stream.NextRune()
 	if err == io.EOF {
@@ -140,7 +140,7 @@ func FragDigit(stream RuneStreamer) error {
 	}
 
 	err = stream.UnreadRune()
-	gers.AssertErr(err, "stream.UnreadRune()")
+	assert.Err(err, "stream.UnreadRune()")
 
 	return NotFound
 }

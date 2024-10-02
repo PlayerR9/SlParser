@@ -6,7 +6,7 @@ import (
 	"io"
 
 	gcch "github.com/PlayerR9/go-commons/runes"
-	gers "github.com/PlayerR9/go-errors"
+	"github.com/PlayerR9/go-errors/assert"
 )
 
 var (
@@ -50,7 +50,7 @@ var (
 
 func init() {
 	FragNewline = func(stream RuneStreamer) error {
-		gers.AssertNotNil(stream, "stream")
+		assert.NotNil(stream, "stream")
 
 		char, err := stream.NextRune()
 		if err == io.EOF {
@@ -63,7 +63,7 @@ func init() {
 			return nil
 		} else if char != '\r' {
 			err = stream.UnreadRune()
-			gers.AssertErr(err, "lexer.UnreadRune()")
+			assert.Err(err, "lexer.UnreadRune()")
 
 			return NotFound
 		}
@@ -129,7 +129,7 @@ func FragGroup(is_fn GroupFn) LexFragment {
 	}
 
 	return func(lexer RuneStreamer) error {
-		gers.AssertNotNil(lexer, "lexer")
+		assert.NotNil(lexer, "lexer")
 
 		char, err := lexer.NextRune()
 		if err == io.EOF {
@@ -143,7 +143,7 @@ func FragGroup(is_fn GroupFn) LexFragment {
 		}
 
 		err = lexer.UnreadRune()
-		gers.AssertErr(err, "lexer.UnreadRune()")
+		assert.Err(err, "lexer.UnreadRune()")
 
 		return NotFound
 	}
@@ -175,7 +175,7 @@ func FragWord(word string) LexFragment {
 	}
 
 	return func(lexer RuneStreamer) error {
-		gers.AssertNotNil(lexer, "lexer")
+		assert.NotNil(lexer, "lexer")
 
 		prev := chars[0]
 

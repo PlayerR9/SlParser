@@ -62,6 +62,10 @@ type Rule struct {
 	IsLhsRule bool
 }
 
+func (r *Rule) IsNil() bool {
+	return r == nil
+}
+
 func NewRule(lhs TokenType, is_lhs_rule bool, fields ...*Field) (*Rule, error) {
 	fields = gcslc.FilterNonNil(fields)
 	if len(fields) == 0 {

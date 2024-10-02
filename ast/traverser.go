@@ -6,7 +6,6 @@ import (
 	"slices"
 
 	gers "github.com/PlayerR9/go-errors"
-	gerr "github.com/PlayerR9/go-errors/error"
 )
 
 // Traversor is a struct that holds the functions for traversing an ast.
@@ -55,7 +54,7 @@ type Traversor[N interface {
 //   - error: The error that might occur during the traversal.
 func (t Traversor[N, I]) ReverseDFS(root N) error {
 	if root.IsNil() {
-		return gers.NewErrNilParameter("root")
+		return gers.NewErrNilParameter("Traversor.ReverseDFS()", "root")
 	}
 
 	if t.DoFn == nil {
@@ -111,7 +110,7 @@ func (t Traversor[N, I]) ReverseDFS(root N) error {
 		return nil
 	}
 
-	outer_err := gerr.New(BadSyntaxTree, inner_err.Error())
+	outer_err := gers.New(BadSyntaxTree, inner_err.Error())
 
 	for frame := range last_top.Frame() {
 		outer_err.AddFrame(frame)
@@ -148,7 +147,7 @@ func ReverseDFS[N interface {
 
 	return func(info I) error {
 		if info.IsNil() {
-			return gers.NewErrNilParameter("info")
+			return gers.NewErrNilParameter("ast.ReverseDFS()", "info")
 		}
 
 		stack := []I{info}
@@ -193,7 +192,7 @@ func ReverseDFS[N interface {
 			return nil
 		}
 
-		outer_err := gerr.New(BadSyntaxTree, inner_err.Error())
+		outer_err := gers.New(BadSyntaxTree, inner_err.Error())
 
 		for frame := range last_top.Frame() {
 			outer_err.AddFrame(frame)

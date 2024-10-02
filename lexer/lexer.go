@@ -5,7 +5,7 @@ import (
 	"io"
 
 	gr "github.com/PlayerR9/SlParser/grammar"
-	gers "github.com/PlayerR9/go-errors"
+	"github.com/PlayerR9/go-errors/assert"
 	gerr "github.com/PlayerR9/go-errors/error"
 )
 
@@ -137,7 +137,7 @@ func (l *Lexer[T]) PeekRune() (rune, error) {
 		l.state.UpdateLastErr(nil)
 
 		err := l.input_stream.UnreadRune()
-		gers.AssertErr(err, "l.input_stream.UnreadRune()")
+		assert.Err(err, "l.input_stream.UnreadRune()")
 
 		return c, nil
 	}

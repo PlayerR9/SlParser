@@ -1,7 +1,7 @@
 package internal
 
 import (
-	gers "github.com/PlayerR9/go-errors"
+	"github.com/PlayerR9/go-errors/assert"
 	"github.com/PlayerR9/go-generator"
 )
 
@@ -39,7 +39,7 @@ func init() {
 	var err error
 
 	LexerGenerator, err = generator.NewCodeGeneratorFromTemplate[*LexerGen]("enum", lexer_templ)
-	gers.AssertErr(err, "generator.NewCodeGeneratorFromTemplate[*LexerGen](%q, templ)", "lexer_templ")
+	assert.Err(err, "generator.NewCodeGeneratorFromTemplate[*LexerGen](%q, templ)", "lexer_templ")
 }
 
 // lexer_templ is the template for the lexer.

@@ -18,7 +18,7 @@ type Rule[T gr.TokenTyper] struct {
 
 func NewRule[T gr.TokenTyper](lhs T, rhss []T) (*Rule[T], error) {
 	if len(rhss) == 0 {
-		return nil, gcers.NewErrInvalidParameter("rhss must have at least one element")
+		return nil, gcers.NewErrInvalidParameter("internal.NewRule()", "rhss must have at least one element")
 	}
 
 	return &Rule[T]{

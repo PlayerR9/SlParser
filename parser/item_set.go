@@ -3,10 +3,11 @@ package parser
 import (
 	"slices"
 
+	gcslc "github.com/PlayerR9/SlParser/PlayerR9/go-commons/slices"
 	gr "github.com/PlayerR9/SlParser/grammar"
 	"github.com/PlayerR9/SlParser/parser/internal"
-	gcslc "github.com/PlayerR9/go-commons/slices"
 	gcers "github.com/PlayerR9/go-errors"
+	"github.com/PlayerR9/go-errors/assert"
 	gcmap "github.com/PlayerR9/go-sets"
 )
 
@@ -72,7 +73,7 @@ func (is *ItemSet[T]) AddRule(lhs T, rhss ...T) error {
 	if is == nil {
 		return nil
 	} else if len(rhss) == 0 {
-		return gcers.NewErrInvalidParameter("rhss must have at least one element")
+		return gcers.NewErrInvalidParameter("*ItemSet.AddRule()", "rhss must have at least one element")
 	}
 
 	pos, ok := slices.BinarySearch(is.symbols, lhs)
@@ -109,7 +110,7 @@ func (is *ItemSet[T]) make_items() {
 
 			for _, idx := range indices {
 				item, err := internal.NewItem(rule, idx)
-				gcers.AssertErr(err, "internal.NewItem(rule, %d)", idx)
+				assert.Err(err, "internal.NewItem(rule, %d)", idx)
 
 				item_list.Append(item)
 			}

@@ -19,7 +19,7 @@ import (
 // If 'frag_fn' is nil, then a function that returns an error is returned.
 func ApplyMany(stream RuneStreamer, frag LexFragment) error {
 	if frag == nil {
-		return gcers.NewErrNilParameter("frag")
+		return gcers.NewErrNilParameter("lexer.ApplyMany()", "frag")
 	}
 
 	if stream == nil {

@@ -8,8 +8,9 @@ import (
 
 	gr "github.com/PlayerR9/SlParser/grammar"
 	"github.com/PlayerR9/SlParser/parser/internal"
-	bck "github.com/PlayerR9/go-commons/backup"
+	bck "github.com/PlayerR9/go-commons/Evaluations/history"
 	gers "github.com/PlayerR9/go-errors"
+	"github.com/PlayerR9/go-errors/assert"
 )
 
 // ActiveParser is a parser.
@@ -27,9 +28,13 @@ type ActiveParser[T gr.TokenTyper] struct {
 	err error
 }
 
+func (ap *ActiveParser[T]) IsNil() bool {
+	return ap == nil
+}
+
 func NewActiveParser[T gr.TokenTyper](global *Parser[T]) (*ActiveParser[T], error) {
 	if global == nil {
-		return nil, gers.NewErrNilParameter("global")
+		return nil, gers.NewErrNilParameter("parser.NewActiveParser()", "global")
 	}
 
 	tokens := make([]*gr.Token[T], len(global.tokens))
@@ -46,15 +51,18 @@ func NewActiveParser[T gr.TokenTyper](global *Parser[T]) (*ActiveParser[T], erro
 }
 
 func (ap *ActiveParser[T]) Align(history *bck.History[*internal.Item[T]]) bool {
-	gers.AssertNotNil(ap, "ap")
-	gers.AssertNotNil(history, "history")
+	assert.NotNil(ap, "ap")
+	assert.NotNil(history, "history")
 
 	ap.shift()
 	if ap.HasError() {
 		return false
 	}
 
-	bck.Align(history, ap)
+	err := history.Align(ap)
+	if err != nil {
+		ap.err = err
+	}
 
 	return !ap.HasError()
 }
@@ -85,7 +93,7 @@ func (p ActiveParser[T]) Pop() (*gr.ParseTree[T], bool) {
 
 // shift is a helper function that shifts a token.
 func (ap *ActiveParser[T]) shift() {
-	gers.AssertNotNil(ap, "ap")
+	assert.NotNil(ap, "ap")
 
 	if len(ap.tokens) == 0 {
 		ap.err = io.EOF
@@ -97,7 +105,7 @@ func (ap *ActiveParser[T]) shift() {
 	ap.tokens = ap.tokens[1:]
 
 	tree, err := gr.NewTree(tk)
-	gers.AssertErr(err, "grammar.NewTree(tk)")
+	assert.Err(err, "grammar.NewTree(tk)")
 
 	ap.stack.Push(tree)
 }
@@ -107,8 +115,8 @@ func (ap *ActiveParser[T]) shift() {
 // Parameters:
 //   - it: the item to reduce. Assumed to be non-nil.
 func (ap *ActiveParser[T]) reduce(it *internal.Item[T]) {
-	gers.AssertNotNil(ap, "ap")
-	gers.AssertNotNil(it, "it")
+	assert.NotNil(ap, "ap")
+	assert.NotNil(it, "it")
 
 	var prev *T
 
@@ -136,7 +144,7 @@ func (ap *ActiveParser[T]) reduce(it *internal.Item[T]) {
 	lhs := it.Lhs()
 
 	tree, err := gr.Combine(lhs, popped)
-	gers.AssertErr(err, "grammar.Combine(%s, popped)", lhs.String())
+	assert.Err(err, "grammar.Combine(%s, popped)", lhs.String())
 
 	ap.stack.Push(tree)
 }
@@ -175,7 +183,7 @@ func (ap *ActiveParser[T]) ApplyEvent(item *internal.Item[T]) bool {
 }
 
 func (ap *ActiveParser[T]) DetermineNextEvents() []*internal.Item[T] {
-	gers.AssertNotNil(ap, "ap")
+	assert.NotNil(ap, "ap")
 
 	defer ap.stack.Refuse()
 

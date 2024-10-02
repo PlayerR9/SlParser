@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	gers "github.com/PlayerR9/go-errors"
+	"github.com/PlayerR9/go-errors/assert"
 	"github.com/PlayerR9/go-generator"
 )
 
@@ -46,13 +47,13 @@ func (gd *TokenGen) SetPackageName(pkg_name string) {
 //   - error: An error if any.
 func NewTokenGen(tokens []*Info) (*TokenGen, error) {
 	if len(tokens) == 0 {
-		return nil, gers.NewErrInvalidParameter("tokens must not be empty")
+		return nil, gers.NewErrInvalidParameter("internal.NewTokenGen()", "tokens must not be empty")
 	}
 
 	symbols := make([]string, 0, len(tokens))
 
 	for _, tk := range tokens {
-		gers.AssertNotNil(tk, "tk")
+		assert.NotNil(tk, "tk")
 
 		symbols = append(symbols, tk.Literal)
 	}
@@ -65,7 +66,7 @@ func NewTokenGen(tokens []*Info) (*TokenGen, error) {
 	var lhs_rules []string
 
 	for _, tk := range tokens {
-		gers.AssertNotNil(tk, "tk")
+		assert.NotNil(tk, "tk")
 
 		if !tk.IsLhsRule {
 			continue
@@ -106,7 +107,7 @@ func init() {
 	var err error
 
 	TokenGenerator, err = generator.NewCodeGeneratorFromTemplate[*TokenGen]("enum", token_templ)
-	gers.AssertErr(err, "generator.NewCodeGeneratorFromTemplate[*TokenGen](%q, token_templ)", "enum")
+	assert.Err(err, "generator.NewCodeGeneratorFromTemplate[*TokenGen](%q, token_templ)", "enum")
 }
 
 // token_templ is the template for the token.

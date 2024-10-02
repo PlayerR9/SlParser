@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"testing"
 
-	gers "github.com/PlayerR9/go-errors"
+	"github.com/PlayerR9/go-errors/assert"
 )
 
 func TestLexer(t *testing.T) {
-	gers.AssertNotNil(Lexer, "Lexer")
+	assert.NotNil(Lexer, "Lexer")
 
 	var buff bytes.Buffer
 

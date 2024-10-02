@@ -1,7 +1,7 @@
 package grammar
 
 import (
-	gerr "github.com/PlayerR9/go-errors/error"
+	gers "github.com/PlayerR9/go-errors"
 )
 
 type ErrorCode int
@@ -16,6 +16,6 @@ func (e ErrorCode) Int() int {
 	return int(e)
 }
 
-func NewBadParseTree(msg string) *gerr.Err {
-	return gerr.New(BadParseTree, msg)
+func NewBadParseTree(msg string) *gers.Err {
+	return gers.New(BadParseTree, msg)
 }

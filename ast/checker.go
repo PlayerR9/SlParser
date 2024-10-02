@@ -5,6 +5,7 @@ import (
 	"iter"
 
 	gers "github.com/PlayerR9/go-errors"
+	"github.com/PlayerR9/go-errors/assert"
 )
 
 // NodeTyper is an interface representing a node type.
@@ -73,7 +74,7 @@ func MakeCheckFn[N interface {
 	if len(table) == 0 {
 		do_fn = func(node N, _ *CheckerInfo[N]) error {
 			if node.IsNil() {
-				return gers.NewErrNilParameter("node")
+				return gers.NewErrNilParameter("ast.CheckASTWithLimit()", "node")
 			}
 
 			type_ := node.GetType()
@@ -83,7 +84,7 @@ func MakeCheckFn[N interface {
 	} else {
 		do_fn = func(node N, _ *CheckerInfo[N]) error {
 			if node.IsNil() {
-				return gers.NewErrNilParameter("node")
+				return gers.NewErrNilParameter("ast.CheckASTWithLimit()", "node")
 			}
 
 			type_ := node.GetType()
@@ -101,10 +102,12 @@ func MakeCheckFn[N interface {
 
 	return func(node N, limit int) error {
 		if node.IsNil() {
-			return gers.NewErrNilParameter("node")
+			return gers.NewErrNilParameter("ast.CheckASTWithLimit()", "node")
 		}
 
-		info := gers.AssertNew(NewCheckerInfo(node, nil, limit))
+		info := assert.New(
+			NewCheckerInfo(node, nil, limit),
+		)
 
 		return fn(info)
 	}

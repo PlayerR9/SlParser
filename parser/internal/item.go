@@ -7,6 +7,7 @@ import (
 
 	gr "github.com/PlayerR9/SlParser/grammar"
 	gcers "github.com/PlayerR9/go-errors"
+	"github.com/PlayerR9/go-errors/assert"
 )
 
 // Item is an item in the parsing table.
@@ -70,12 +71,12 @@ func (item Item[T]) String() string {
 //   - error: if the position is out of range.
 func NewItem[T gr.TokenTyper](rule *Rule[T], pos int) (*Item[T], error) {
 	if rule == nil {
-		return nil, gcers.NewErrNilParameter("rule")
+		return nil, gcers.NewErrNilParameter("internal.NewItem()", "rule")
 	}
 
 	size := rule.Size()
 	if pos < 0 || pos >= size {
-		return nil, gcers.NewErrInvalidParameter(fmt.Sprintf("pos of (%d) must be in range [0, %d)", pos, size))
+		return nil, gcers.NewErrInvalidParameter("internal.NewItem()", fmt.Sprintf("pos of (%d) must be in range [0, %d)", pos, size))
 	}
 
 	var act ActionType
@@ -84,7 +85,7 @@ func NewItem[T gr.TokenTyper](rule *Rule[T], pos int) (*Item[T], error) {
 		act = ActShift
 	} else {
 		rhs, ok := rule.RhsAt(pos)
-		gcers.AssertOk(ok, "rhs_at(%d)", pos)
+		assert.Ok(ok, "rhs_at(%d)", pos)
 
 		if rhs == T(0) {
 			act = ActAccept
@@ -104,14 +105,10 @@ func NewItem[T gr.TokenTyper](rule *Rule[T], pos int) (*Item[T], error) {
 //
 // Never returns nil.
 func MustNewItem[T gr.TokenTyper](rule *Rule[T], pos int) *Item[T] {
-	if rule == nil {
-		panic(gcers.NewErrNilParameter("rule"))
-	}
+	assert.NotNil(rule, "rule")
 
 	size := rule.Size()
-	if pos < 0 || pos >= size {
-		panic(gcers.NewErrInvalidParameter(fmt.Sprintf("pos of (%d) must be in range [0, %d)", pos, size)))
-	}
+	assert.CondF(pos >= 0 && pos < size, "pos must be in range [0, %d)", size)
 
 	var act ActionType
 
@@ -119,7 +116,7 @@ func MustNewItem[T gr.TokenTyper](rule *Rule[T], pos int) *Item[T] {
 		act = ActShift
 	} else {
 		rhs, ok := rule.RhsAt(pos)
-		gcers.AssertOk(ok, "rhs_at(%d)", pos)
+		assert.Ok(ok, "rhs_at(%d)", pos)
 
 		if rhs == T(0) {
 			act = ActAccept
@@ -139,7 +136,7 @@ func MustNewItem[T gr.TokenTyper](rule *Rule[T], pos int) *Item[T] {
 // Returns:
 //   - iter.Seq[T]: The forward rhs of the item.
 func (item Item[T]) ForwardRhs() iter.Seq[T] {
-	gcers.AssertNotNil(item.rule, "item.rule")
+	assert.NotNil(item.rule, "item.rule")
 
 	return item.rule.ForwardRhs()
 }
@@ -149,7 +146,7 @@ func (item Item[T]) ForwardRhs() iter.Seq[T] {
 // Returns:
 //   - iter.Seq[T]: the backward rhs of the item.
 func (item Item[T]) BackwardRhs() iter.Seq[T] {
-	gcers.AssertNotNil(item.rule, "item.rule")
+	assert.NotNil(item.rule, "item.rule")
 
 	return item.rule.BackwardRhs()
 }
@@ -159,7 +156,7 @@ func (item Item[T]) BackwardRhs() iter.Seq[T] {
 // Returns:
 //   - T: the left hand side of the item.
 func (item Item[T]) Lhs() T {
-	gcers.AssertNotNil(item.rule, "item.rule")
+	assert.NotNil(item.rule, "item.rule")
 
 	return item.rule.Lhs()
 }

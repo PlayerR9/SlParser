@@ -105,7 +105,7 @@ func (am AstMaker[N, T]) Convert(root *gr.ParseTree[T]) (N, error) {
 	zero := *new(N)
 
 	if root == nil {
-		return zero, gers.NewErrNilParameter("root")
+		return zero, gers.NewErrNilParameter("AstMaker.Convert()", "root")
 	}
 
 	type_ := root.Type()
@@ -150,7 +150,7 @@ func (am AstMaker[N, T]) Convert(root *gr.ParseTree[T]) (N, error) {
 //   - error: if an error occurred.
 func (am AstMaker[N, T]) Apply(root *gr.ParseTree[T]) ([]N, error) {
 	if root == nil {
-		return nil, gers.NewErrNilParameter("root")
+		return nil, gers.NewErrNilParameter("AstMaker.Apply()", "root")
 	}
 
 	type_ := root.Type()

@@ -8,8 +8,9 @@ import (
 
 	kdd "github.com/PlayerR9/SlParser/kdd"
 	gcch "github.com/PlayerR9/go-commons/runes"
+	gerr "github.com/PlayerR9/go-errors"
 	gers "github.com/PlayerR9/go-errors"
-	gerr "github.com/PlayerR9/go-errors/error"
+	"github.com/PlayerR9/go-errors/assert"
 )
 
 // replace_underscore replaces underscores with underscores.
@@ -26,7 +27,7 @@ import (
 // Assertions:
 //   - len(chars) > 0
 func replace_underscore(chars []rune) string {
-	gers.Assert(len(chars) > 0, "chars must not be empty")
+	assert.Cond(len(chars) > 0, "chars must not be empty")
 
 	var builder strings.Builder
 
@@ -119,7 +120,7 @@ func CandidatesForAst(table map[*kdd.Node]*Info) []string {
 	var candidates []string
 
 	for _, info := range table {
-		gers.AssertNotNil(info, "info")
+		assert.NotNil(info, "info")
 
 		if !info.IsCandidate {
 			continue
@@ -161,7 +162,7 @@ func sort(infos []*Info) error {
 
 	// 2. Divide the infos into buckets.
 	for _, info := range infos {
-		gers.AssertNotNil(info, "node")
+		assert.NotNil(info, "node")
 
 		prev, ok := buckets[info.Type]
 		if !ok {
@@ -222,7 +223,7 @@ func LinearizeTable(table map[*kdd.Node]*Info) []*Info {
 	list := make([]*Info, 0, len(table))
 
 	for _, info := range table {
-		gers.AssertNotNil(info, "info")
+		assert.NotNil(info, "info")
 
 		ok := slices.ContainsFunc(list, info.Equals)
 		if !ok {
@@ -234,7 +235,7 @@ func LinearizeTable(table map[*kdd.Node]*Info) []*Info {
 
 	// 2. Sort the list in ascending order using bucket sort.
 	err := sort(list)
-	gers.AssertErr(err, "sort(list)")
+	assert.Err(err, "sort(list)")
 
 	return list
 }
@@ -257,7 +258,7 @@ func FindLastTerminal(infos []*Info) *Info {
 	idx := -1
 
 	for i := 0; i < len(infos) && idx == -1; i++ {
-		gers.AssertNotNil(infos[i], "tokens[i]")
+		assert.NotNil(infos[i], "tokens[i]")
 
 		info := infos[i]
 		if info.Type == NonterminalTk {
@@ -287,10 +288,10 @@ func CheckEofExists(infos []*Info) bool {
 	}
 
 	for _, info := range infos {
-		gers.AssertNotNil(info, "tk")
+		assert.NotNil(info, "tk")
 
 		node := info.Node()
-		gers.AssertNotNil(node, "node")
+		assert.NotNil(node, "node")
 
 		if node.Data == "EOF" {
 			return true

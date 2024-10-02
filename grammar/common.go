@@ -3,6 +3,7 @@ package grammar
 import (
 	gcslc "github.com/PlayerR9/go-commons/slices"
 	gcers "github.com/PlayerR9/go-errors"
+	"github.com/PlayerR9/go-errors/assert"
 )
 
 // Combine creates a new ParseTree by combining the subtrees.
@@ -21,7 +22,7 @@ import (
 func Combine[T TokenTyper](type_ T, subtrees []*ParseTree[T]) (*ParseTree[T], error) {
 	subtrees = gcslc.FilterZeroValues(subtrees)
 	if len(subtrees) == 0 {
-		return nil, gcers.NewErrInvalidParameter("cannot combine an empty list of subtrees")
+		return nil, gcers.NewErrInvalidParameter("grammar.Combine()", "cannot combine an empty list of subtrees")
 	}
 
 	last_tk := subtrees[len(subtrees)-1].Root()
@@ -34,7 +35,7 @@ func Combine[T TokenTyper](type_ T, subtrees []*ParseTree[T]) (*ParseTree[T], er
 	}
 
 	tree, err := NewTree(root_tk)
-	gcers.AssertErr(err, "NewTree(root_tk)")
+	assert.Err(err, "NewTree(root_tk)")
 	tree.SetChildren(subtrees)
 
 	return tree, nil
