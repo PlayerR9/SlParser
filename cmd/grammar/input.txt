@@ -1,0 +1,80 @@
+source : source1 EOF ;
+source1
+   : declaration
+   | declaration source1
+   ;
+
+declaration : DEF DE_ID funcDecl ;
+
+funcDecl : mapDe bodyCls END ;
+
+bodyCls
+   : statement
+   | statement bodyCls
+   ;
+
+dataEntity
+   : DE_ID
+   | mapDe
+   | dynArrDe
+   ;
+
+mapDe
+   : DE_ID COLON VOID_TYPE
+   | DE_ID COLON dataEntity
+   ;
+
+dynArrDe : VOID_TYPE COLON dataEntity ;
+
+statement
+   : funcCallSign SEMICOLON
+   | returnStmt SEMICOLON
+   ;
+
+returnStmt : NUMERIC_LITERAL ASSIGN_OP RETURN ;
+
+funcCallSign
+   : DE_ID argCls1
+   | DE_ID VOID_TYPE
+   ;
+
+argCls
+   : OP_PAREN CL_PAREN
+   | OP_PAREN argCls1 CL_PAREN
+   ;
+
+argCls1
+   : arg
+   | argCls
+   | arg argCls1
+   | argCls argCls1
+   ;
+
+arg
+   : STRING_LITERAL
+   | DE_ID
+   | funcCallSign
+   | expression
+   ;
+
+expression : equalExpr ;
+
+equalExpr
+   : orExpr
+   | orExpr EQUAL_OP equalExpr
+   ;
+
+orExpr
+   : andExpr
+   | andExpr OR_OP orExpr
+   ;
+
+andExpr
+   : notExpr
+   | notExpr AND_OP notExpr
+   ;
+
+notExpr
+   : VARIABLE_ID
+   | NOT_OP notExpr
+   ;

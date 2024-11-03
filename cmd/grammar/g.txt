@@ -1,0 +1,5 @@
+source : source1 EOF ;
+source1 : rule | rule source1 ;
+rule : lhs COLON rhss SEMICOLON ;
+rhss : orExpr | orExpr rhss ;
+orExpr : RHS | RHS PIPE orExpr ;
