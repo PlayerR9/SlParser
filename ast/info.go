@@ -1,12 +1,6 @@
 package ast
 
-import (
-	"fmt"
-	"iter"
-	"slices"
-	"strconv"
-)
-
+/*
 type CheckDataFn func(data string) error
 
 type CheckChildrenFn[N interface {
@@ -79,3 +73,4 @@ func (ni NodeInfo[N]) CheckNode(node N) ([]N, error) {
 
 	return children, nil
 }
+*/

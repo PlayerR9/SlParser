@@ -348,7 +348,7 @@ func (r Result[N]) Parse(parser slpx.Parser) ([]Result[N], error) {
 //
 // If the `ast` function returns more or less than one abstract syntax tree
 // node, an error is returned.
-func (r Result[N]) AST(ast_fn ast.AST[N]) ([]Result[N], error) {
+func (r Result[N]) AST(ast_fn *ast.ASTMaker[N]) ([]Result[N], error) {
 	if ast_fn == nil {
 		return nil, common.NewErrNilParam("ast")
 	}

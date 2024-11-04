@@ -1,6 +1,6 @@
 package grammar
 
-import "strings"
+import "unicode/utf8"
 
 const (
 	// EtEOF is a special token type used to indicate the end of the input (or file).
@@ -19,5 +19,14 @@ const (
 // Returns:
 //   - bool: True if the token type is a terminal, false otherwise.
 func IsTerminal(rhs string) bool {
-	return strings.HasPrefix(rhs, "T") || strings.HasPrefix(rhs, "E")
+	if rhs == "" {
+		return false
+	}
+
+	c, _ := utf8.DecodeRuneInString(rhs)
+	if c == 'T' || c == 'E' {
+		return true
+	} else {
+		return false
+	}
 }

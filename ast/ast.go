@@ -1,39 +1,36 @@
 package ast
 
 import (
-	"errors"
-	"fmt"
-
 	slgr "github.com/PlayerR9/SlParser/grammar"
 	"github.com/PlayerR9/mygo-lib/common"
 )
 
-type AST[N any] interface {
-	Make(token *slgr.Token) ([]N, error)
+// ASTMaker is an AST maker.
+type ASTMaker[T any] struct {
+	// table is the AST maker table.
+	table map[string]ToASTFn[T]
 }
 
-type baseAST[N any] struct {
-	table map[string]ToAstFunc[N]
-}
-
-func (b *baseAST[N]) Make(token *slgr.Token) ([]N, error) {
-	if token == nil {
-		return nil, nil
-	} else if b == nil {
-		return nil, common.NewErrNilParam("b")
+// Make makes an AST node from a token.
+//
+// Parameters:
+//   - token: The token to make an AST node from.
+//
+// Returns:
+//   - []T: The AST nodes.
+//   - error: An error if the evaluation failed.
+func (b *ASTMaker[T]) Make(token *slgr.Token) ([]T, error) {
+	if b == nil {
+		return nil, common.ErrNilReceiver
+	} else if token == nil {
+		return nil, common.NewErrNilParam("token")
 	}
 
 	type_ := token.Type
 
-	if len(b.table) == 0 {
-		return nil, fmt.Errorf("token type (%q) is not supported", type_)
-	}
-
 	fn, ok := b.table[type_]
-	if !ok {
-		return nil, fmt.Errorf("token type (%q) is not supported", type_)
-	} else if fn == nil {
-		return nil, errors.New("fn must not be nil")
+	if !ok || fn == nil {
+		return nil, NewErrUnsupportedType(true, type_)
 	}
 
 	nodes, err := fn(token)

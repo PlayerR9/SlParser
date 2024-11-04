@@ -14,7 +14,7 @@ func MakeEvaluate[N interface {
 	Child() iter.Seq[N]
 
 	slast.Noder
-}](lexer *sllx.Lexer, parser slpx.Parser, ast slast.AST[N]) (evrsl.ApplyOnValidsFn[Result[N]], error) {
+}](lexer *sllx.Lexer, parser slpx.Parser, ast *slast.ASTMaker[N]) (evrsl.ApplyOnValidsFn[Result[N]], error) {
 	if lexer == nil {
 		return nil, common.NewErrNilParam("lexer")
 	} else if parser == nil {

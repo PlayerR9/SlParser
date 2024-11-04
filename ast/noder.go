@@ -1,24 +1,10 @@
 package ast
 
-import (
-	"strconv"
-	"strings"
-
-	"github.com/PlayerR9/mygo-lib/common"
-)
-
-func Quote(b *strings.Builder, type_ string) error {
-	if b == nil {
-		return common.NewErrNilParam("b")
-	}
-
-	_, _ = b.WriteString(strconv.Quote(type_))
-
-	return nil
-}
-
+// Noder is the interface that all nodes must implement.
 type Noder interface {
-	IsNil() bool
-	String() string
+	// GetType returns the type of the node.
+	//
+	// Returns:
+	//   - string: The type of the node.
 	GetType() string
 }

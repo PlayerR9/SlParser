@@ -1,47 +1,6 @@
 package ast
 
-import (
-	"errors"
-	"fmt"
-	"iter"
-	"slices"
-
-	slgr "github.com/PlayerR9/SlParser/grammar"
-	trav "github.com/PlayerR9/SlParser/trav"
-	"github.com/PlayerR9/mygo-lib/common"
-	gslc "github.com/PlayerR9/mygo-lib/slices"
-)
-
-func CheckNode(kind string, node Noder, types ...string) error {
-	if node == nil {
-		return gslc.NewErrNotAsExpected(true, kind, nil, types...)
-	}
-
-	got := node.GetType()
-
-	ok := slices.Contains(types, got)
-	if !ok {
-		return gslc.NewErrNotAsExpected(true, kind, &got, types...)
-	}
-
-	return nil
-}
-
-func CheckToken(kind string, token *slgr.Token, types ...string) error {
-	if token == nil {
-		return gslc.NewErrNotAsExpected(true, kind, nil, types...)
-	}
-
-	got := token.Type
-
-	ok := slices.Contains(types, got)
-	if !ok {
-		return gslc.NewErrNotAsExpected(true, kind, &got, types...)
-	}
-
-	return nil
-}
-
+/*
 type CheckFn[N interface {
 	Child() iter.Seq[N]
 
@@ -195,3 +154,4 @@ func (c *Checker[N]) Reset() {
 		c.table = nil
 	}
 }
+*/
