@@ -3,25 +3,16 @@ package ast
 import (
 	"errors"
 	"fmt"
-	"iter"
 
 	slgr "github.com/PlayerR9/SlParser/grammar"
 	"github.com/PlayerR9/mygo-lib/common"
 )
 
-type AST[N interface {
-	Child() iter.Seq[N]
-
-	Noder
-}] interface {
+type AST[N any] interface {
 	Make(token *slgr.Token) ([]N, error)
 }
 
-type baseAST[N interface {
-	Child() iter.Seq[N]
-
-	Noder
-}] struct {
+type baseAST[N any] struct {
 	table map[string]ToAstFunc[N]
 }
 

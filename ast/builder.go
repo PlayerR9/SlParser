@@ -1,22 +1,12 @@
 package ast
 
 import (
-	"iter"
-
 	slgr "github.com/PlayerR9/SlParser/grammar"
 )
 
-type ToAstFunc[N interface {
-	Child() iter.Seq[N]
+type ToAstFunc[N any] func(token *slgr.Token) ([]N, error)
 
-	Noder
-}] func(token *slgr.Token) ([]N, error)
-
-type Builder[N interface {
-	Child() iter.Seq[N]
-
-	Noder
-}] struct {
+type Builder[N any] struct {
 	table map[string]ToAstFunc[N]
 }
 

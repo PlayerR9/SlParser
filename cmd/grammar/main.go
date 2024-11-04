@@ -74,11 +74,6 @@ func main() {
 		logger.Fatalf("failed to create %q: %v", DirPath, err)
 	}
 
-	err = generateNodeType(sign, DirPath)
-	if err != nil {
-		logger.Fatal(err)
-	}
-
 	err = generateNode(sign, DirPath)
 	if err != nil {
 		logger.Fatal(err)
@@ -101,23 +96,6 @@ func main() {
 
 	logger.Printf("Successfully generated %q", OutputPath)
 	os.Exit(0)
-}
-
-func generateNodeType(sign, dir string) error {
-	const (
-		FileName string = "node_type.go"
-	)
-
-	data := gen.NewNodeTypeData()
-
-	path := filepath.Join(dir, FileName)
-
-	err := gen.NodeTypeGenerator.Generate(true, sign, path, data)
-	if err != nil {
-		return fmt.Errorf("failed to generate node type: %w", err)
-	}
-
-	return nil
 }
 
 func generateNode(sign, dir string) error {

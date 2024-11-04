@@ -1,5 +1,0 @@
-source : projectCls NEWLINE versionCls NEWLINE compileCls EOF ;
-
-projectCls : PROJECT PROJECT_NAME ;
-versionCls : SD SD_VERSION ;
-compileCls : COMPILE FILE_PATH ;

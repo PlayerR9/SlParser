@@ -53,7 +53,7 @@ type Node struct {
 	Pos int
 
 	// Type is the type of the node.
-	Type NodeType
+	Type string
 
 	// Data is the data of the node.
 	Data string
@@ -72,9 +72,9 @@ func (n Node) IsLeaf() bool {
 // String implements the TreeNoder interface.
 func (n Node) String() string {
 	if n.Data != "" {
-		return fmt.Sprintf("Node[%d:%s (%q)]", n.Pos, n.Type.String(), n.Data)
+		return fmt.Sprintf("Node[%d:%s (%q)]", n.Pos, n.Type, n.Data)
 	} else {
-		return fmt.Sprintf("Node[%d:%s]", n.Pos, n.Type.String())
+		return fmt.Sprintf("Node[%d:%s]", n.Pos, n.Type)
 	}
 }
 
@@ -87,7 +87,7 @@ func (n Node) String() string {
 //
 // Returns:
 //   - *Node: The new node. Never returns nil.
-func NewNode(pos int, t NodeType, data string) *Node {
+func NewNode(pos int, t string, data string) *Node {
 	return &Node{
 		Pos:  pos,
 		Type: t,
@@ -95,22 +95,11 @@ func NewNode(pos int, t NodeType, data string) *Node {
 	}
 }
 
-// AreChildrenCritical checks whether the children of the node are critical or not.
-//
-// A node is said to be critical if, when an error occurs, the entire process
-// is immediately returned instead of continuing.
-//
-// Returns:
-//		- bool: True if the children are critical, false otherwise.
-func (n Node) AreChildrenCritical() bool {
-	return n.Type.AreChildrenCritical()
-}
-
 // GetType returns the type of the node.
 //
 // Returns:
-//   - NodeType: The type of the node.
-func (n Node) GetType() NodeType {
+//   - string: The type of the node.
+func (n Node) GetType() string {
 	return n.Type
 }
 
