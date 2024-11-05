@@ -1,17 +1,10 @@
 package SlParser
 
 import (
-	"iter"
-
-	"github.com/PlayerR9/SlParser/ast"
 	slpx "github.com/PlayerR9/SlParser/parser"
 )
 
-func HasTree[N interface {
-	Child() iter.Seq[N]
-
-	ast.Noder
-}](results []Result[N], target *slpx.ParseTree) bool {
+func HasTree(results []Result, target *slpx.ParseTree) bool {
 	if len(results) == 0 || target == nil {
 		return false
 	}

@@ -1,44 +1,11 @@
-package generator
-
-import (
-	common "github.com/PlayerR9/mygo-lib/common"
-	cgen "github.com/PlayerR9/mygo-lib/generator"
-)
-
-type NodeData struct {
-	PackageName string
-}
-
-func (nd *NodeData) SetPkgName(pkg string) error {
-	if nd == nil {
-		return common.ErrNilReceiver
-	}
-
-	nd.PackageName = pkg
-
-	return nil
-}
-
-func NewNodeData() *NodeData {
-	return &NodeData{}
-}
-
-var (
-	NodeGenerator *cgen.CodeGenerator[*NodeData]
-)
-
-func init() {
-	NodeGenerator = cgen.Must(cgen.New[*NodeData]("node", node_templ))
-}
-
-const node_templ string = `package {{ .PackageName }}
+package grammar
 
 import (
 	"fmt"
 	"io"
 	"iter"
 
-	"github.com/PlayerR9/mygo-lib/common"
+	"github.com/PlayerR9/go-evals/common"
 	"github.com/PlayerR9/mygo-lib/slices"
 	"github.com/PlayerR9/mygo-lib/trees"
 )
@@ -93,14 +60,6 @@ func NewNode(pos int, t string, data string) *Node {
 		Type: t,
 		Data: data,
 	}
-}
-
-// GetType returns the type of the node.
-//
-// Returns:
-//   - string: The type of the node.
-func (n Node) GetType() string {
-	return n.Type
 }
 
 // Child iterates over the children of the node from the first child to the last child.
@@ -233,4 +192,4 @@ var (
 
 func init() {
 	WriteTree = trees.MakeWriteTree[*Node]()
-}`
+}

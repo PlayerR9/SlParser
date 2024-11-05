@@ -3,10 +3,8 @@ package SlParser
 import (
 	"errors"
 	"fmt"
-	"iter"
 
-	"github.com/PlayerR9/SlParser/ast"
-	slgr "github.com/PlayerR9/SlParser/grammar"
+	gr "github.com/PlayerR9/SlParser/grammar"
 	sllx "github.com/PlayerR9/SlParser/lexer"
 	slpx "github.com/PlayerR9/SlParser/parser"
 
@@ -32,16 +30,12 @@ func init() {
 }
 
 // Result holds all the information regarding the parsing process.
-type Result[N interface {
-	Child() iter.Seq[N]
-
-	ast.Noder
-}] struct {
+type Result struct {
 	// data is a pointer to a slice of bytes that is used to store the input data.
 	data *[]byte
 
 	// tokens is the list of tokens that were produced during the parsing process.
-	tokens *[]*slgr.Token
+	tokens *[]*gr.Token
 
 	// lexer_err is the error that occurred during the lexing process.
 	lexer_err *error
@@ -50,14 +44,14 @@ type Result[N interface {
 	parse_tree **slpx.Result
 
 	// node is the node that was produced during the parsing process.
-	node *N
+	node **gr.Node
 
 	// err is the error that occurred during the parsing process.
 	err error
 }
 
 // HasError implements the Resulter interface.
-func (r Result[N]) HasError() bool {
+func (r Result) HasError() bool {
 	return r.err != nil
 }
 
@@ -67,13 +61,9 @@ func (r Result[N]) HasError() bool {
 //   - data: The data to create the result from.
 //
 // Returns:
-//   - Result[N]: The new result.
-func NewResult[N interface {
-	Child() iter.Seq[N]
-
-	ast.Noder
-}](data []byte) Result[N] {
-	return Result[N]{
+//   - Result: The new result.
+func NewResult(data []byte) Result {
+	return Result{
 		data: &data,
 	}
 }
@@ -85,12 +75,12 @@ func NewResult[N interface {
 //
 // Returns:
 //   - Result[T, N]: The result with the error set.
-func (r Result[N]) SetError(err error) Result[N] {
+func (r Result) SetError(err error) Result {
 	if err == nil {
 		err = r.err
 	}
 
-	return Result[N]{
+	return Result{
 		data:       r.data,
 		tokens:     r.tokens,
 		lexer_err:  r.lexer_err,
@@ -108,7 +98,7 @@ func (r Result[N]) SetError(err error) Result[N] {
 //
 // Errors:
 //   - ErrMissingData: If the data is not set.
-func (r Result[N]) Data() ([]byte, error) {
+func (r Result) Data() ([]byte, error) {
 	if r.data == nil {
 		return nil, ErrMissingData
 	} else {
@@ -121,7 +111,7 @@ func (r Result[N]) Data() ([]byte, error) {
 // Returns:
 //   - []*grammar.Token: The tokens of the result.
 //   - error: An error if the tokens are not set.
-func (r Result[N]) Tokens() ([]*slgr.Token, error) {
+func (r Result) Tokens() ([]*gr.Token, error) {
 	if r.tokens == nil {
 		return nil, ErrMissingTokens
 	} else {
@@ -134,7 +124,7 @@ func (r Result[N]) Tokens() ([]*slgr.Token, error) {
 // Returns:
 //   - *slpx.Result: The parse tree of the result.
 //   - error: An error if the parse tree is not set.
-func (r Result[N]) ParseTree() (*slpx.Result, error) {
+func (r Result) ParseTree() (*slpx.Result, error) {
 	if r.parse_tree == nil {
 		return nil, ErrMissingParseTree
 	} else {
@@ -145,11 +135,11 @@ func (r Result[N]) ParseTree() (*slpx.Result, error) {
 // Node returns the node of the result.
 //
 // Returns:
-//   - N: The node of the result.
+//   - grammar.Node: The node of the result.
 //   - error: An error if the node is not set.
-func (r Result[N]) Node() (N, error) {
+func (r Result) Node() (*gr.Node, error) {
 	if r.node == nil {
-		return *new(N), errors.New("missing node")
+		return nil, errors.New("missing node")
 	} else {
 		return *r.node, nil
 	}
@@ -160,7 +150,7 @@ func (r Result[N]) Node() (N, error) {
 // Returns:
 //   - error: The lexer error of the result.
 //   - error: An error if the lexer error is not set.
-func (r Result[N]) LexerErr() (error, error) {
+func (r Result) LexerErr() (error, error) {
 	if r.lexer_err == nil {
 		return nil, errors.New("missing lexer error")
 	} else {
@@ -172,7 +162,7 @@ func (r Result[N]) LexerErr() (error, error) {
 //
 // Returns:
 //   - error: The error of the result.
-func (r Result[N]) Err() error {
+func (r Result) Err() error {
 	return r.err
 }
 
@@ -190,7 +180,7 @@ func (r Result[N]) Err() error {
 // Errors:
 //   - ErrMissingData: If the Lex function is called before the data is set.
 //   - any other error: When the lexer is nil or any other error occurs during the lexing process.
-func (r Result[N]) Lex(lexer *sllx.Lexer) ([]Result[N], error) {
+func (r Result) Lex(lexer *sllx.Lexer) ([]Result, error) {
 	if lexer == nil {
 		return nil, common.NewErrNilParam("lexer")
 	}
@@ -213,7 +203,7 @@ func (r Result[N]) Lex(lexer *sllx.Lexer) ([]Result[N], error) {
 	itr, _ := lexer.Lex()
 	defer itr.Stop()
 
-	eos := ernk.NewErrRorSol[Result[N]]()
+	eos := ernk.NewErrRorSol[Result]()
 	eos.ChangeOrder(true)
 
 	for {
@@ -226,7 +216,7 @@ func (r Result[N]) Lex(lexer *sllx.Lexer) ([]Result[N], error) {
 
 		err = pair.GetError()
 		tokens := pair.Tokens()
-		tokens = append(tokens, slgr.EOFToken)
+		tokens = append(tokens, gr.EOFToken)
 
 		if err == nil {
 			r := r.SetError(nil)
@@ -244,7 +234,7 @@ func (r Result[N]) Lex(lexer *sllx.Lexer) ([]Result[N], error) {
 
 	errs := eos.Errors()
 
-	results := make([]Result[N], 0, len(errs))
+	results := make([]Result, 0, len(errs))
 
 	for _, err := range errs {
 		r := r.SetError(err)
@@ -262,7 +252,7 @@ func (r Result[N]) Lex(lexer *sllx.Lexer) ([]Result[N], error) {
 //   - parser: The parser to use for processing the input data.
 //
 // Returns:
-//   - []*Result[T, N]: A slice containing the result of the parsing process. If successful,
+//   - []*Result A slice containing the result of the parsing process. If successful,
 //     it contains the parse trees generated from the input data. Otherwise, it contains the
 //     error that occurred during the parsing process.
 //   - error: An error if the evaluation failed.
@@ -270,12 +260,12 @@ func (r Result[N]) Lex(lexer *sllx.Lexer) ([]Result[N], error) {
 // Errors:
 //   - ErrMissingTokens: If the Parse function is called before the tokens are set.
 //   - any other error: When the parser is nil or any other error occurs during the parsing process.
-func (r Result[N]) Parse(parser slpx.Parser) ([]Result[N], error) {
+func (r Result) Parse(parser slpx.Parser) ([]Result, error) {
 	if parser == nil {
 		return nil, common.NewErrNilParam("parser")
 	}
 
-	var tokens []*slgr.Token
+	var tokens []*gr.Token
 
 	if r.tokens == nil {
 		return nil, ErrMissingTokens
@@ -283,7 +273,7 @@ func (r Result[N]) Parse(parser slpx.Parser) ([]Result[N], error) {
 		tokens = *r.tokens
 	}
 
-	eos := ernk.NewErrRorSol[Result[N]]()
+	eos := ernk.NewErrRorSol[Result]()
 
 	itr := parser.Parse(tokens)
 	defer itr.Stop()
@@ -312,7 +302,7 @@ func (r Result[N]) Parse(parser slpx.Parser) ([]Result[N], error) {
 	}
 
 	if !eos.HasError() {
-		results := make([]Result[N], 0, eos.Size())
+		results := make([]Result, 0, eos.Size())
 
 		for _, r := range eos.Sols() {
 			ok := HasTree(results, (*r.parse_tree).Forest()[0])
@@ -326,7 +316,7 @@ func (r Result[N]) Parse(parser slpx.Parser) ([]Result[N], error) {
 
 	errs := eos.Errors()
 
-	results := make([]Result[N], 0, len(errs))
+	results := make([]Result, 0, len(errs))
 
 	for _, err := range errs {
 		r := r.SetError(err)
@@ -348,8 +338,17 @@ func (r Result[N]) Parse(parser slpx.Parser) ([]Result[N], error) {
 //
 // If the `ast` function returns more or less than one abstract syntax tree
 // node, an error is returned.
-func (r Result[N]) AST(ast_fn *ast.ASTMaker[N]) ([]Result[N], error) {
-	if ast_fn == nil {
+//
+// Parameters:
+//   - table: The AST maker to use for transforming the parse tree into an abstract syntax tree.
+//
+// Returns:
+//   - []Result: A slice containing the result of the transformation process. If
+//     successful, it contains the abstract syntax tree nodes generated from the parse tree.
+//     Otherwise, it contains the error that occurred during the transformation process.
+//   - error: An error if the evaluation failed.
+func (r Result) AST(table map[string]gr.ToASTFn) ([]Result, error) {
+	if table == nil {
 		return nil, common.NewErrNilParam("ast")
 	}
 
@@ -365,7 +364,7 @@ func (r Result[N]) AST(ast_fn *ast.ASTMaker[N]) ([]Result[N], error) {
 
 	errs := make([]error, 0, 2)
 
-	nodes, err := ast_fn.Make(root)
+	nodes, err := gr.AST.Make(table, root)
 	if err != nil {
 		errs = append(errs, err)
 	}
@@ -377,11 +376,11 @@ func (r Result[N]) AST(ast_fn *ast.ASTMaker[N]) ([]Result[N], error) {
 	err = errors.Join(errs...)
 
 	if len(nodes) == 0 {
-		r.SetError(err)
+		r = r.SetError(err)
 
-		return []Result[N]{r}, nil
+		return []Result{r}, nil
 	} else {
-		results := make([]Result[N], 0, len(nodes))
+		results := make([]Result, 0, len(nodes))
 
 		for i := range nodes {
 			result := r.SetError(err)

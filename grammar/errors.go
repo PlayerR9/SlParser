@@ -1,7 +1,9 @@
-package ast
+package grammar
 
 import (
 	"strconv"
+
+	faults "github.com/PlayerR9/go-fault"
 )
 
 // ErrUnsupportedType is an error that occurs when a token type is not supported.
@@ -37,56 +39,10 @@ func NewErrUnsupportedType(quote bool, type_ string) error {
 	}
 }
 
-/*
-type ErrBadData struct {
-	Reason error
-}
-
-func (e ErrBadData) Error() string {
-	var msg string
-
-	if e.Reason == nil {
-		msg = "something went wrong"
-	} else {
-		msg = e.Reason.Error()
-	}
-
-	return "(ErrBadData) " + msg
-}
-
-func NewErrBadData(reason error) error {
-	return &ErrBadData{
-		Reason: reason,
-	}
-}
-
-type ErrBadChildren struct {
-	Reason error
-}
-
-func (e ErrBadChildren) Error() string {
-	var msg string
-
-	if e.Reason == nil {
-		msg = "something went wrong"
-	} else {
-		msg = e.Reason.Error()
-	}
-
-	return "(ErrBadChildren) " + msg
-}
-
-func NewErrBadChildren(reason error) error {
-	return &ErrBadChildren{
-		Reason: reason,
-	}
-}
-
 var (
-	ErrNilNode error
+	ErrNotAsExpected faults.Descriptor
 )
 
 func init() {
-	ErrNilNode = errors.New("nil nodes are not allowed")
+	ErrNotAsExpected = faults.New(NotAsExpected, "check failed")
 }
-*/

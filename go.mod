@@ -7,3 +7,5 @@ require (
 	github.com/PlayerR9/mygo-lib v0.1.5
 	github.com/dustin/go-humanize v1.0.1
 )
+
+require github.com/PlayerR9/go-fault v0.1.1

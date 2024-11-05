@@ -74,11 +74,6 @@ func main() {
 		logger.Fatalf("failed to create %q: %v", DirPath, err)
 	}
 
-	err = generateNode(sign, DirPath)
-	if err != nil {
-		logger.Fatal(err)
-	}
-
 	err = generateLexer(sign, DirPath)
 	if err != nil {
 		logger.Fatal(err)
@@ -96,23 +91,6 @@ func main() {
 
 	logger.Printf("Successfully generated %q", OutputPath)
 	os.Exit(0)
-}
-
-func generateNode(sign, dir string) error {
-	const (
-		FileName string = "node.go"
-	)
-
-	data := gen.NewNodeData()
-
-	path := filepath.Join(dir, FileName)
-
-	err := gen.NodeGenerator.Generate(false, sign, path, data)
-	if err != nil {
-		return fmt.Errorf("failed to generate node: %w", err)
-	}
-
-	return nil
 }
 
 func generateLexer(sign, dir string) error {

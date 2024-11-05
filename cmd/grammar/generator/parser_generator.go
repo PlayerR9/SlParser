@@ -100,7 +100,7 @@ func init() {
 	Parser = parser.NewParser(builder.Build())
 }
 
-var evalFn result.ApplyOnValidsFn[SlParser.Result[*Node]]
+var evalFn result.ApplyOnValidsFn[SlParser.Result]
 
 func init() {
 	var err error
@@ -114,7 +114,7 @@ func init() {
 // Result holds all the information regarding the parsing process. This is read-only.
 type Result struct {
 	// inner holds the inner result.
-	inner *SlParser.Result[*Node]
+	inner *SlParser.Result
 }
 
 // Data returns the data of the result.
@@ -150,9 +150,9 @@ func (r Result) ParseTree() (*parser.Result, bool) {
 // Node returns the node of the result.
 //
 // Returns:
-//   - *Node: The node of the result.
+//   - *grammar.Node: The node of the result.
 //   - bool: True if the node is set, false otherwise.
-func (r Result) Node() (*Node, bool) {
+func (r Result) Node() (*grammar.Node, bool) {
 	n, err := r.inner.Node()
 	return n, err == nil
 }
@@ -172,7 +172,7 @@ func (r Result) LexerErr() (error, bool) {
 // Returns:
 //   - error: The error of the result. Nil if no error is set.
 func (r Result) Err() error {
-	return r.Err()
+	return r.inner.Err()
 }
 
 // Parse parses the given data according to the grammar.
@@ -184,9 +184,9 @@ func (r Result) Err() error {
 //   - []Result: A slice containing the result of the parsing process.
 //   - error: An error if the evaluation failed.
 func Parse(data []byte) ([]Result, error) {
-	result := SlParser.NewResult[*Node](data)
+	result := SlParser.NewResult(data)
 
-	results, err := Evaluate([]SlParser.Result[*Node]{result})
+	results, err := Evaluate([]SlParser.Result{result})
 
 	slice := make([]Result, 0, len(results))
 

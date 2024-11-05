@@ -46,19 +46,16 @@ const ast_templ string = `package {{ .PackageName }}
 
 import (
 	"errors"
-	"github.com/PlayerR9/SlParser/ast"
 	"github.com/PlayerR9/SlParser/grammar"
 )
 
 var (
-	Ast ast.AST[*Node]
+	Ast map[string]grammar.ToASTFn = make(map[string]grammar.ToASTFn)
 )
 
 func init() {
-	var builder ast.Builder[*Node]
-	defer builder.Reset()
 	{{ range $index, $symbol := .Symbols }}
-	builder.Register({{ $symbol }}, func(token *grammar.Token) ([]*Node, error) {
+	Ast[{{ $symbol }}] = func(token *grammar.Token) ([]*grammar.Node, error) {
 		if token == nil {
 			return nil, errors.New("token must not be nil")
 		}
@@ -66,7 +63,6 @@ func init() {
 		// TODO: Write here the logic for turning the token into an AST node...
 
 		panic("implement me")
-	})
+	}
 	{{ end }}
-	Ast = builder.Build()
 }`
