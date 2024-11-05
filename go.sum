@@ -6,5 +6,7 @@ github.com/PlayerR9/go-verify v0.1.1 h1:UK1jLR6wrjbI5vQBJRgXA9+pJAM2TjdnFsRJW+7E
 github.com/PlayerR9/go-verify v0.1.1/go.mod h1:JV0O22ENxfcnFlCPkQIkwtfCNS0IBMU42gB/BDTfY6w=
 github.com/PlayerR9/mygo-lib v0.1.5 h1:giDmi18YWcXKz23/FqHAdEQ2fnFlSBr6ycCd9ZHW0BI=
 github.com/PlayerR9/mygo-lib v0.1.5/go.mod h1:7Lumjc0e/1SD5SHyn7eCQalbDo82g+YS31G9CQ/UvB8=
+github.com/PlayerR9/mygo-lib v0.1.6 h1:Lu21wKnfHUUvrv9ysNAlxlvr1aU75+RWckxebz8/VxE=
+github.com/PlayerR9/mygo-lib v0.1.6/go.mod h1:7Lumjc0e/1SD5SHyn7eCQalbDo82g+YS31G9CQ/UvB8=
 github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
 github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=

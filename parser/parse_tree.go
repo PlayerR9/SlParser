@@ -2,14 +2,14 @@ package parser
 
 import (
 	slgr "github.com/PlayerR9/SlParser/grammar"
+	tr "github.com/PlayerR9/mygo-lib/CustomData/tree"
 	"github.com/PlayerR9/mygo-lib/common"
-	tr "github.com/PlayerR9/mygo-lib/trees"
 )
 
 // ParseTree the parse tree output by the parser.
 type ParseTree struct {
 	// tree is the underlying parse tree.
-	tree tr.Tree[*slgr.Token]
+	tree *tr.Tree
 }
 
 // String implements the fmt.Stringer interface.
@@ -30,7 +30,7 @@ func NewParseTree(tk *slgr.Token) (*ParseTree, error) {
 		return nil, common.NewErrNilParam("tk")
 	}
 
-	tree := tr.New(tk)
+	tree := tr.NewTree(tk)
 
 	return &ParseTree{
 		tree: tree,

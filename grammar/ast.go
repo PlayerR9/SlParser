@@ -50,7 +50,9 @@ func (astT) Make(ast map[string]ToASTFn, token *Token) ([]*Node, error) {
 
 	fn, ok := ast[type_]
 	if !ok || fn == nil {
-		return nil, NewErrUnsupportedType(true, type_)
+		fn = func(t *Token) ([]*Node, error) {
+
+		}
 	}
 
 	nodes, err := fn(token)
@@ -175,4 +177,39 @@ func Many(ast map[string]ToASTFn, lhs string, groups ...Group) error {
 	ast[lhs] = fn
 
 	return nil
+}
+
+// Transform transforms a given token into an AST node.
+//
+// Parameters:
+//   - token: The token to transform.
+//
+// Returns:
+//   - *Node: The transformed node.
+//   - error: An error if the transformation failed.
+func (astT) Transform(token *Token) (*Node, error) {
+	if token == nil {
+		return nil, common.NewErrNilParam("token")
+	}
+
+	n := NewNode(token.Pos, token.Type, token.Data)
+
+	if token.FirstChild == nil {
+		return n, nil
+	}
+
+	var children []*Node
+
+	for c := token.FirstChild; c != nil; c = c.NextSibling {
+		child, err := AST.Transform(c)
+		if err != nil {
+			return nil, err
+		}
+
+		children = append(children, child)
+	}
+
+	_ = n.AppendChildren(children...)
+
+	return n, nil
 }

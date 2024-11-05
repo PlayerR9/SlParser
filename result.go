@@ -350,47 +350,46 @@ func (r Result) Parse(parser slpx.Parser) ([]Result, error) {
 func (r Result) AST(table map[string]gr.ToASTFn) ([]Result, error) {
 	if table == nil {
 		return nil, common.NewErrNilParam("ast")
-	}
-
-	var tree *slpx.ParseTree
-
-	if r.parse_tree == nil {
+	} else if r.parse_tree == nil {
 		return nil, ErrMissingParseTree
-	} else {
-		tree = (*r.parse_tree).Forest()[0]
 	}
+
+	forest := (*r.parse_tree).Forest()
+
+	if len(forest) != 1 {
+		err := fmt.Errorf("unexpected number of parse trees: %d", len(forest))
+		r = r.SetError(err)
+
+		return []Result{r}, nil
+	}
+
+	tree := forest[0]
 
 	root := tree.Root()
 
-	errs := make([]error, 0, 2)
+	node, _ := gr.AST.Transform(root)
 
-	nodes, err := gr.AST.Make(table, root)
-	if err != nil {
-		errs = append(errs, err)
+	nodes, err := gr.AST.Make(table, node)
+	if err == nil && len(nodes) != 1 {
+		err = fmt.Errorf("expected one node, got %d instead", len(nodes))
 	}
-
-	if len(nodes) != 1 {
-		errs = append(errs, fmt.Errorf("expected one node, got %d instead", len(nodes)))
-	}
-
-	err = errors.Join(errs...)
 
 	if len(nodes) == 0 {
 		r = r.SetError(err)
 
 		return []Result{r}, nil
-	} else {
-		results := make([]Result, 0, len(nodes))
-
-		for i := range nodes {
-			result := r.SetError(err)
-			result.node = &nodes[i]
-
-			results = append(results, result)
-		}
-
-		return results, nil
 	}
+
+	results := make([]Result, 0, len(nodes))
+
+	for i := range nodes {
+		result := r.SetError(err)
+		result.node = &nodes[i]
+
+		results = append(results, result)
+	}
+
+	return results, nil
 }
 
 type ModifyFn[T interface {
