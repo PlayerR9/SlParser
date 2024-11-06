@@ -1,12 +1,12 @@
 package parser
 
 import (
-	slgr "github.com/PlayerR9/SlParser/grammar"
 	"github.com/PlayerR9/SlParser/parser/internal"
+	tr "github.com/PlayerR9/mygo-lib/CustomData/tree"
 )
 
 type Parser interface {
-	Parse(tokens []*slgr.Token) *Iterator
+	Parse(tokens []*tr.Node) *Iterator
 	ItemsOf(type_ string) ([]*internal.Item, bool)
 }
 

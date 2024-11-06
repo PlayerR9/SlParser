@@ -1,195 +1,72 @@
 package grammar
 
 import (
+	"errors"
 	"fmt"
-	"io"
-	"iter"
+	"strconv"
 
 	"github.com/PlayerR9/go-evals/common"
-	"github.com/PlayerR9/mygo-lib/slices"
-	"github.com/PlayerR9/mygo-lib/trees"
+	tr "github.com/PlayerR9/mygo-lib/CustomData/tree"
 )
 
-// Node is the node in the tree.
-type Node struct {
-	// Parent, FirstChild, LastChild, NextSibling, and PrevSibling are pointers of
-	// the node.
-	Parent, FirstChild, LastChild, NextSibling, PrevSibling *Node
-
-	// Pos is the position in the source code.
-	Pos int
-
-	// Type is the type of the node.
+type NodeData struct {
 	Type string
-
-	// Data is the data of the node.
 	Data string
+	Pos  int
 }
 
-// IsNil implements the TreeNoder interface.
-func (n *Node) IsNil() bool {
-	return n == nil
-}
-
-// IsLeaf implements the TreeNoder interface.
-func (n Node) IsLeaf() bool {
-	return n.FirstChild == nil
-}
-
-// String implements the TreeNoder interface.
-func (n Node) String() string {
-	if n.Data != "" {
-		return fmt.Sprintf("Node[%d:%s (%q)]", n.Pos, n.Type, n.Data)
+func (d NodeData) String() string {
+	if d.Data == "" {
+		return fmt.Sprintf("%d:%s", d.Pos, d.Type)
 	} else {
-		return fmt.Sprintf("Node[%d:%s]", n.Pos, n.Type)
+		return fmt.Sprintf("%d:%s (%s)", d.Pos, d.Type, strconv.Quote(d.Data))
 	}
 }
 
-// NewNode creates a new node with the given position, type, and data.
+func (d NodeData) Equals(other tr.Infoer) bool {
+	if other == nil {
+		return false
+	}
+
+	v, ok := other.(*NodeData)
+	if !ok {
+		return false
+	}
+
+	return d.Type == v.Type && d.Data == v.Data
+}
+
+// NewNode is a convenience function to create a new AST node.
 //
 // Parameters:
-//   - pos: The position of the node.
-//   - t: The type of the node.
+//   - pos: The position of the node (in bytes).
+//   - type_: The type of the node.
 //   - data: The data of the node.
 //
 // Returns:
-//   - *Node: The new node. Never returns nil.
-func NewNode(pos int, t string, data string) *Node {
-	return &Node{
+//   - *tree.Node: The new tree node. Never returns nil.
+func NewNode(pos int, type_, data string) *tr.Node {
+	return tr.NewNode(&NodeData{
 		Pos:  pos,
-		Type: t,
+		Type: type_,
 		Data: data,
-	}
+	})
 }
 
-// Child iterates over the children of the node from the first child to the last child.
-//
-// Returns:
-//   - iter.Seq[*Node]: An iterator over the children of the node. Never returns nil.
-func (n Node) Child() iter.Seq[*Node] {
-	return func(yield func(*Node) bool) {
-		for child := n.FirstChild; child != nil; child = child.NextSibling {
-			if !yield(child) {
-				break
-			}
-		}
-	}
-}
-
-// BackwardChild is an iterator over the children of the node that goes from the
-// last child to the first child.
-//
-// Returns:
-//   - iter.Seq[*Node]: An iterator over the children of the node. Never returns nil.
-func (n Node) BackwardChild() iter.Seq[*Node] {
-	return func(yield func(*Node) bool) {
-		for child := n.LastChild; child != nil; child = child.PrevSibling {
-			if !yield(child) {
-				break
-			}
-		}
-	}
-}
-
-// link_nodes links the given children nodes to the specified parent node,
-// setting up the parent, next sibling, and previous sibling pointers.
-//
-// Parameters:
-//   - parent: The parent node to which the children will be linked.
-//   - children: A slice of nodes to be linked as children.
-//
-// Returns:
-//   - []*Node: The linked children nodes, excluding any nil nodes.
-func link_nodes(parent *Node, children []*Node) []*Node {
-	slices.RejectNils(&children)
-	if len(children) == 0 {
-		return nil
+func GetNodeData(node *tr.Node) (*TokenData, error) {
+	if node == nil {
+		return nil, common.NewErrNilParam("node")
 	}
 
-	for _, c := range children {
-		c.Parent = parent
+	info := node.Info
+	if info == nil {
+		return nil, errors.New("node has no data")
 	}
 
-	prev := children[0]
-
-	for _, c := range children[1:] {
-		prev.NextSibling = c
-		c.PrevSibling = prev
-		prev = c
+	v, ok := info.(*TokenData)
+	if !ok {
+		return nil, errors.New("node has the wrong data")
 	}
 
-	return children
-}
-
-// PrependChildren adds the given children nodes to the beginning of the current node's children list.
-//
-// Parameters:
-//   - children: Variadic parameter of type Node representing the children to be added.
-//
-// Returns:
-//   - error: Returns an error if the operation fails or if the receiver is nil, otherwise returns nil.
-func (n *Node) PrependChildren(children ...*Node) error {
-	children = link_nodes(n, children)
-	if len(children) == 0 {
-		return nil
-	} else if n == nil {
-		return common.ErrNilReceiver
-	}
-
-	if n.FirstChild == nil {
-		n.LastChild = children[len(children)-1]
-	} else {
-		n.FirstChild.PrevSibling = children[len(children)-1]
-		children[len(children)-1].NextSibling = n.FirstChild
-	}
-
-	n.FirstChild = children[0]
-	n.Pos = children[0].Pos
-
-	return nil
-}
-
-// AppendChildren adds the given children nodes to the end of the current node's children list.
-//
-// Parameters:
-//   - children: Variadic parameter of type Node representing the children to be appended.
-//
-// Returns:
-//   - error: Returns an error if the operation fails or if the receiver is nil, otherwise returns nil.
-func (n *Node) AppendChildren(children ...*Node) error {
-	children = link_nodes(n, children)
-	if len(children) == 0 {
-		return nil
-	} else if n == nil {
-		return common.ErrNilReceiver
-	}
-
-	if n.LastChild == nil {
-		n.FirstChild = children[0]
-		n.Pos = children[0].Pos
-	} else {
-		n.LastChild.NextSibling = children[0]
-		children[0].PrevSibling = n.LastChild
-	}
-
-	n.LastChild = children[len(children)-1]
-
-	return nil
-}
-
-var (
-	// WriteTree is a function that writes a tree to the given writer.
-	//
-	// Parameters:
-	//   - w: The writer to write the tree to.
-	//   - node: The root node of the tree to write.
-	//
-	// Returns:
-	//   - int: The number of bytes written to the writer.
-	//   - error: Returns an error if the operation fails.
-	WriteTree func(w io.Writer, node *Node) (int, error)
-)
-
-func init() {
-	WriteTree = trees.MakeWriteTree[*Node]()
+	return v, nil
 }

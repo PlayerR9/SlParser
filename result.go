@@ -7,8 +7,8 @@ import (
 	gr "github.com/PlayerR9/SlParser/grammar"
 	sllx "github.com/PlayerR9/SlParser/lexer"
 	slpx "github.com/PlayerR9/SlParser/parser"
-
 	ernk "github.com/PlayerR9/go-evals/rank"
+	tr "github.com/PlayerR9/mygo-lib/CustomData/tree"
 	"github.com/PlayerR9/mygo-lib/common"
 )
 
@@ -35,7 +35,7 @@ type Result struct {
 	data *[]byte
 
 	// tokens is the list of tokens that were produced during the parsing process.
-	tokens *[]*gr.Token
+	tokens *[]*tr.Node
 
 	// lexer_err is the error that occurred during the lexing process.
 	lexer_err *error
@@ -44,7 +44,7 @@ type Result struct {
 	parse_tree **slpx.Result
 
 	// node is the node that was produced during the parsing process.
-	node **gr.Node
+	node **tr.Node
 
 	// err is the error that occurred during the parsing process.
 	err error
@@ -111,7 +111,7 @@ func (r Result) Data() ([]byte, error) {
 // Returns:
 //   - []*grammar.Token: The tokens of the result.
 //   - error: An error if the tokens are not set.
-func (r Result) Tokens() ([]*gr.Token, error) {
+func (r Result) Tokens() ([]*tr.Node, error) {
 	if r.tokens == nil {
 		return nil, ErrMissingTokens
 	} else {
@@ -137,7 +137,7 @@ func (r Result) ParseTree() (*slpx.Result, error) {
 // Returns:
 //   - grammar.Node: The node of the result.
 //   - error: An error if the node is not set.
-func (r Result) Node() (*gr.Node, error) {
+func (r Result) Node() (*tr.Node, error) {
 	if r.node == nil {
 		return nil, errors.New("missing node")
 	} else {
@@ -265,7 +265,7 @@ func (r Result) Parse(parser slpx.Parser) ([]Result, error) {
 		return nil, common.NewErrNilParam("parser")
 	}
 
-	var tokens []*gr.Token
+	var tokens []*tr.Node
 
 	if r.tokens == nil {
 		return nil, ErrMissingTokens

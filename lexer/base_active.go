@@ -3,6 +3,7 @@ package lexer
 import (
 	slgr "github.com/PlayerR9/SlParser/grammar"
 	internal "github.com/PlayerR9/SlParser/lexer/internal"
+	tr "github.com/PlayerR9/mygo-lib/CustomData/tree"
 	"github.com/PlayerR9/mygo-lib/common"
 )
 
@@ -12,7 +13,7 @@ type baseActive struct {
 	global *Lexer
 
 	// tokens is the list of tokens.
-	tokens []*slgr.Token
+	tokens []*tr.Node
 
 	// pos is the current position in the stream.
 	pos int
@@ -54,7 +55,7 @@ func (ba *baseActive) ApplyEvent(r internal.Event) error {
 	}
 
 	if r.Type != slgr.EtToSkip {
-		tk := slgr.NewToken(ba.pos, r.Type, string(r.Data))
+		tk := slgr.NewToken(ba.pos, r.Type, string(r.Data), nil)
 		ba.tokens = append(ba.tokens, tk)
 	}
 
@@ -81,11 +82,11 @@ func (ba *baseActive) Reset() {
 // Tokens returns the tokens generated from the input stream.
 //
 // Returns:
-//   - []*slgr.Token: The tokens generated from the input stream.
+//   - []*tr.Node: The tokens generated from the input stream.
 //
 // Remember to append the EOF after calling this function
-func (l baseActive) Tokens() []*slgr.Token {
-	tokens := make([]*slgr.Token, len(l.tokens))
+func (l baseActive) Tokens() []*tr.Node {
+	tokens := make([]*tr.Node, len(l.tokens))
 	copy(tokens, l.tokens)
 
 	return tokens

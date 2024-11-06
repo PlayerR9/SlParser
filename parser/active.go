@@ -5,13 +5,15 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/PlayerR9/SlParser/grammar"
 	slgr "github.com/PlayerR9/SlParser/grammar"
 	"github.com/PlayerR9/SlParser/parser/internal"
 
 	ern "github.com/PlayerR9/go-evals/rank"
 	// assert "github.com/PlayerR9/go-verify"
+	ll "github.com/PlayerR9/mygo-lib/CustomData/listlike"
+	tr "github.com/PlayerR9/mygo-lib/CustomData/tree"
 	"github.com/PlayerR9/mygo-lib/common"
-	ll "github.com/PlayerR9/mygo-lib/listlike"
 	gslc "github.com/PlayerR9/mygo-lib/slices"
 )
 
@@ -21,14 +23,14 @@ type Active struct {
 	global Parser
 
 	// input_stream is the tokens to parse. Must not be nil.
-	input_stream []*slgr.Token
+	input_stream []*tr.Node
 
 	// pos is the current position in the input stream. It indicates the position
 	// of the first non-shifted token in the input stream.
 	pos int
 
 	// stack is the stack to use. Must not be nil.
-	stack *ll.RefusableStack[*slgr.Token]
+	stack *ll.RefusableStack[*tr.Node]
 
 	// is_done is a flag that indicates whether the parsing is done.
 	is_done bool
@@ -107,8 +109,12 @@ func (active *Active) ApplyEvent(event *internal.Event) error {
 				if err != nil {
 					_ = active.state.SetGot("")
 					_ = active.state.ToggleError()
-				} else if top.Type != en {
-					_ = active.state.SetGot(top.Type)
+				}
+
+				topd := grammar.MustGet[*grammar.TokenData](top)
+
+				if topd.Type != en {
+					_ = active.state.SetGot(topd.Type)
 					_ = active.state.ToggleError()
 				}
 
@@ -122,8 +128,11 @@ func (active *Active) ApplyEvent(event *internal.Event) error {
 				if err != nil {
 					_ = active.state.SetGot("")
 					_ = active.state.ToggleError()
-				} else if top.Type != en {
-					_ = active.state.SetGot(top.Type)
+				}
+
+				topd := grammar.MustGet[*grammar.TokenData](top)
+				if topd.Type != en {
+					_ = active.state.SetGot(topd.Type)
 					_ = active.state.ToggleError()
 				}
 
@@ -176,7 +185,9 @@ func (active *Active) NextEvents() ([]*internal.Event, error) {
 		return nil, nil
 	}
 
-	type_ := top1.Type
+	top1d := grammar.MustGet[*grammar.TokenData](top1)
+
+	type_ := top1d.Type
 
 	_ = active.state.SetCurrentRHS(type_)
 
@@ -240,7 +251,9 @@ func (active *Active) NextEvents() ([]*internal.Event, error) {
 			break
 		}
 
-		type_ := top.Type
+		topd := grammar.MustGet[*grammar.TokenData](top)
+
+		type_ := topd.Type
 
 		sameRhsFn := func(item *internal.Item) bool {
 			rhs, ok := item.RhsAt(item.Pos() - offset)
@@ -309,7 +322,7 @@ func (active *Active) NextEvents() ([]*internal.Event, error) {
 // Returns:
 //   - *Active[T]: The new parser.
 //   - error: An error if the initial shift failed.
-func NewActive(global *baseParser, tokens []*slgr.Token) (*Active, error) {
+func NewActive(global *baseParser, tokens []*tr.Node) (*Active, error) {
 	if global == nil {
 		return nil, common.NewErrNilParam("global")
 	}
@@ -317,7 +330,7 @@ func NewActive(global *baseParser, tokens []*slgr.Token) (*Active, error) {
 	active := &Active{
 		global:       global,
 		input_stream: tokens,
-		stack:        new(ll.RefusableStack[*slgr.Token]),
+		stack:        new(ll.RefusableStack[*tr.Node]),
 		pos:          0,
 		state:        newInternalState(),
 	}
@@ -337,7 +350,7 @@ func NewActive(global *baseParser, tokens []*slgr.Token) (*Active, error) {
 //
 // Returns:
 //   - error: An error if the receiver is nil.
-func (active *Active) push(tk *slgr.Token) error {
+func (active *Active) push(tk *tr.Node) error {
 	if active == nil {
 		return common.ErrNilReceiver
 	}
@@ -407,7 +420,9 @@ func (active *Active) reduce(rule *internal.Rule) error {
 			return nil
 		}
 
-		type_ := top.Type
+		topd := grammar.MustGet[*grammar.TokenData](top)
+
+		type_ := topd.Type
 
 		if type_ != rhs {
 			_ = active.state.SetGot(type_)
@@ -420,9 +435,12 @@ func (active *Active) reduce(rule *internal.Rule) error {
 	popped := active.stack.Popped()
 	active.stack.Accept()
 
-	tk := slgr.NewToken(popped[0].Pos, rule.Lhs(), "")
-
-	tk.Lookahead = popped[len(popped)-1].Lookahead
+	tk := slgr.NewToken(
+		grammar.MustGet[*grammar.TokenData](popped[0]).Pos,
+		rule.Lhs(),
+		"",
+		grammar.MustGet[*grammar.TokenData](popped[len(popped)-1]).Lookahead,
+	)
 
 	_ = tk.AppendChildren(popped...)
 
@@ -480,7 +498,7 @@ func (active Active) Shadow() (*Active, error) {
 	shadow := &Active{
 		global:       active.global,
 		input_stream: active.input_stream,
-		stack:        new(ll.RefusableStack[*slgr.Token]),
+		stack:        new(ll.RefusableStack[*tr.Node]),
 		state:        newInternalState(),
 		pos:          0,
 	}

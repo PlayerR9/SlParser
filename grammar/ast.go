@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	tr "github.com/PlayerR9/mygo-lib/CustomData/tree"
 	"github.com/PlayerR9/mygo-lib/common"
 	gslc "github.com/PlayerR9/mygo-lib/slices"
 )
@@ -26,9 +27,9 @@ func init() {
 //   - token: the token to convert. Assumed to not be nil.
 //
 // Returns:
-//   - []*Node: the nodes created by the token.
+//   - []*tr.Node: the nodes created by the token.
 //   - error: an error if the token cannot be converted.
-type ToASTFn func(token *Token) ([]*Node, error)
+type ToASTFn func(token *tr.Node) ([]*tr.Node, error)
 
 // Make makes an AST node from a token.
 //
@@ -37,21 +38,28 @@ type ToASTFn func(token *Token) ([]*Node, error)
 //   - token: The token to make an AST node from.
 //
 // Returns:
-//   - []*Node: The AST nodes.
+//   - []*tr.Node: The AST nodes.
 //   - error: An error if the evaluation failed.
-func (astT) Make(ast map[string]ToASTFn, token *Token) ([]*Node, error) {
+func (astT) Make(ast map[string]ToASTFn, token *tr.Node) ([]*tr.Node, error) {
 	if ast == nil {
 		return nil, common.NewErrNilParam("ast")
 	} else if token == nil {
 		return nil, common.NewErrNilParam("token")
 	}
 
-	type_ := token.Type
+	tkd, err := Get[*TokenData](token)
+	if err != nil {
+		return nil, err
+	}
+
+	type_ := tkd.Type
 
 	fn, ok := ast[type_]
 	if !ok || fn == nil {
-		fn = func(t *Token) ([]*Node, error) {
+		fn = func(t *tr.Node) ([]*tr.Node, error) {
+			common.TODO("Handle this case.")
 
+			return nil, nil
 		}
 	}
 
@@ -79,13 +87,13 @@ func NewGroup(tokens, nodes []string) Group {
 	}
 }
 
-func (g Group) Check(ast map[string]ToASTFn, idx int, child *Token, nodes *[]*Node) error {
+func (g Group) Check(ast map[string]ToASTFn, idx int, child *tr.Node, nodes *[]*tr.Node) error {
 	if nodes == nil {
 		return common.NewErrNilParam("nodes")
 	}
 
 	if len(g.Tokens) > 0 {
-		err := CheckToken(idx, "child", child, g.Tokens...)
+		err := CheckNode(idx, "child", child, g.Tokens...)
 		if err != nil {
 			return err
 		}
@@ -123,12 +131,12 @@ func Many(ast map[string]ToASTFn, lhs string, groups ...Group) error {
 		return common.NewErrBadParam("groups", "must contain at least 1 group")
 	}
 
-	fn := func(t *Token) ([]*Node, error) {
+	fn := func(t *tr.Node) ([]*tr.Node, error) {
 		if t.LastChild == nil {
 			return nil, errors.New("missing last child")
 		}
 
-		is_base_case := t.LastChild.Type != lhs
+		is_base_case := MustGet[*TokenData](t.LastChild).Type != lhs
 
 		var size int
 
@@ -144,7 +152,7 @@ func Many(ast map[string]ToASTFn, lhs string, groups ...Group) error {
 			return nil, fmt.Errorf("expected %d children for last level, got %d instead", len(groups)+1, size)
 		}
 
-		var nodes []*Node
+		var nodes []*tr.Node
 
 		child := t.FirstChild
 
@@ -161,7 +169,7 @@ func Many(ast map[string]ToASTFn, lhs string, groups ...Group) error {
 			return nodes, nil
 		}
 
-		err := CheckToken(len(groups), "child", t.LastChild, lhs)
+		err := CheckNode(len(groups), "child", t.LastChild, lhs)
 		if err != nil {
 			return nil, err
 		}
@@ -185,20 +193,25 @@ func Many(ast map[string]ToASTFn, lhs string, groups ...Group) error {
 //   - token: The token to transform.
 //
 // Returns:
-//   - *Node: The transformed node.
+//   - *tr.Node: The transformed node.
 //   - error: An error if the transformation failed.
-func (astT) Transform(token *Token) (*Node, error) {
+func (astT) Transform(token *tr.Node) (*tr.Node, error) {
 	if token == nil {
 		return nil, common.NewErrNilParam("token")
 	}
 
-	n := NewNode(token.Pos, token.Type, token.Data)
+	tkd, err := Get[*TokenData](token)
+	if err != nil {
+		return nil, err
+	}
+
+	n := NewNode(tkd.Pos, tkd.Type, tkd.Data)
 
 	if token.FirstChild == nil {
 		return n, nil
 	}
 
-	var children []*Node
+	var children []*tr.Node
 
 	for c := token.FirstChild; c != nil; c = c.NextSibling {
 		child, err := AST.Transform(c)

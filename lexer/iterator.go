@@ -4,10 +4,10 @@ import (
 	"errors"
 	"iter"
 
-	slgr "github.com/PlayerR9/SlParser/grammar"
 	internal "github.com/PlayerR9/SlParser/lexer/internal"
 	"github.com/PlayerR9/go-evals/common"
 	ehst "github.com/PlayerR9/go-evals/history"
+	tr "github.com/PlayerR9/mygo-lib/CustomData/tree"
 )
 
 var (
@@ -33,8 +33,8 @@ type Result struct {
 // Tokens returns the tokens generated from the MatchResult of the active lexer.
 //
 // Returns:
-//   - []*slgr.Token: The tokens generated from the MatchResult.
-func (r Result) Tokens() []*slgr.Token {
+//   - []*tr.Node: The tokens generated from the MatchResult.
+func (r Result) Tokens() []*tr.Node {
 	return r.active.Tokens()
 }
 

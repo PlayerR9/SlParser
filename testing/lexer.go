@@ -4,12 +4,14 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/PlayerR9/SlParser/grammar"
 	slgr "github.com/PlayerR9/SlParser/grammar"
 	sllx "github.com/PlayerR9/SlParser/lexer"
+	tr "github.com/PlayerR9/mygo-lib/CustomData/tree"
 	"github.com/PlayerR9/mygo-lib/common"
 )
 
-func CheckTokens(tokens []*slgr.Token, expecteds ...string) error {
+func CheckTokens(tokens []*tr.Node, expecteds ...string) error {
 	if len(tokens) != len(expecteds) {
 		return fmt.Errorf("expected %d tokens, got %d", len(expecteds), len(tokens))
 	}
@@ -17,7 +19,12 @@ func CheckTokens(tokens []*slgr.Token, expecteds ...string) error {
 	for i, expected := range expecteds {
 		tk := tokens[i]
 
-		type_ := tk.Type
+		tkd, err := grammar.Get[*grammar.TokenData](tk)
+		if err != nil {
+			return fmt.Errorf("at index %d: %w", i, err)
+		}
+
+		type_ := tkd.Type
 
 		if type_ != expected {
 			return fmt.Errorf("expected token at index %d to be %s, got %s", i, expected, type_)

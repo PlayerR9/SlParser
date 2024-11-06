@@ -5,30 +5,34 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/PlayerR9/SlParser/grammar"
 	slgr "github.com/PlayerR9/SlParser/grammar"
 	slpx "github.com/PlayerR9/SlParser/parser"
 	"github.com/PlayerR9/go-evals/common"
+	tr "github.com/PlayerR9/mygo-lib/CustomData/tree"
 )
 
-func LinkTokens(tokens []*slgr.Token) []*slgr.Token {
+func LinkTokens(tokens []*tr.Node) []*tr.Node {
 	tokens = append(tokens, slgr.EOFToken)
 
-	prev := tokens[0]
+	prev := grammar.MustGet[*grammar.TokenData](tokens[0])
 
 	for _, tk := range tokens[1:] {
+		tkd := grammar.MustGet[*grammar.TokenData](tk)
+
 		prev.Lookahead = tk
-		prev = tk
+		prev = tkd
 	}
 
 	return tokens
 }
 
 type ParserArgs struct {
-	Tokens    []*slgr.Token
+	Tokens    []*tr.Node
 	Expecteds []string
 }
 
-func NewParserArgs(tokens []*slgr.Token, expecteds ...string) ParserArgs {
+func NewParserArgs(tokens []*tr.Node, expecteds ...string) ParserArgs {
 	tokens = LinkTokens(tokens)
 
 	return ParserArgs{
@@ -86,7 +90,7 @@ func ParserTest(parser slpx.Parser, arg ParserArgs) error {
 		}
 
 		for i, expected := range arg.Expecteds {
-			type_ := slice[i].Type
+			type_ := slice[i].Info.(*grammar.TokenData).Type
 
 			if type_ != expected {
 				err := fmt.Errorf("expected token at index %d to be %s, got %s", i, expected, type_)

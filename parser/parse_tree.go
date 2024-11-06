@@ -1,7 +1,6 @@
 package parser
 
 import (
-	slgr "github.com/PlayerR9/SlParser/grammar"
 	tr "github.com/PlayerR9/mygo-lib/CustomData/tree"
 	"github.com/PlayerR9/mygo-lib/common"
 )
@@ -25,7 +24,7 @@ func (pt ParseTree) String() string {
 // Returns:
 //   - *ParseTree: The new parse tree.
 //   - error: An error if the token is nil.
-func NewParseTree(tk *slgr.Token) (*ParseTree, error) {
+func NewParseTree(tk *tr.Node) (*ParseTree, error) {
 	if tk == nil {
 		return nil, common.NewErrNilParam("tk")
 	}
@@ -51,24 +50,24 @@ func (pt ParseTree) Equals(other *ParseTree) bool {
 // Root returns the root token of the parse tree.
 //
 // Returns:
-//   - *slgr.Token: The root token of the parse tree.
-func (pt ParseTree) Root() *slgr.Token {
+//   - *tr.Node: The root token of the parse tree.
+func (pt ParseTree) Root() *tr.Node {
 	return pt.tree.Root()
 }
 
 // Slice returns a slice of all the tokens in the parse tree in a pre-order view.
 //
 // Returns:
-//   - []*slgr.Token: A slice of all the tokens in the parse tree.
-func (pt ParseTree) Slice() []*slgr.Token {
-	slice := make([]*slgr.Token, 0, pt.tree.Size())
+//   - []*tr.Node: A slice of all the tokens in the parse tree.
+func (pt ParseTree) Slice() []*tr.Node {
+	slice := make([]*tr.Node, 0, pt.tree.Size())
 
-	visit_fn := func(t *slgr.Token) error {
+	visit_fn := func(t *tr.Node) error {
 		slice = append(slice, t)
 		return nil
 	}
 
-	_ = tr.PreorderView(pt.tree, visit_fn)
+	_ = tr.View.Preorder(pt.tree, visit_fn)
 
 	return slice
 }

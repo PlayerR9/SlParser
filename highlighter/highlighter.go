@@ -2,11 +2,13 @@ package highlighter
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"unicode/utf8"
 
-	slgr "github.com/PlayerR9/SlParser/grammar"
+	gr "github.com/PlayerR9/SlParser/grammar"
 	sllx "github.com/PlayerR9/SlParser/lexer"
+	tr "github.com/PlayerR9/mygo-lib/CustomData/tree"
 	"github.com/PlayerR9/mygo-lib/colors"
 	gch "github.com/PlayerR9/mygo-lib/runes"
 )
@@ -16,14 +18,44 @@ type Highlighter struct {
 	defaultStyle *colors.Style
 }
 
-func (h Highlighter) Highlight(w io.Writer, data []rune, tokens []*slgr.Token) error {
+func (h Highlighter) Highlight(w io.Writer, data []rune, tokens []*tr.Node) error {
+	if len(tokens) == 0 {
+		var b []byte
+
+		_ = Encode(&b, data)
+
+		n, err := w.Write(b)
+		if err != nil {
+			return err
+		} else if n != len(b) {
+			return io.ErrShortWrite
+		}
+
+		return nil
+	}
+
+	infos := make([]*gr.TokenData, 0, len(tokens))
+
+	for i, token := range tokens {
+		tkd, err := gr.Get[*gr.TokenData](token)
+		if err != nil {
+			return fmt.Errorf("at index %d: %w", i, err)
+		}
+
+		infos = append(infos, tkd)
+	}
+
 	var pos int
 
-	for _, token := range tokens {
-		if pos < token.Pos {
+	for _, info := range infos {
+		if info.Pos > len(data) {
+			return fmt.Errorf("invalid position: %d", info.Pos)
+		}
+
+		if pos < info.Pos {
 			var b []byte
 
-			_ = Encode(&b, data[pos:token.Pos])
+			_ = Encode(&b, data[pos:info.Pos])
 
 			n, err := w.Write(b)
 			if err != nil {
@@ -33,16 +65,16 @@ func (h Highlighter) Highlight(w io.Writer, data []rune, tokens []*slgr.Token) e
 			}
 		}
 
-		pos = token.Pos + utf8.RuneCountInString(token.Data)
+		pos = info.Pos + utf8.RuneCountInString(info.Data)
 
-		type_ := token.Type
+		type_ := info.Type
 
 		style, ok := h.table[type_]
 		if !ok {
 			style = h.defaultStyle
 		}
 
-		b := []byte(style.String() + token.Data)
+		b := []byte(style.String() + info.Data)
 
 		n, err := w.Write(b)
 		if err != nil {
@@ -79,7 +111,7 @@ func Highlight(h Highlighter, lexer sllx.Lexer, data []byte) ([]byte, error) {
 	}
 	defer itr.Stop()
 
-	var tokens []*slgr.Token
+	var tokens []*tr.Node
 
 	for {
 		result, err := itr.Next()
