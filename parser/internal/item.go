@@ -3,12 +3,11 @@ package internal
 import (
 	"fmt"
 	"iter"
-	"slices"
 	"strings"
 
 	slgr "github.com/PlayerR9/SlParser/grammar"
+	"github.com/PlayerR9/mygo-data/sets"
 	"github.com/PlayerR9/mygo-lib/common"
-	gslc "github.com/PlayerR9/mygo-lib/slices"
 )
 
 type ActionType int
@@ -23,7 +22,7 @@ type Item struct {
 	rule       *Rule
 	pos        int
 	act        ActionType
-	lookaheads []string
+	lookaheads *sets.OrderedSet[string]
 }
 
 func (item Item) String() string {
@@ -52,8 +51,8 @@ func (item Item) String() string {
 
 	builder.WriteString(": ")
 	builder.WriteString(item.act.String())
-	builder.WriteString(" -- ")
-	builder.WriteString(strings.Join(item.lookaheads, ", "))
+	builder.WriteString(" --> ")
+	builder.WriteString(item.lookaheads.String())
 
 	return builder.String()
 }
@@ -115,25 +114,27 @@ func (item Item) Pos() int {
 	return item.pos
 }
 
-func (item *Item) SetLookaheads(lookaheads []string) error {
-	if lookaheads == nil {
-		return nil
-	} else if item == nil {
+func (item *Item) SetLookaheads(lookaheads *sets.OrderedSet[string]) error {
+	if item == nil {
 		return common.ErrNilReceiver
 	}
 
-	_, _ = gslc.Merge(&item.lookaheads, lookaheads)
+	item.lookaheads = lookaheads
 
 	return nil
 }
 
 func (item Item) HasLookahead(la string) bool {
-	_, ok := slices.BinarySearch(item.lookaheads, la)
+	ok := item.lookaheads.Has(la)
 	return ok
 }
 
 func (item Item) ExpectLookahead() bool {
-	return len(item.lookaheads) != 0
+	for range item.lookaheads.Elem() {
+		return true
+	}
+
+	return false
 }
 
 func (item Item) Action() ActionType {

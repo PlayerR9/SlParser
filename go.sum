@@ -4,6 +4,10 @@ github.com/PlayerR9/go-fault v0.1.1 h1:ROBbqAaDn+dL7JeXeRJ3LMwqtshF63fhwS5vzXrN8
 github.com/PlayerR9/go-fault v0.1.1/go.mod h1:yUchX7der8S/cIW0LOf7K3E6ihmoN754HBEcb6J6IP0=
 github.com/PlayerR9/go-verify v0.1.1 h1:UK1jLR6wrjbI5vQBJRgXA9+pJAM2TjdnFsRJW+7EOkw=
 github.com/PlayerR9/go-verify v0.1.1/go.mod h1:JV0O22ENxfcnFlCPkQIkwtfCNS0IBMU42gB/BDTfY6w=
+github.com/PlayerR9/go-verify v0.1.4 h1:GpG+sbK4ukASwCVNLsRXhY82exyT/CMbbB9Qt51XTvg=
+github.com/PlayerR9/go-verify v0.1.4/go.mod h1:9lLndNP1IW10qZlhsW2+q78ZowVimshTskYsjvRf8VQ=
+github.com/PlayerR9/mygo-data v0.1.0 h1:UoUTO1e8PUlK/m1zJAJ1f1ZeCxllvVB5bXb6YDE8bgs=
+github.com/PlayerR9/mygo-data v0.1.0/go.mod h1:/VznwXxO9q8Q3lP3s6jvFlOFjY8IzOGv/KyVkMul6eM=
 github.com/PlayerR9/mygo-lib v0.1.5 h1:giDmi18YWcXKz23/FqHAdEQ2fnFlSBr6ycCd9ZHW0BI=
 github.com/PlayerR9/mygo-lib v0.1.5/go.mod h1:7Lumjc0e/1SD5SHyn7eCQalbDo82g+YS31G9CQ/UvB8=
 github.com/PlayerR9/mygo-lib v0.1.6 h1:Lu21wKnfHUUvrv9ysNAlxlvr1aU75+RWckxebz8/VxE=

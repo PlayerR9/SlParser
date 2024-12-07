@@ -1,13 +1,10 @@
 package parser
 
 import (
-	"slices"
-
 	slgr "github.com/PlayerR9/SlParser/grammar"
 	"github.com/PlayerR9/SlParser/parser/internal"
+	sets "github.com/PlayerR9/mygo-data/sets"
 	"github.com/PlayerR9/mygo-lib/common"
-
-	// sets "github.com/PlayerR9/mygo-lib/sets"
 	gslc "github.com/PlayerR9/mygo-lib/slices"
 )
 
@@ -26,32 +23,20 @@ func (b *Builder) AddRule(lhs string, rhss ...string) error {
 	return nil
 }
 
-func itemsWithLhs(table map[string][]*internal.Item, lhs string) []*internal.Item {
-	var res []*internal.Item
-
-	for _, items := range table {
-		for _, item := range items {
-			if item.Lhs() == lhs {
-				res = append(res, item)
-			}
-		}
-	}
-
-	return res
-}
-
-func lookaheadsOf(table map[string][]*internal.Item, item *internal.Item) []string {
-	var las []string
+func lookaheadsOf(table map[string][]*internal.Item, item *internal.Item) *sets.OrderedSet[string] {
+	lookaheads := new(sets.OrderedSet[string])
 
 	next, ok := item.NextRhs()
 	if !ok {
 		return nil
 	}
 
-	if slgr.IsTerminal(next) {
-		las = append(las, next)
+	ok = slgr.IsTerminal(next)
 
-		return las
+	if ok {
+		_ = lookaheads.Insert(next)
+
+		return lookaheads
 	}
 
 	seen := make(map[string]interface{})
@@ -62,7 +47,9 @@ func lookaheadsOf(table map[string][]*internal.Item, item *internal.Item) []stri
 		top := stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
 
-		others := itemsWithLhs(table, top)
+		ct := (ConflictTable)(table)
+
+		others := ct.ItemsByLhs(top)
 
 		seen[top] = struct{}{}
 
@@ -71,10 +58,7 @@ func lookaheadsOf(table map[string][]*internal.Item, item *internal.Item) []stri
 			// assert.True(ok, "other.RhsAt(0)")
 
 			if slgr.IsTerminal(rhs) {
-				pos, ok := slices.BinarySearch(las, rhs)
-				if !ok {
-					las = slices.Insert(las, pos, rhs)
-				}
+				_ = lookaheads.Insert(rhs)
 			} else {
 				_, ok := seen[rhs]
 				if !ok {
@@ -86,24 +70,38 @@ func lookaheadsOf(table map[string][]*internal.Item, item *internal.Item) []stri
 		}
 	}
 
-	return las
+	return lookaheads
 }
 
-func makeDecisionTable(rules []*internal.Rule) map[string][]*internal.Item {
-	var all_symbols []string
-
-	for _, rule := range rules {
-		symbols := rule.Symbols()
-
-		_, _ = gslc.Merge(&all_symbols, symbols)
+func (b Builder) determineSymbols() *sets.OrderedSet[string] {
+	if len(b.rules) == 0 {
+		return nil
 	}
+
+	symbols := new(sets.OrderedSet[string])
+
+	for _, rule := range b.rules {
+		tmp := rule.Symbols()
+
+		for _, symbol := range tmp {
+			_ = symbols.Insert(symbol)
+		}
+	}
+
+	return symbols
+}
+
+func (b Builder) Build() map[string][]*internal.Item {
+	symbols := b.determineSymbols()
+
+	table := make(map[string][]*internal.Item)
 
 	table := make(map[string][]*internal.Item, len(all_symbols))
 
 	var builder gslc.Builder[*internal.Item]
 
 	for _, symbol := range all_symbols {
-		for _, rule := range rules {
+		for _, rule := range b.rules {
 			indices := rule.IndicesOf(symbol)
 
 			for _, idx := range indices {
@@ -130,12 +128,6 @@ func makeDecisionTable(rules []*internal.Rule) map[string][]*internal.Item {
 			// assert.Err(err, "item.SetLookaheads(las)")
 		}
 	}
-
-	return table
-}
-
-func (b Builder) Build() map[string][]*internal.Item {
-	table := makeDecisionTable(b.rules)
 
 	// for _, items := range table {
 	// 	for _, item := range items {
