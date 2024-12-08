@@ -8,17 +8,13 @@ import (
 	"github.com/PlayerR9/SlParser/grammar"
 	slgr "github.com/PlayerR9/SlParser/grammar"
 	"github.com/PlayerR9/SlParser/parser/internal"
-	assert "github.com/PlayerR9/go-verify"
-
 	ern "github.com/PlayerR9/go-evals/rank"
-	// assert "github.com/PlayerR9/go-verify"
-	ll "github.com/PlayerR9/mygo-lib/CustomData/listlike"
+	assert "github.com/PlayerR9/go-verify"
+	"github.com/PlayerR9/mygo-data/stacks"
 	tr "github.com/PlayerR9/mygo-lib/CustomData/tree"
 	"github.com/PlayerR9/mygo-lib/common"
 	gslc "github.com/PlayerR9/mygo-lib/slices"
 )
-
-/////////////////////////////////////////////////////////
 
 // Active is the active parser.
 type Active struct {
@@ -30,17 +26,19 @@ type Active struct {
 
 	// pos is the current position in the input stream. It indicates the position
 	// of the first non-shifted token in the input stream.
-	pos int
+	pos uint
 
 	// stack is the stack to use. Must not be nil.
-	stack *ll.RefusableStack[*tr.Node]
+	stack *stacks.RefusableStack[*tr.Node]
 
 	// is_done is a flag that indicates whether the parsing is done.
 	is_done bool
 
 	// state is the internal state of the parser.
-	state *internalState
+	state internal.InternalState
 }
+
+/////////////////////////////////////////////////////////
 
 // ApplyEvent implements the history.Subject interface.
 func (active *Active) ApplyEvent(event *internal.Event) error {
@@ -52,7 +50,7 @@ func (active *Active) ApplyEvent(event *internal.Event) error {
 
 	_ = active.state.SetEvent(event)
 
-	en := event.ExpectedNext()
+	en := event.ExpectedNext
 	if en == "" {
 		switch act := event.Action(); act {
 		case internal.ActShift:
@@ -106,7 +104,7 @@ func (active *Active) ApplyEvent(event *internal.Event) error {
 
 		if !is_terminal {
 			if act != internal.ActShift {
-				_ = active.state.UpdatePhase(PhaseCheckBranch)
+				_ = active.state.UpdatePhase(internal.PhaseCheckBranch)
 
 				top, err := active.stack.Peek()
 				if err != nil {
@@ -125,7 +123,7 @@ func (active *Active) ApplyEvent(event *internal.Event) error {
 			}
 		} else {
 			if act == internal.ActShift {
-				_ = active.state.UpdatePhase(PhaseCheckBranch)
+				_ = active.state.UpdatePhase(internal.PhaseCheckBranch)
 
 				top, err := active.stack.Peek()
 				if err != nil {
@@ -154,7 +152,7 @@ func (active Active) HasError() bool {
 
 // GetError implements the history.Subject interface.
 func (active Active) GetError() error {
-	return active.state.makeError()
+	return active.state.MakeError()
 }
 
 // NextEvents implements the history.Subject interface.
@@ -163,7 +161,7 @@ func (active *Active) NextEvents() ([]*internal.Event, error) {
 		return nil, common.ErrNilReceiver
 	}
 
-	_ = active.state.UpdatePhase(PhasePrediction)
+	_ = active.state.UpdatePhase(internal.PhasePrediction)
 
 	// fmt.Println(active.DebugStackString())
 	// fmt.Println()
@@ -209,9 +207,10 @@ func (active *Active) NextEvents() ([]*internal.Event, error) {
 			next = ""
 		}
 
-		return []*internal.Event{
-			internal.NewEvent(item, next),
-		}, nil
+		event := internal.NewEvent(item, next)
+		assert.Cond(event != nil, "event != nil")
+
+		return []*internal.Event{event}, nil
 	}
 
 	item_copy = make([]*internal.Item, len(items))
@@ -314,6 +313,8 @@ func (active *Active) NextEvents() ([]*internal.Event, error) {
 			}
 
 			event := internal.NewEvent(item, next)
+			assert.Cond(event != nil, "event != nil")
+
 			events = append(events, event)
 		}
 
@@ -341,9 +342,8 @@ func NewActive(global *baseParser, tokens []*tr.Node) (*Active, error) {
 	active := &Active{
 		global:       global,
 		input_stream: tokens,
-		stack:        new(ll.RefusableStack[*tr.Node]),
+		stack:        stacks.RefusableOf[*tr.Node](nil),
 		pos:          0,
-		state:        newInternalState(),
 	}
 
 	err := active.shift() // Initial Shift
@@ -384,9 +384,9 @@ func (active *Active) shift() error {
 		return common.ErrNilReceiver
 	}
 
-	_ = active.state.UpdatePhase(PhaseShifting)
+	_ = active.state.UpdatePhase(internal.PhaseShifting)
 
-	if active.pos >= len(active.input_stream) {
+	if active.pos >= uint(len(active.input_stream)) {
 		_ = active.state.ToggleError()
 
 		return nil
@@ -418,7 +418,7 @@ func (active *Active) reduce(rule *internal.Rule) error {
 		return common.ErrNilReceiver
 	}
 
-	_ = active.state.UpdatePhase(PhaseReduction)
+	_ = active.state.UpdatePhase(internal.PhaseReduction)
 
 	rhss := rule.Rhss()
 	slices.Reverse(rhss)
@@ -512,8 +512,7 @@ func (active Active) Shadow() (*Active, error) {
 	shadow := &Active{
 		global:       active.global,
 		input_stream: active.input_stream,
-		stack:        new(ll.RefusableStack[*tr.Node]),
-		state:        newInternalState(),
+		stack:        stacks.RefusableOf[*tr.Node](nil),
 		pos:          0,
 	}
 
