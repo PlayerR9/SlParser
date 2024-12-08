@@ -8,6 +8,7 @@ import (
 	"github.com/PlayerR9/SlParser/grammar"
 	slgr "github.com/PlayerR9/SlParser/grammar"
 	"github.com/PlayerR9/SlParser/parser/internal"
+	assert "github.com/PlayerR9/go-verify"
 
 	ern "github.com/PlayerR9/go-evals/rank"
 	// assert "github.com/PlayerR9/go-verify"
@@ -16,6 +17,8 @@ import (
 	"github.com/PlayerR9/mygo-lib/common"
 	gslc "github.com/PlayerR9/mygo-lib/slices"
 )
+
+/////////////////////////////////////////////////////////
 
 // Active is the active parser.
 type Active struct {
@@ -238,7 +241,7 @@ func (active *Active) NextEvents() ([]*internal.Event, error) {
 	// 	item_copy = internal.FilterSlice(item_copy, fn)
 	// }
 
-	offset := 2
+	var offset uint = 2
 
 	sols := new(ern.Rank[*internal.Item])
 
@@ -256,12 +259,19 @@ func (active *Active) NextEvents() ([]*internal.Event, error) {
 		type_ := topd.Type
 
 		sameRhsFn := func(item *internal.Item) bool {
-			rhs, ok := item.RhsAt(item.Pos() - offset)
-			if !ok {
-				_ = sols.Add(offset, item)
+			pos := item.Pos()
+
+			if pos < offset {
+				err := sols.Add(int(offset), item)
+				assert.Err(err, "sols.Add(%d, item)", int(offset))
+
+				return false
 			}
 
-			return ok && rhs == type_
+			rhs, ok := item.RhsAt(pos - offset)
+			assert.True(ok, "item.RhsAt(%d - %d)", pos, offset)
+
+			return rhs == type_
 		}
 
 		ok := gslc.FilterIfApplicable(&item_copy, sameRhsFn)
@@ -287,7 +297,8 @@ func (active *Active) NextEvents() ([]*internal.Event, error) {
 
 		if ok {
 			for _, item := range item_copy {
-				_ = sols.Add(offset, item)
+				err := sols.Add(int(offset), item)
+				assert.Err(err, "sols.Add(%d, item)", int(offset))
 			}
 		}
 	}
@@ -409,7 +420,10 @@ func (active *Active) reduce(rule *internal.Rule) error {
 
 	_ = active.state.UpdatePhase(PhaseReduction)
 
-	for rhs := range rule.BackwardRhs() {
+	rhss := rule.Rhss()
+	slices.Reverse(rhss)
+
+	for _, rhs := range rhss {
 		_ = active.state.SetExpecteds([]string{rhs})
 
 		top, err := active.stack.Pop()

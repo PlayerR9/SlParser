@@ -5,6 +5,8 @@ import (
 	tr "github.com/PlayerR9/mygo-lib/CustomData/tree"
 )
 
+/////////////////////////////////////////////////////////
+
 type Parser interface {
 	Parse(tokens []*tr.Node) *Iterator
 	ItemsOf(type_ string) ([]*internal.Item, bool)

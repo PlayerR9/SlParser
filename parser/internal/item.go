@@ -3,61 +3,48 @@ package internal
 import (
 	"fmt"
 	"iter"
+	"slices"
 	"strings"
 
 	slgr "github.com/PlayerR9/SlParser/grammar"
+	"github.com/PlayerR9/mygo-data/collections"
 	"github.com/PlayerR9/mygo-data/sets"
 	"github.com/PlayerR9/mygo-lib/common"
 )
 
-type ActionType int
-
-const (
-	ActAccept ActionType = iota // (ACCEPT)
-	ActReduce                   // (REDUCE)
-	ActShift                    // (SHIFT)
-)
-
+// Item is the item of a parser.
 type Item struct {
-	rule       *Rule
-	pos        int
-	act        ActionType
+	// rule is the rule of the item. (non-nil)
+	rule *Rule
+
+	// pos is the position of the item in the rule's right-hand side.
+	pos uint
+
+	// act is the action of the item.
+	act ActionType
+
+	// lookaheads is the lookaheads of the item.
 	lookaheads *sets.OrderedSet[string]
 }
 
+/////////////////////////////////////////////////////////
+
 func (item Item) String() string {
-	// assert.Cond(item.rule != nil, "item.rule must not be nil")
+	lhs := item.rule.Lhs()
+	rhss := item.rule.Rhss()
+	act := item.act.String()
+	lookaheads := collections.String("*sets.OrderedSet[string]", item.lookaheads)
 
-	var builder strings.Builder
+	elems := append([]string{lhs, "="}, rhss...)
+	elems = append(elems, ":", "(", act, ")", "-->", lookaheads)
 
-	builder.WriteString(item.rule.Lhs())
-	builder.WriteString(" -> ")
+	elems = slices.Insert(elems, int(item.pos)+1, "#")
 
-	var i int
-
-	for rhs := range item.rule.Rhs() {
-		if i == item.pos {
-			builder.WriteString("# ")
-		}
-
-		builder.WriteString(rhs + " ")
-
-		i++
-	}
-
-	if i == item.pos {
-		builder.WriteString("# ")
-	}
-
-	builder.WriteString(": ")
-	builder.WriteString(item.act.String())
-	builder.WriteString(" --> ")
-	builder.WriteString(item.lookaheads.String())
-
-	return builder.String()
+	str := strings.Join(elems, " ")
+	return str
 }
 
-func NewItem(rule *Rule, pos int) (*Item, error) {
+func NewItem(rule *Rule, pos uint) (*Item, error) {
 	if rule == nil {
 		return nil, common.NewErrNilParam("rule")
 	}
@@ -93,9 +80,20 @@ func NewItem(rule *Rule, pos int) (*Item, error) {
 }
 
 func (item Item) BackwardRhs() iter.Seq[string] {
-	// assert.Cond(item.rule != nil, "item.rule must not be nil")
+	rhss := item.rule.Rhss()
 
-	return item.rule.BackwardRhs()
+	slices.Reverse(rhss)
+
+	fn := func(yield func(string) bool) {
+		for _, rhs := range rhss {
+			ok := yield(rhs)
+			if !ok {
+				break
+			}
+		}
+	}
+
+	return fn
 }
 
 func (item Item) Lhs() string {
@@ -104,13 +102,13 @@ func (item Item) Lhs() string {
 	return item.rule.Lhs()
 }
 
-func (item Item) RhsAt(idx int) (string, bool) {
+func (item Item) RhsAt(idx uint) (string, bool) {
 	// assert.Cond(item.rule != nil, "item.rule must not be nil")
 
 	return item.rule.RhsAt(idx)
 }
 
-func (item Item) Pos() int {
+func (item Item) Pos() uint {
 	return item.pos
 }
 
@@ -130,11 +128,8 @@ func (item Item) HasLookahead(la string) bool {
 }
 
 func (item Item) ExpectLookahead() bool {
-	for range item.lookaheads.Elem() {
-		return true
-	}
-
-	return false
+	ok := item.lookaheads.IsEmpty()
+	return !ok
 }
 
 func (item Item) Action() ActionType {
@@ -152,7 +147,7 @@ func (item Item) NextRhs() (string, bool) {
 	return item.rule.RhsAt(item.pos)
 }
 
-func (item Item) IndicesOf(symbol string) []int {
+func (item Item) IndicesOf(symbol string) []uint {
 	// assert.Cond(item.rule != nil, "item.rule must not be nil")
 
 	return item.rule.IndicesOf(symbol)

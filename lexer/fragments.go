@@ -8,6 +8,8 @@ import (
 	gch "github.com/PlayerR9/mygo-lib/runes"
 )
 
+/////////////////////////////////////////////////////////
+
 // matchNewline matches a newline.
 type matchNewline struct {
 	// matched are the characters that were matched.

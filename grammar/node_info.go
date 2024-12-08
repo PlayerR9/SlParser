@@ -5,6 +5,8 @@ import (
 	"strconv"
 )
 
+/////////////////////////////////////////////////////////
+
 type NodeInfo struct {
 	Pos  int
 	Type string

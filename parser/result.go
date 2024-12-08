@@ -7,6 +7,8 @@ import (
 	hst "github.com/PlayerR9/go-evals/history"
 )
 
+/////////////////////////////////////////////////////////
+
 // Result is the result of an evaluation.
 type Result struct {
 	// pair is the result of the evaluation.

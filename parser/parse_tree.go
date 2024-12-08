@@ -5,6 +5,8 @@ import (
 	"github.com/PlayerR9/mygo-lib/common"
 )
 
+/////////////////////////////////////////////////////////
+
 // ParseTree the parse tree output by the parser.
 type ParseTree struct {
 	// tree is the underlying parse tree.

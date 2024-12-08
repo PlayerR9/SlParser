@@ -9,6 +9,8 @@ import (
 	"github.com/dustin/go-humanize"
 )
 
+/////////////////////////////////////////////////////////
+
 // Prettify is a pretty-printer.
 type Prettify struct {
 	// data is the data to be pretty-printed.

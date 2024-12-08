@@ -2,6 +2,8 @@ package grammar
 
 import "unicode/utf8"
 
+/////////////////////////////////////////////////////////
+
 const (
 	// EtEOF is a special token type used to indicate the end of the input (or file).
 	EtEOF string = "EtEOF"

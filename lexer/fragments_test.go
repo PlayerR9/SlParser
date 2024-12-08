@@ -7,6 +7,8 @@ import (
 	emtch "github.com/PlayerR9/go-evals/matcher"
 )
 
+/////////////////////////////////////////////////////////
+
 func TestSuccessMatching(t *testing.T) {
 	type args struct {
 		Stream   []rune

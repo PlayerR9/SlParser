@@ -8,6 +8,8 @@ import (
 	"github.com/PlayerR9/mygo-lib/common"
 )
 
+/////////////////////////////////////////////////////////
+
 var (
 	// ErrNotFound occurs when the input stream is not empty but the current rune
 	// is not as expected.

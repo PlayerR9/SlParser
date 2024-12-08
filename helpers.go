@@ -4,6 +4,8 @@ import (
 	slpx "github.com/PlayerR9/SlParser/parser"
 )
 
+/////////////////////////////////////////////////////////
+
 func HasTree(results []Result, target *slpx.ParseTree) bool {
 	if len(results) == 0 || target == nil {
 		return false

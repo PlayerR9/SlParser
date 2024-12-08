@@ -12,6 +12,8 @@ import (
 	"github.com/PlayerR9/mygo-lib/common"
 )
 
+/////////////////////////////////////////////////////////
+
 var (
 	// ErrMissingData is the error that is returned when data is missing.
 	ErrMissingData error

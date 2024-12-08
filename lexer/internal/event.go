@@ -1,5 +1,7 @@
 package internal
 
+/////////////////////////////////////////////////////////
+
 // Event is the result of a match.
 type Event struct {
 	// Type is the type of the match.

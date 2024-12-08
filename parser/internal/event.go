@@ -1,5 +1,7 @@
 package internal
 
+/////////////////////////////////////////////////////////
+
 type Event struct {
 	item          *Item
 	expected_next string

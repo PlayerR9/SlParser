@@ -1,72 +1,103 @@
 package internal
 
 import (
-	"iter"
+	"strconv"
 
-	gslc "github.com/PlayerR9/mygo-lib/slices"
+	assert "github.com/PlayerR9/go-verify"
+	"github.com/PlayerR9/mygo-data/sets"
 )
 
+// Rule is a grammar rule.
 type Rule struct {
-	lhs  string
+	// lhs is the left-hand side of the rule.
+	lhs string
+
+	// rhss is the right-hand side of the rule.
 	rhss []string
 }
 
-func NewRule(lhs string, rhss []string) *Rule {
-	return &Rule{
+// NewRule creates a new Rule.
+//
+// Parameters:
+//   - lhs: The left-hand side of the rule.
+//   - rhss: The right-hand side of the rule.
+//
+// Returns:
+//   - Rule: The new Rule.
+func NewRule(lhs string, rhss []string) Rule {
+	return Rule{
 		lhs:  lhs,
 		rhss: rhss,
 	}
 }
 
-func (r Rule) Size() int {
-	return len(r.rhss)
+// Size returns the number of right-hand sides in the rule.
+//
+// Returns:
+//   - uint: The number of right-hand sides in the rule.
+func (r Rule) Size() uint {
+	return uint(len(r.rhss))
 }
 
-func (r Rule) RhsAt(idx int) (string, bool) {
-	if idx < 0 || idx >= len(r.rhss) {
-		return "", false
-	}
-
-	return r.rhss[idx], true
-}
-
-func (r Rule) Rhs() iter.Seq[string] {
-	return func(yield func(string) bool) {
-		for _, rhs := range r.rhss {
-			if !yield(rhs) {
-				break
-			}
-		}
-	}
-}
-
-func (r Rule) BackwardRhs() iter.Seq[string] {
-	return func(yield func(string) bool) {
-		for i := len(r.rhss) - 1; i >= 0; i-- {
-			if !yield(r.rhss[i]) {
-				break
-			}
-		}
-	}
-}
-
+// Lhs returns the left-hand side of the rule.
+//
+// Returns:
+//   - string: The left-hand side of the rule.
 func (r Rule) Lhs() string {
 	return r.lhs
 }
 
-func (r Rule) Symbols() []string {
-	symbols := make([]string, len(r.rhss))
-	copy(symbols, r.rhss)
+// RhsAt returns the right-hand side at the given index.
+//
+// Parameters:
+//   - idx: The index of the right-hand side to retrieve.
+//
+// Returns:
+//   - string: The right-hand side at the given index.
+//   - bool: True if the retrieval was successful, false otherwise.
+func (r Rule) RhsAt(idx uint) (string, bool) {
+	if idx >= uint(len(r.rhss)) {
+		return "", false
+	}
 
-	_ = gslc.Uniquefy(&symbols)
+	rhs := r.rhss[idx]
 
-	_, _ = gslc.MayInsert(&symbols, r.lhs)
+	return rhs, true
+}
+
+// Symbols returns an ordered set of symbols which are used in the rule.
+//
+// The ordered set contains the left-hand side and all the right-hand sides.
+//
+// Returns:
+//   - *sets.OrderedSet[string]: The ordered set of symbols. Never returns nil.
+func (r Rule) Symbols() *sets.OrderedSet[string] {
+	symbols := new(sets.OrderedSet[string])
+
+	err := symbols.Insert(r.lhs)
+	assert.Err(err, "symbols.Insert(%s)", strconv.Quote(r.lhs))
+
+	for _, rhs := range r.rhss {
+		err := symbols.Insert(rhs)
+		assert.Err(err, "symbols.Insert(%s)", strconv.Quote(rhs))
+	}
 
 	return symbols
 }
 
-func (r Rule) IndicesOf(target string) []int {
-	var count int
+// IndicesOf returns all the indices of a target symbol in the right-hand side.
+//
+// Parameters:
+//   - target: The target symbol to search for.
+//
+// Returns:
+//   - []uint: The indices of the target symbol in the right-hand side or nil if target is not found.
+func (r Rule) IndicesOf(target string) []uint {
+	if len(r.rhss) == 0 {
+		return nil
+	}
+
+	var count uint
 
 	for _, rhs := range r.rhss {
 		if rhs == target {
@@ -78,13 +109,28 @@ func (r Rule) IndicesOf(target string) []int {
 		return nil
 	}
 
-	slice := make([]int, 0, count)
+	slice := make([]uint, 0, count)
 
-	for idx, rhs := range r.rhss {
+	for i, rhs := range r.rhss {
 		if rhs == target {
-			slice = append(slice, idx)
+			slice = append(slice, uint(i))
 		}
 	}
+
+	return slice
+}
+
+// Rhss returns a copy of the right-hand side of the rule.
+//
+// Returns:
+//   - []string: A copy of the right-hand side of the rule.
+func (r Rule) Rhss() []string {
+	if len(r.rhss) == 0 {
+		return nil
+	}
+
+	slice := make([]string, len(r.rhss))
+	copy(slice, r.rhss)
 
 	return slice
 }

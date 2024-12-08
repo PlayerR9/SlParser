@@ -8,6 +8,8 @@ import (
 	"github.com/PlayerR9/mygo-lib/common"
 )
 
+/////////////////////////////////////////////////////////
+
 // MakeEvaluate makes an evaluator function that evaluates a sequence of SlParser
 // results. The evaluator function takes a sequence of SlParser results and returns
 // a new sequence of SlParser results. The new sequence of SlParser results is

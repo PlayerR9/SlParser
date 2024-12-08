@@ -9,6 +9,8 @@ import (
 	tr "github.com/PlayerR9/mygo-lib/CustomData/tree"
 )
 
+/////////////////////////////////////////////////////////
+
 // baseParser is the base implementation of the Parser interface.
 type baseParser struct {
 	// decision_table is the decision table of the parser. This must be

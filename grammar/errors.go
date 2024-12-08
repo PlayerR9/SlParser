@@ -6,6 +6,8 @@ import (
 	faults "github.com/PlayerR9/go-fault"
 )
 
+/////////////////////////////////////////////////////////
+
 // ErrUnsupportedType is an error that occurs when a token type is not supported.
 type ErrUnsupportedType struct {
 	// Quote is a flag that indicates whether the type is quoted or not.

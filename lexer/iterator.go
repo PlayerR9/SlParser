@@ -10,6 +10,8 @@ import (
 	tr "github.com/PlayerR9/mygo-lib/CustomData/tree"
 )
 
+/////////////////////////////////////////////////////////
+
 var (
 	// ErrExhausted occurs when an iterator is exhausted.
 	// This can be checked with the == operator.

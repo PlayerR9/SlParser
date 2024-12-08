@@ -11,6 +11,8 @@ import (
 	"github.com/PlayerR9/mygo-lib/common"
 )
 
+/////////////////////////////////////////////////////////
+
 func CheckTokens(tokens []*tr.Node, expecteds ...string) error {
 	if len(tokens) != len(expecteds) {
 		return fmt.Errorf("expected %d tokens, got %d", len(expecteds), len(tokens))

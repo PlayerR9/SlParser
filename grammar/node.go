@@ -9,6 +9,8 @@ import (
 	tr "github.com/PlayerR9/mygo-lib/CustomData/tree"
 )
 
+/////////////////////////////////////////////////////////
+
 type NodeData struct {
 	Type string
 	Data string

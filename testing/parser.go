@@ -12,6 +12,8 @@ import (
 	tr "github.com/PlayerR9/mygo-lib/CustomData/tree"
 )
 
+/////////////////////////////////////////////////////////
+
 func LinkTokens(tokens []*tr.Node) []*tr.Node {
 	tokens = append(tokens, slgr.EOFToken)
 

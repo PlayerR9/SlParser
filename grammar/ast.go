@@ -9,6 +9,8 @@ import (
 	gslc "github.com/PlayerR9/mygo-lib/slices"
 )
 
+/////////////////////////////////////////////////////////
+
 // astT is for internal use.
 type astT struct{}
 

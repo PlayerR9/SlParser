@@ -7,6 +7,8 @@ import (
 	tr "github.com/PlayerR9/mygo-lib/CustomData/tree"
 )
 
+/////////////////////////////////////////////////////////
+
 type TokenData struct {
 	Type      string
 	Data      string

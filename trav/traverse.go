@@ -6,6 +6,8 @@ import (
 	"github.com/PlayerR9/mygo-lib/common"
 )
 
+/////////////////////////////////////////////////////////
+
 type TravFn[N Node] func(root N) error
 
 type DoFn[N Node] func(node N, info Info) error

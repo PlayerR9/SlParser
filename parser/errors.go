@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+/////////////////////////////////////////////////////////
+
 // NewUnsupportedValue creates a new errors.Err error with the code InvalidOperation and the
 // message "value of <expected> is not a supported <kind> type".
 //

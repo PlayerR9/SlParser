@@ -9,6 +9,8 @@ import (
 	"github.com/PlayerR9/mygo-lib/common"
 )
 
+/////////////////////////////////////////////////////////
+
 var (
 	// ErrExhausted occurs when an iterator is exhausted.
 	// This can be checked with the == operator.

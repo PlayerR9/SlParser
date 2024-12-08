@@ -7,6 +7,8 @@ import (
 	"github.com/PlayerR9/mygo-lib/common"
 )
 
+/////////////////////////////////////////////////////////
+
 // baseActive is a implementation of a lexer that uses a function for lexing.
 type baseActive struct {
 	// global is the global lexer.

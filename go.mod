@@ -12,5 +12,5 @@ require github.com/PlayerR9/go-fault v0.1.1
 
 require (
 	github.com/PlayerR9/go-verify v0.1.4
-	github.com/PlayerR9/mygo-data v0.1.0
+	github.com/PlayerR9/mygo-data v0.1.1
 )

@@ -1,3 +1,3 @@
 package internal
 
-//go:generate stringer -type=ActionType -linecomment
+//go:generate stringer -type=ActionType

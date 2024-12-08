@@ -7,6 +7,8 @@ import (
 	common "github.com/PlayerR9/mygo-lib/common"
 )
 
+/////////////////////////////////////////////////////////
+
 // TODO: Delete this once mygo-lib is updated.
 
 // ErrInvalidType occurs when a type is not as expected.

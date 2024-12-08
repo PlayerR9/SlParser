@@ -9,6 +9,8 @@ import (
 	gch "github.com/PlayerR9/mygo-lib/runes"
 )
 
+/////////////////////////////////////////////////////////
+
 // Lexer is a implementation of a lexer that uses a function for lexing.
 type Lexer struct {
 	// data is the input data.

@@ -5,6 +5,8 @@ import (
 	"github.com/PlayerR9/mygo-lib/common"
 )
 
+/////////////////////////////////////////////////////////
+
 // Builder is a builder for a Lexer. An empty builder can be created with
 // the `var b Builder` syntax or with the `b := new(Builder)` constructor.
 type Builder struct {

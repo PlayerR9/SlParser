@@ -6,6 +6,8 @@ import (
 	"github.com/PlayerR9/go-evals/common"
 )
 
+/////////////////////////////////////////////////////////
+
 // TODO: Delete this once mygo-lib is updated.
 
 // Encode appends the UTF-8 encoding of a slice of runes to the provided byte slice.

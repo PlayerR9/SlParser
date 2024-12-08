@@ -5,6 +5,8 @@ import (
 	"github.com/dustin/go-humanize"
 )
 
+/////////////////////////////////////////////////////////
+
 type ErrTestFailed struct {
 	Idx       int
 	Operation string

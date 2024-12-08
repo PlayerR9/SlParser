@@ -8,6 +8,8 @@ import (
 	tr "github.com/PlayerR9/mygo-lib/CustomData/tree"
 )
 
+/////////////////////////////////////////////////////////
+
 var (
 	// EOFToken is the end of file token.
 	EOFToken *tr.Node

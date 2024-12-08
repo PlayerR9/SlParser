@@ -13,6 +13,8 @@ import (
 	gch "github.com/PlayerR9/mygo-lib/runes"
 )
 
+/////////////////////////////////////////////////////////
+
 type Highlighter struct {
 	table        map[string]*colors.Style
 	defaultStyle *colors.Style

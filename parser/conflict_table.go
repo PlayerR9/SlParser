@@ -10,6 +10,8 @@ import (
 	stacks "github.com/PlayerR9/mygo-data/stacks"
 )
 
+/////////////////////////////////////////////////////////
+
 // ConflictTable is a table of conflicts.
 type ConflictTable map[string][]*internal.Item
 

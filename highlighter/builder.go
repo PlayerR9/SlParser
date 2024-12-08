@@ -5,6 +5,8 @@ import (
 	"github.com/PlayerR9/mygo-lib/colors"
 )
 
+/////////////////////////////////////////////////////////
+
 type Builder struct {
 	table        map[string]*colors.Style
 	defaultStyle *colors.Style
