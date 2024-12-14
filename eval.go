@@ -1,10 +1,10 @@
 package SlParser
 
 import (
+	evrsl "github.com/PlayerR9/SlParser/go-evals/result"
 	gr "github.com/PlayerR9/SlParser/grammar"
 	sllx "github.com/PlayerR9/SlParser/lexer"
 	slpx "github.com/PlayerR9/SlParser/parser"
-	evrsl "github.com/PlayerR9/go-evals/result"
 	"github.com/PlayerR9/mygo-lib/common"
 )
 

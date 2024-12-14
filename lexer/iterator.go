@@ -4,9 +4,9 @@ import (
 	"errors"
 	"iter"
 
+	"github.com/PlayerR9/SlParser/PlayerR9/mygo-lib/common"
+	ehst "github.com/PlayerR9/SlParser/go-evals/history"
 	internal "github.com/PlayerR9/SlParser/lexer/internal"
-	"github.com/PlayerR9/go-evals/common"
-	ehst "github.com/PlayerR9/go-evals/history"
 	tr "github.com/PlayerR9/mygo-lib/CustomData/tree"
 )
 

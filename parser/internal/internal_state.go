@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/PlayerR9/SlParser/mygo-lib/common"
+	"github.com/PlayerR9/SlParser/PlayerR9/mygo-lib/common"
 	assert "github.com/PlayerR9/go-verify"
 	"github.com/PlayerR9/mygo-data/sets"
 )

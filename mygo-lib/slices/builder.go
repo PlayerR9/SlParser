@@ -1,6 +1,6 @@
 package slices
 
-import "github.com/PlayerR9/SlParser/mygo-lib/common"
+import "github.com/PlayerR9/SlParser/PlayerR9/mygo-lib/common"
 
 // Builder is a builder for slices. It is only efficent for making many slices one after the other.
 //

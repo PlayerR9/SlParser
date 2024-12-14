@@ -3,8 +3,8 @@ package parser
 import (
 	"iter"
 
+	hst "github.com/PlayerR9/SlParser/go-evals/history"
 	"github.com/PlayerR9/SlParser/parser/internal"
-	hst "github.com/PlayerR9/go-evals/history"
 )
 
 /////////////////////////////////////////////////////////

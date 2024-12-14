@@ -3,7 +3,7 @@ package highlighter
 import (
 	"unicode/utf8"
 
-	"github.com/PlayerR9/go-evals/common"
+	"github.com/PlayerR9/SlParser/PlayerR9/mygo-lib/common"
 )
 
 /////////////////////////////////////////////////////////

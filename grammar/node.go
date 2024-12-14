@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/PlayerR9/go-evals/common"
+	"github.com/PlayerR9/SlParser/PlayerR9/mygo-lib/common"
 	tr "github.com/PlayerR9/mygo-lib/CustomData/tree"
 )
 

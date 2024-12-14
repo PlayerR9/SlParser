@@ -1,7 +1,7 @@
 package highlighter
 
 import (
-	"github.com/PlayerR9/go-evals/common"
+	"github.com/PlayerR9/SlParser/PlayerR9/mygo-lib/common"
 	"github.com/PlayerR9/mygo-lib/colors"
 )
 

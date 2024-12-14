@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/PlayerR9/SlParser/PlayerR9/mygo-lib/common"
 	"github.com/PlayerR9/SlParser/grammar"
 	slgr "github.com/PlayerR9/SlParser/grammar"
 	slpx "github.com/PlayerR9/SlParser/parser"
-	"github.com/PlayerR9/go-evals/common"
 	tr "github.com/PlayerR9/mygo-lib/CustomData/tree"
 )
 

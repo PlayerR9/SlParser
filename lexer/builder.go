@@ -1,7 +1,7 @@
 package lexer
 
 import (
-	emtch "github.com/PlayerR9/go-evals/matcher"
+	emtch "github.com/PlayerR9/SlParser/go-evals/matcher"
 	"github.com/PlayerR9/mygo-lib/common"
 )
 
