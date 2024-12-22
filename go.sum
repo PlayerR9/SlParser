@@ -1,12 +1,4 @@
-github.com/PlayerR9/go-evals v0.1.4 h1:1guboBkeRWR5APp7xVuxcahs5rmW3GDMM/7OF2rVd7M=
-github.com/PlayerR9/go-evals v0.1.4/go.mod h1:ne9HvgqdP6Ipdip/n795EF53ZkfNUQKPJNzyuMsjhrw=
-github.com/PlayerR9/go-fault v0.1.1 h1:ROBbqAaDn+dL7JeXeRJ3LMwqtshF63fhwS5vzXrN8IQ=
-github.com/PlayerR9/go-fault v0.1.1/go.mod h1:yUchX7der8S/cIW0LOf7K3E6ihmoN754HBEcb6J6IP0=
 github.com/PlayerR9/go-verify v0.1.4 h1:GpG+sbK4ukASwCVNLsRXhY82exyT/CMbbB9Qt51XTvg=
 github.com/PlayerR9/go-verify v0.1.4/go.mod h1:9lLndNP1IW10qZlhsW2+q78ZowVimshTskYsjvRf8VQ=
-github.com/PlayerR9/mygo-data v0.1.1 h1:05KdIWgwIAQd8xRkwcZrSZ1zuTK9+mbIxAOQlszUa7s=
-github.com/PlayerR9/mygo-data v0.1.1/go.mod h1:/VznwXxO9q8Q3lP3s6jvFlOFjY8IzOGv/KyVkMul6eM=
-github.com/PlayerR9/mygo-lib v0.1.6 h1:Lu21wKnfHUUvrv9ysNAlxlvr1aU75+RWckxebz8/VxE=
-github.com/PlayerR9/mygo-lib v0.1.6/go.mod h1:7Lumjc0e/1SD5SHyn7eCQalbDo82g+YS31G9CQ/UvB8=
-github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
-github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=
+github.com/PlayerR9/mygo-data v0.1.2 h1:lUVuvY5ZWtpItn39KKozw9zEQSHWTIlP9rZcc1npNRk=
+github.com/PlayerR9/mygo-data v0.1.2/go.mod h1:/VznwXxO9q8Q3lP3s6jvFlOFjY8IzOGv/KyVkMul6eM=
